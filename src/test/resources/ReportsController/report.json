@@ -1,0 +1,92 @@
+{
+  "name": "repo_2",
+  "type": "Common1",
+  "title": "Отчет №2",
+  "createdBy": null,
+  "description": {
+    "f1": {
+      "s1": "sq1"
+    },
+    "f2": [
+      1,
+      2
+    ],
+    "f3": false
+  },
+  "isFavorite": true,
+  "isPublic": true,
+  "queryDescriptor": {
+    "table": "Данные по дневным ведомостям",
+    "select": [
+      {
+        "column": "abnormal_worktime",
+        "title": "abnormalWorktime",
+        "sortable": false,
+        "filterable": false
+      },
+      {
+        "column": "heat_pipe",
+        "title": "heatPipe",
+        "sortable": false,
+        "filterable": false
+      },
+      {
+        "column": "date_from",
+        "title": "Дата с",
+        "sortable": false,
+        "filterable": false
+      }
+    ],
+    "orderBy": [
+      {
+        "column": "abnormal_context",
+        "title": null,
+        "order": null
+      },
+      {
+        "column": "pipeline_id",
+        "title": null,
+        "order": null
+      }
+    ],
+    "where": [
+      {
+        "column": null,
+        "title": null,
+        "operator": null,
+        "value": null,
+        "operand": "and",
+        "left": {
+          "column": "abnormal_worktime",
+          "title": null,
+          "operator": ">",
+          "value": 0,
+          "operand": null,
+          "left": null,
+          "right": null
+        },
+        "right": {
+          "column": "abnormal_worktime",
+          "title": null,
+          "operator": "<",
+          "value": 99999,
+          "operand": null,
+          "left": null,
+          "right": null
+        }
+      }
+    ],
+    "aggregations": [
+      {
+        "column": "heat_pipe",
+        "title": "Сумма heat_pipe",
+        "function": "sum"
+      },
+      {
+        "column": "abnormal_worktime",
+        "title": "Сумма abnormal_worktime",
+        "function": "sum"
+      }
+    ]
+  }
+}

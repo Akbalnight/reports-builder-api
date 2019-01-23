@@ -1,0 +1,42 @@
+{
+  "table": "databasechangelog",
+  "where": [
+    {
+      "left": {
+        "left": {
+          "column": "filename",
+          "operator": "=",
+          "value": "f_name_1"
+        },
+        "operand": "or",
+        "right": {
+          "left": {
+            "column": "filename",
+            "operator": "=",
+            "value": "f_name_1"
+          },
+          "operand": "or",
+          "right": {
+            "column": "filename",
+            "operator": "=",
+            "value": "f_name_2"
+          }
+        }
+      },
+      "operand": "and",
+      "right": {
+        "left": {
+          "column": "filename",
+          "operator": "=",
+          "value": "f_name_1"
+        },
+        "operand": "or",
+        "right": {
+          "column": "filename",
+          "operator": "=",
+          "value": "f_name_2"
+        }
+      }
+    }
+  ]
+}

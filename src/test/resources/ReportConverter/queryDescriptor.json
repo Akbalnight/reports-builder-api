@@ -1,0 +1,21 @@
+{
+  "table": "staff",
+  "select": [
+    {
+      "column":"department",
+      "title":"department"
+    }
+  ],
+  "aggregations": [
+    {
+      "column": "salary",
+      "function": "sum",
+      "title": "salarySum"
+    },
+    {
+      "column": "pressure",
+      "function": "average",
+      "title": "averagePressure"
+    }
+  ]
+}

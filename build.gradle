@@ -1,0 +1,72 @@
+buildscript {
+	ext {
+		springBootVersion = '2.0.4.RELEASE'
+
+		appVersion = "0.1."
+		buildNumber = (System.getenv("BUILD_NUMBER")?.toString()?.toInteger() ?: 0)
+	}
+	repositories {
+		maven { url "https://plugins.gradle.org/m2/" }
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+		classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.5-rc1"
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse-wtp'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'war'
+apply plugin: "org.sonarqube"
+apply plugin: 'jacoco'
+
+group 'com.dias.services'
+version appVersion + buildNumber
+sourceCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+}
+
+configurations {
+	providedRuntime
+}
+
+task bootWarCustom (type: Copy, dependsOn:bootWar){
+	from "build/libs"
+	into "../build"
+	include (project.name + "-" + project.version + ".war")
+	rename (project.name + "-" + project.version + ".war", project.name + ".war")
+}
+configure(bootWarCustom) {
+	group = BasePlugin.BUILD_GROUP
+	description = 'Assembles bootWar task and copy wars to build directory of root project'
+}
+
+dependencies {
+	springBoot { buildInfo() }
+	compile('org.springframework.boot:spring-boot-starter-web')
+	compile("org.springframework:spring-jdbc")
+	compile('org.springframework.boot:spring-boot-starter-tomcat')
+	compile('org.hibernate:hibernate-core:5.3.7.Final')
+	compile('org.apache.tomcat:tomcat-jdbc')
+	compile('io.springfox:springfox-swagger2:2.9.2')
+	compile('io.springfox:springfox-swagger-ui:2.9.2')
+	compile('org.modelmapper:modelmapper:2.3.0')
+	compile('org.apache.commons:commons-lang3:3.8')
+	compile('org.projectlombok:lombok')
+	compile('com.fasterxml.jackson:jackson-datatype-guava:1.9.2')
+	compile('com.itextpdf:itextpdf:5.5.13')
+	compile('org.apache.poi:poi:4.0.0')
+	compile('org.apache.poi:poi-ooxml-schemas:4.0.0')
+	compile('org.apache.poi:poi-ooxml:4.0.0')
+	compile('jfree:jfreechart:1.0.13')
+
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+	testCompile group: 'com.h2database', name: 'h2', version: '1.4.197'
+
+	runtime('org.postgresql:postgresql')
+}

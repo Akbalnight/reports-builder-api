@@ -1,0 +1,1 @@
+SELECT * FROM databasechangelog databasechangelog WHERE filename not in ('1','2')

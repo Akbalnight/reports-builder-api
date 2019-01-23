@@ -1,0 +1,10 @@
+{
+  "table": "databasechangelog",
+  "where": [
+    {
+      "column": "filename",
+      "operator": "not in",
+      "value": "1,2"
+    }
+  ]
+}

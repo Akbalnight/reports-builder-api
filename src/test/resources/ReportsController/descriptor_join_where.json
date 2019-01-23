@@ -1,0 +1,20 @@
+{
+  "select": [
+    {
+      "column":"Ведомости по дням.name_statement",
+      "title":"Наименование ведомости"
+    },
+    {
+      "column":"Данные по дневным ведомостям.abnormal_context",
+      "title":"Нештатные ситуации (ошибки)"
+    }
+  ],
+  "where": [
+    {
+      "column":"Данные по дневным ведомостям.abnormal_worktime",
+      "operator":"=",
+      "value":"1"
+    }
+  ]
+
+}

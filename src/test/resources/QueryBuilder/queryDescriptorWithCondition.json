@@ -1,0 +1,26 @@
+{
+  "table": "databasechangelog",
+  "where": [
+    {
+      "left": {
+        "column": "filename",
+        "operator": "=",
+        "value": "f_name_0"
+      },
+      "operand": "and",
+      "right": {
+        "left": {
+          "column": "filename",
+          "operator": "=",
+          "value": "f_name_1"
+        },
+        "operand": "or",
+        "right": {
+          "column": "filename",
+          "operator": "=",
+          "value": "f_name_2"
+        }
+      }
+    }
+  ]
+}

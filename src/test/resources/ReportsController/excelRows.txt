@@ -1,0 +1,9 @@
+
+Отчет №2
+
+Параметры:,     abnormal_worktime > 0
+    И abnormal_worktime < 99999
+
+abnormalWorktime, heatPipe, Дата с
+1.0, 1794.94, 2018-03-23 00:00:00.0
+Итого:,1.0, 1794.94, ,

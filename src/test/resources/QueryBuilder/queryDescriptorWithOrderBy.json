@@ -1,0 +1,31 @@
+{
+  "table": "databasechangelog",
+  "select": [
+    {
+      "column": "author",
+      "title": "Автор"
+    },
+    {
+      "column": "filename",
+      "title": "Имя файла"
+    }
+  ],
+  "orderBy": [
+    {
+      "column": "author",
+      "order": "ASC"
+    }
+  ],
+  "aggregations": [
+    {
+      "column": "orderexecuted",
+      "function": "sum",
+      "title": "Сумма"
+    },
+    {
+      "column": "orderexecuted",
+      "function": "avg",
+      "title": "Среднее"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "table": "databasechangelog",
+  "where": [
+    {
+      "column": "filename",
+      "operator": "=",
+      "value": "f_name_0"
+    },
+    {
+      "column": "filename",
+      "operator": "=",
+      "value": "f_name_0"
+    }
+  ]
+}
