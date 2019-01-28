@@ -1,0 +1,10 @@
+{
+  "table": "databasechangelog",
+  "where": [
+    {
+      "column": "dateexecuted",
+      "operator": ">",
+      "value": null
+    }
+  ]
+}

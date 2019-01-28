@@ -1,0 +1,1 @@
+SELECT * FROM databasechangelog databasechangelog WHERE int_val > 0

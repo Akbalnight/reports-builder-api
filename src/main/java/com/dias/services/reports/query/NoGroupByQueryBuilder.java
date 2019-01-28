@@ -4,6 +4,7 @@ import com.dias.services.reports.report.query.Calculation;
 import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.Condition;
 import com.dias.services.reports.report.query.QueryDescriptor;
+import com.dias.services.reports.service.ReportBuilderService;
 import com.dias.services.reports.subsystem.ColumnWithType;
 import com.dias.services.reports.subsystem.TablesService;
 import com.dias.services.reports.translation.Translator;
@@ -229,7 +230,28 @@ public class NoGroupByQueryBuilder {
             bld.append(column);
             bld.append(SPACE);
             String operator = part.getOperator();
-            boolean requiresQuoting = requiresQuoting(column, value, columnWithTypes);
+            boolean requiresQuoting = value != null && requiresQuoting(column, value, columnWithTypes);
+
+            //специальная обработка для value = null значений
+            //для = сравнения оставляем null как есть, а = меняем на is
+            //для всех других сравнений меняем null на соответствующее типу минимальное значение
+            if (value == null) {
+                value = "null";
+                if ("=".equals(operator)) {
+                    operator = " is ";
+                } else {
+                    ColumnWithType columnWithType = defineColumnWithType(column, columnWithTypes);
+                    if (columnWithType != null) {
+                        if (ReportBuilderService.JAVA_TYPE_NUMERIC.equals(columnWithType.getType())) {
+                            value = "0";
+                        } else if (ReportBuilderService.JAVA_TYPE_DATE.equals(columnWithType.getType())) {
+                            value = "to_timestamp(0)";
+                        }
+                    }
+                }
+            }
+
+
             if ("[contains],[not contains]".contains("[" + operator.toLowerCase() + "]")) {
                 operator = operator.toLowerCase().replace("contains", "like");
                 value = "%" + value + "%";
@@ -287,12 +309,19 @@ public class NoGroupByQueryBuilder {
 
     private static boolean requiresQuoting(String column, Object value, Map<String, Map<String, ColumnWithType>> columnWithTypes) {
 
-        boolean requires = !Number.class.isAssignableFrom(value.getClass());
-
+        boolean requires = value != null && !Number.class.isAssignableFrom(value.getClass());
         //Если значение явно передано как число, тогда сразу возвращаем ответ
         //в противном случае пытаемся определить по типам
         if (requires && columnWithTypes != null) {
+            ColumnWithType columnWithType = defineColumnWithType(column, columnWithTypes);
+            requires = columnWithType == null || columnWithType.isRequiresQuoting();
+        }
+        return requires;
+    }
 
+    private static ColumnWithType defineColumnWithType(String column, Map<String, Map<String, ColumnWithType>> columnWithTypes) {
+
+        if (columnWithTypes != null) {
             String table = null;
             if (column.contains(".")) {
                 String[] parts = column.split("\\.");
@@ -308,10 +337,9 @@ public class NoGroupByQueryBuilder {
                 columnWithTypes.values().forEach(finalColumnsToSearchIn::putAll);
             }
 
-            ColumnWithType columnWithType = columnsToSearchIn.get(column);
-            requires = columnWithType == null || columnWithType.isRequiresQuoting();
+            return columnsToSearchIn.get(column);
         }
-        return requires;
+        return null;
     }
 
 }
