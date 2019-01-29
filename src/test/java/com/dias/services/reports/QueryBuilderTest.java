@@ -2,11 +2,16 @@ package com.dias.services.reports;
 
 import com.dias.services.reports.query.NoGroupByQueryBuilder;
 import com.dias.services.reports.report.query.QueryDescriptor;
+import com.dias.services.reports.service.ReportBuilderService;
+import com.dias.services.reports.subsystem.ColumnWithType;
 import com.dias.services.reports.subsystem.TablesService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class QueryBuilderTest {
 
@@ -30,44 +35,32 @@ public class QueryBuilderTest {
 
     @Test
     public void buildSqlByDescriptor() {
-        QueryDescriptor descriptor = Util.readObjectFromJSON("QueryBuilder/queryDescriptor.json", QueryDescriptor.class);
-        String query = new NoGroupByQueryBuilder(descriptor, tablesService).buildSelectQuery();
-        Assert.assertEquals(QUERY, query);
+        compareWithExpectedQueryResult(null, "QueryBuilder/queryDescriptor.json", QUERY, null);
     }
 
     @Test
     public void buildSqlByDescriptorWithLimit() {
-        QueryDescriptor descriptor = Util.readObjectFromJSON("QueryBuilder/queryDescriptor.json", QueryDescriptor.class);
-        String query = new NoGroupByQueryBuilder(descriptor, tablesService).withRowLimit(LIMIT).buildSelectQuery();
-        Assert.assertEquals(QUERY_LIMIT, query);
+        compareWithExpectedQueryResult(null, "QueryBuilder/queryDescriptor.json", QUERY_LIMIT, LIMIT);
     }
 
     @Test
     public void buildSqlByDescriptorWithGroupBy() {
-        QueryDescriptor descriptor = Util.readObjectFromJSON("QueryBuilder/queryDescriptorWithOrderBy.json", QueryDescriptor.class);
-        String query = new NoGroupByQueryBuilder(descriptor, tablesService).buildSelectQuery();
-        Assert.assertEquals(QUERY_ORDER_BY, query);
+        compareWithExpectedQueryResult(null, "QueryBuilder/queryDescriptorWithOrderBy.json", QUERY_ORDER_BY, null);
     }
 
     @Test
     public void buildSqlWithAllColumns() {
-        QueryDescriptor descriptor = Util.readObjectFromJSON("QueryBuilder/noSelectDescriptor.json", QueryDescriptor.class);
-        String query = new NoGroupByQueryBuilder(descriptor, tablesService).buildSelectQuery();
-        Assert.assertEquals(QUERY_SELECT_ALL, query);
+        compareWithExpectedQueryResult(null, "QueryBuilder/noSelectDescriptor.json", QUERY_SELECT_ALL, null);
     }
 
     @Test
     public void buildSqlWithWhere() {
-        QueryDescriptor descriptor = Util.readObjectFromJSON("QueryBuilder/queryDescriptorWithCondition.json", QueryDescriptor.class);
-        String query = new NoGroupByQueryBuilder(descriptor, tablesService).buildSelectQuery();
-        Assert.assertEquals(QUERY_WITH_WHERE, query);
+        compareWithExpectedQueryResult(null, "QueryBuilder/queryDescriptorWithCondition.json", QUERY_WITH_WHERE, null);
     }
 
     @Test
     public void buildSqlWithSimpleWhere() {
-        QueryDescriptor descriptor = Util.readObjectFromJSON("QueryBuilder/queryDescriptorWithSimpleCondition.json", QueryDescriptor.class);
-        String query = new NoGroupByQueryBuilder(descriptor, tablesService).buildSelectQuery();
-        Assert.assertEquals(QUERY_WITH_SIMPLE_WHERE, query);
+        compareWithExpectedQueryResult(null, "QueryBuilder/queryDescriptorWithSimpleCondition.json", QUERY_WITH_SIMPLE_WHERE, null);
     }
 
     @Test
@@ -91,23 +84,47 @@ public class QueryBuilderTest {
 
     @Test
     public void buildSqlWithWhereContains() {
-        QueryDescriptor descriptor = Util.readObjectFromJSON("QueryBuilder/queryDescriptorWithWhereContains.json", QueryDescriptor.class);
-        String query = new NoGroupByQueryBuilder(descriptor, tablesService).buildSelectQuery();
-        Assert.assertEquals(Util.readResource("QueryBuilder/queryDescriptorWithWhereContains_Expected.sql"), query);
+        compareQueryResults(null, "QueryBuilder/queryDescriptorWithWhereContains.json", "QueryBuilder/queryDescriptorWithWhereContains_Expected.sql");
     }
 
     @Test
     public void buildSqlWithWhereLike() {
-        QueryDescriptor descriptor = Util.readObjectFromJSON("QueryBuilder/queryDescriptorWithWhereLike.json", QueryDescriptor.class);
-        String query = new NoGroupByQueryBuilder(descriptor, tablesService).buildSelectQuery();
-        Assert.assertEquals(Util.readResource("QueryBuilder/queryDescriptorWithWhereLike_Expected.sql"), query);
+        compareQueryResults(null, "QueryBuilder/queryDescriptorWithWhereLike.json", "QueryBuilder/queryDescriptorWithWhereLike_Expected.sql");
     }
 
     @Test
     public void buildSqlWithWhereNotIn() {
-        QueryDescriptor descriptor = Util.readObjectFromJSON("QueryBuilder/queryDescriptorWithWhereNotIn.json", QueryDescriptor.class);
-        String query = new NoGroupByQueryBuilder(descriptor, tablesService).buildSelectQuery();
-        Assert.assertEquals(Util.readResource("QueryBuilder/queryDescriptorWithWhereNotIn_Expected.sql"), query);
+        compareQueryResults(null, "QueryBuilder/queryDescriptorWithWhereNotIn.json", "QueryBuilder/queryDescriptorWithWhereNotIn_Expected.sql");
+    }
+
+    @Test
+    public void buildSqlWithNullValueWhere() {
+
+        //определим типы колонок для теста
+        Map<String, Map<String, ColumnWithType>> columnsWithTypes = new HashMap<>();
+        Map<String, ColumnWithType> columnsMap = new HashMap<>();
+        columnsMap.put("dateexecuted", ColumnWithType.builder().column("dateexecuted").type(ReportBuilderService.JAVA_TYPE_DATE).build());
+        columnsMap.put("filename", ColumnWithType.builder().column("filename").type(ReportBuilderService.JAVA_TYPE_STRING).build());
+        columnsMap.put("int_val", ColumnWithType.builder().column("int_val").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
+        columnsWithTypes.put("databasechangelog", columnsMap);
+
+        compareQueryResults(columnsWithTypes, "QueryBuilder/queryDescriptorWithNullValue1.json", "QueryBuilder/queryDescriptorWithNullValue1_Expected.sql");
+        compareQueryResults(columnsWithTypes, "QueryBuilder/queryDescriptorWithNullValue2.json", "QueryBuilder/queryDescriptorWithNullValue2_Expected.sql");
+        compareQueryResults(columnsWithTypes, "QueryBuilder/queryDescriptorWithNullValue3.json", "QueryBuilder/queryDescriptorWithNullValue3_Expected.sql");
+
+    }
+
+    private void compareQueryResults(Map<String, Map<String, ColumnWithType>> columnsWithTypes, String queryDescriptorResource, String expectedQueryResultResource) {
+        compareWithExpectedQueryResult(columnsWithTypes, queryDescriptorResource, Util.readResource(expectedQueryResultResource), null);
+    }
+
+    private void compareWithExpectedQueryResult(Map<String, Map<String, ColumnWithType>> columnsWithTypes, String queryDescriptorResource, String expectedQueryResult, Long limit) {
+        QueryDescriptor descriptor = Util.readObjectFromJSON(queryDescriptorResource, QueryDescriptor.class);
+        String query = new NoGroupByQueryBuilder(descriptor, tablesService)
+                .withColumns(columnsWithTypes)
+                .withRowLimit(limit)
+                .buildSelectQuery();
+        Assert.assertEquals(expectedQueryResult, query);
     }
 
 }

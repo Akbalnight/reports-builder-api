@@ -1,0 +1,10 @@
+{
+  "table": "databasechangelog",
+  "where": [
+    {
+      "column": "int_val",
+      "operator": ">",
+      "value": null
+    }
+  ]
+}

@@ -26,10 +26,10 @@ import java.util.stream.Collectors;
 @Service
 public class ReportBuilderService extends AbstractService<SubSystem> {
 
-    private static final String PG_TYPE_TIMESTAMP = "timestamp";
-    private static final String JAVA_TYPE_NUMERIC = "numeric";
-    private static final String JAVA_TYPE_DATE = "date";
-    private static final String JAVA_TYPE_STRING = "string";
+    public static final String PG_TYPE_TIMESTAMP = "timestamp";
+    public static final String JAVA_TYPE_NUMERIC = "numeric";
+    public static final String JAVA_TYPE_DATE = "date";
+    public static final String JAVA_TYPE_STRING = "string";
     private static Logger LOG = Logger.getLogger(ReportBuilderService.class.getName());
 
     private static final String TABLE_STRUCTURE_QUERY = "SELECT LOWER(column_name) as column_name, data_type FROM information_schema.columns WHERE LOWER(table_name) = '%s'";
