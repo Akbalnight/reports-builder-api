@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @Configuration
 @EnableAsync
-@PropertySource(value = "classpath:application.properties")
+@PropertySource(value="file:${config}/application.properties", ignoreResourceNotFound = true)
 public class ServiceConfig {
 
     @Bean
