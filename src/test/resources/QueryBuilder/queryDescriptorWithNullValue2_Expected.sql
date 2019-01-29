@@ -1,0 +1,1 @@
+SELECT * FROM databasechangelog databasechangelog WHERE dateexecuted > to_timestamp(0)
