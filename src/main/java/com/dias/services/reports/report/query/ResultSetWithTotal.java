@@ -8,7 +8,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Данные возвращаемые запросом плюс строка с итогами
@@ -28,7 +30,7 @@ public class ResultSetWithTotal {
      * Генерируем итоговую строку, для подстановки в таблицу
      * Таким образом, количество колонок итоговой строки равно количеству колонок в резалтсете
      *
-     * @return
+     * @return строка, дополняющая основной резалтсет итогами
      */
     public List<Object> generateTableReadyTotalRow() {
         List<Object> totalRow = new ArrayList<>();
@@ -56,9 +58,30 @@ public class ResultSetWithTotal {
      *
      * Содержит ли резалтсет итог
      *
-     * @return
+     * @return true если резалтсет содержит итог
      */
     public boolean containsTotal() {
         return total != null && !total.isEmpty();
+    }
+
+    /**
+     * Функция возвращает сопоставление имя или заголовок колонки к индексу в резалтсете
+     *
+     * @return map column->index в резалтсете
+     */
+    public Map<String, Integer> getColumnsMap() {
+        Map<String, Integer> result = new HashMap<>();
+        List<ColumnWithType> headers = getHeaders();
+        for (int i = 0; i < headers.size(); i++) {
+            ColumnWithType column = headers.get(i);
+            String columnName = column.getColumn();
+            result.put(columnName, i);
+            result.put(column.getTitle(), i);
+            //продублируем колонку без имени таблицы
+            if (columnName.contains(".")) {
+                result.put(columnName.substring(columnName.indexOf(".") + 1), i);
+            }
+        }
+        return result;
     }
 }

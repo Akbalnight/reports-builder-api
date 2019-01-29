@@ -32,11 +32,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
+
+import java.util.List;
 
 public class ReportPdfWriter {
 
@@ -151,7 +152,7 @@ public class ReportPdfWriter {
     private DefaultCategoryDataset getDefaultCategoryDataset(ResultSetWithTotal rs, ChartDescriptor chartDescriptor, boolean withSummary) {
         DefaultCategoryDataset ds = new DefaultCategoryDataset();
         List<List<Object>> rows = rs.getRows();
-        Map<String, Integer> columnMap = getColumnMap(rs);
+        Map<String, Integer> columnMap = rs.getColumnsMap();
         Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
         //последняя строка - итоговая в случае withSummary = true
@@ -208,23 +209,6 @@ public class ReportPdfWriter {
             legend.setPosition(RectangleEdge.RIGHT);
         }
     }
-
-    private Map<String, Integer> getColumnMap(ResultSetWithTotal rs) {
-        Map<String, Integer> result = new HashMap<>();
-        List<ColumnWithType> headers = rs.getHeaders();
-        for (int i = 0; i < headers.size(); i++) {
-            ColumnWithType column = headers.get(i);
-            String columnName = column.getColumn();
-            result.put(columnName, i);
-            result.put(column.getTitle(), i);
-            //продублируем колонку без имени таблицы
-            if (columnName.contains(".")) {
-                result.put(columnName.substring(columnName.indexOf(".") + 1), i);
-            }
-        }
-        return result;
-    }
-
 
     private void writeTableBody(ReportDTO report, ResultSetWithTotal rs, PdfPTable table, boolean withSummary) {
 

@@ -372,7 +372,9 @@ public class ReportExcelWriter {
 
     private void writeTotal(ReportDTO report, ResultSetWithTotal rs, XSSFSheet sheet, int numberOfColumns, int rowNum, int titleAndHeadersHeight) {
         Calculation[] calculations = report.getQueryDescriptor().getAggregations();
+
         if (calculations != null && calculations.length > 0) {
+            Map<String, Integer> columnsMap = rs.getColumnsMap();
             XSSFRow row = sheet.createRow(rowNum++);
             row.setHeight(TOTAL_HEIGHT);
             if ((numberOfColumns - calculations.length) >= 0) {
@@ -380,9 +382,10 @@ public class ReportExcelWriter {
             }
 
             if (!rs.getRows().isEmpty()) {
-                int startColumn = numberOfColumns - calculations.length + START_COLUMN_INDEX + 1;
+                int dataStartsFrom = START_COLUMN_INDEX + 1 + 1; //добавляем одну колонку для вывода номеров строк и вторую колонку для строки ИТОГО
                 for (Calculation calculation : calculations) {
-                    Cell cell = createCell(row, startColumn++, totalValueStyle);
+                    Integer colIndexInRs = columnsMap.get(calculation.getTitle());
+                    Cell cell = createCell(row, dataStartsFrom + colIndexInRs, totalValueStyle);
                     cell.setCellType(CellType.FORMULA);
                     String wantedRef = (new CellReference(cell)).formatAsString();
                     String cellName = wantedRef.substring(0, wantedRef.indexOf(Integer.toString(rowNum)));
