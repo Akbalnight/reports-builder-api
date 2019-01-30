@@ -37,8 +37,6 @@ import java.util.Map;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
 
-import java.util.List;
-
 public class ReportPdfWriter {
 
     private static final int CHART_WIDTH = (int) PageSize.A4.getHeight() - 40;
@@ -254,15 +252,45 @@ public class ReportPdfWriter {
                 addCell(table, "", font);
             }
 
-            for (int j = 0; j < row.size(); j++) {
-                Object cellValue = row.get(j);
-                String value = cellValue != null ? cellValue.toString() : "";
-                if (calculatedColumnsIndicies.contains(j) && !value.isEmpty()) {
-                    addBigDecimalCell(table, BigDecimal.valueOf(Double.valueOf(value)), font);
-                } else {
-                    addCell(table, value, font);
+            if (rs.isGroupRowIndex(i)) {
+                addGroupRow(table, row);
+            } else {
+                for (int j = 0; j < row.size(); j++) {
+                    Object cellValue = row.get(j);
+                    String value = cellValue != null ? cellValue.toString() : "";
+                    if (calculatedColumnsIndicies.contains(j) && !value.isEmpty()) {
+                        addBigDecimalCell(table, BigDecimal.valueOf(Double.valueOf(value)), font);
+                    } else {
+                        addCell(table, value, font);
+                    }
                 }
             }
+
+        }
+    }
+
+    private void addGroupRow(PdfPTable table, List<Object> row) {
+        Font font = BOLD_FONT;
+        PdfPCell cell;
+        for (int j = 0; j < row.size(); j++) {
+            //первая колонка содержит значение группы
+            if (j == 0) {
+                Object cellValue = row.get(j);
+                String value = cellValue != null ? " " + cellValue.toString() : "";
+                cell = cell(value, font);
+                cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+                cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            } else {
+                cell = cell("", font);
+            }
+
+            cell.setBorderWidth(0);
+            cell.setBorderWidthBottom(0.5F);
+            if (j == row.size() - 1) {
+                cell.setBorderWidthRight(0.5F);
+            }
+            cell.setPaddingBottom(3);
+            table.addCell(cell);
         }
     }
 
