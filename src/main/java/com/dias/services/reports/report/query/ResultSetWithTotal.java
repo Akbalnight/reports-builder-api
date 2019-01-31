@@ -88,6 +88,12 @@ public class ResultSetWithTotal {
 
     @JsonIgnore
     public ResultSetWithTotal convertToGroupped(Column[] groups, OrderBy[] orderBy) {
+
+        //нечего конвертировать, в случае, если группировки не заданы
+        if (groups == null || groups.length == 0) {
+            return this;
+        }
+
         Map<String, Integer> columnsMap = getColumnsMap();
         Integer[] groupIndexes = new Integer[groups.length];
         for (int i = 0; i < groups.length; i++) {

@@ -271,9 +271,6 @@ public class ReportService extends AbstractService<Report> {
     public void exportToExcel(Report report, ByteArrayOutputStream out) throws IOException {
         ReportDTO reportDTO = convertToDTO(report);
         ResultSetWithTotal rs = syncExecuteWithTotalReport(reportDTO.getQueryDescriptor(), null, null);
-        if (reportDTO.getQueryDescriptor().getGroupBy() != null) {
-            rs = rs.convertToGroupped(reportDTO.getQueryDescriptor().getGroupBy(), reportDTO.getQueryDescriptor().getOrderBy());
-        }
         new ReportExcelWriter(this, translator).writeExcel(reportDTO, rs, out);
     }
 

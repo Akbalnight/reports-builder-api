@@ -48,9 +48,9 @@ public class ReportExcelWriter {
     private static final String FORMAT_DATE = "dd/mm/yyyy";
     private static final String FORMAT_TIME = "hh:mm;@";
     private static final short HEADER_HEIGHT = (short) 1200;
+    private static final short GROUP_HEIGHT = (short) 500;
     private static final short TOTAL_HEIGHT = (short) 400;
     private static final int START_COLUMN_INDEX = 1;
-    private static final String CHART_SHEET_DEFAULT_NAME = "Диаграмма";
     private static final String DATA_SHEET_DEFAULT_NAME = "Данные";
     private static final int CHART_WIDTH = 15;
     private static final int CHART_HEIGHT = 20;
@@ -72,6 +72,7 @@ public class ReportExcelWriter {
     private XSSFCellStyle bigDecimalStyle;
     private XSSFCellStyle bigDecimalTotalStyle;
     private XSSFCellStyle titleStyle;
+    private XSSFCellStyle groupStyle;
     private XSSFCellStyle dateStyle;
     private XSSFCellStyle timeStyle;
     private XSSFCellStyle totalHeaderStyle;
@@ -79,7 +80,8 @@ public class ReportExcelWriter {
     private XSSFCellStyle paramsLabelStyle;
     private XSSFCellStyle paramsDetailsStyle;
     private XSSFCellStyle totalValueStyle;
-
+    private XSSFCellStyle groupLastCellStyle;
+    private XSSFCellStyle groupFirstCellStyle;
 
     public ReportExcelWriter(ReportService tablesService, Translator translator) {
         super();
@@ -95,8 +97,16 @@ public class ReportExcelWriter {
         init();
         ReportType repType = ReportType.byNameOrDefaultForUnknown(report.getType());
         XSSFSheet sheet = workbook.createSheet(ReportType.table == repType ? report.getName() : DATA_SHEET_DEFAULT_NAME);
+        boolean isChart = ReportType.table != repType;
+        if (!isChart) {
+            //преобразуем резалтсет в резалтсет с группировками только
+            //в случае типа отчета = таблица
+            //в противном случае собьются индексы данных
+            //для вывода серий
+            rs = rs.convertToGroupped(report.getQueryDescriptor().getGroupBy(), report.getQueryDescriptor().getOrderBy());
+        }
         int firstRowWithData = writeTableReport(report, rs, sheet);
-        if (ReportType.table != repType) {
+        if (isChart) {
             writeChartReport(report, rs, sheet, repType, firstRowWithData);
         }
         workbook.write(out);
@@ -412,15 +422,37 @@ public class ReportExcelWriter {
     }
 
     private int writeRows(ResultSetWithTotal rs, XSSFSheet sheet, int rowNum) {
+        List<Integer> groupRowsIndexes = rs.getGroupRowsIndexes();
         List<List<Object>> rows = rs.getRows();
         for (int i = 0; i < rows.size(); i++) {
             List<Object> r = rows.get(i);
             XSSFRow xlsRow = sheet.createRow(rowNum++);
             int dataRowCellNum = START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0);
+            //выводим номер строки
             writeObject(xlsRow, dataRowCellNum++, i + 1, defaultStyle);
-            for(Object data : r) {
-                writeObject(xlsRow, dataRowCellNum++, data, defaultStyle);
+
+            //определим стиль вывода данных
+            //в случае выводы группы - используем специальный стиль
+            XSSFCellStyle style = defaultStyle;
+            boolean isGroup = groupRowsIndexes != null && groupRowsIndexes.remove(Integer.valueOf(i));
+
+            if (isGroup) {
+                xlsRow.setHeight(GROUP_HEIGHT);
             }
+
+            for (int j = 0; j < r.size(); j++) {
+                Object data = r.get(j);
+                if (isGroup) {
+                    style = groupStyle;
+                    if (j == r.size() - 1) {
+                        style = groupLastCellStyle;
+                    } else if (j == 0) {
+                        style = groupFirstCellStyle;
+                    }
+                }
+                writeObject(xlsRow, dataRowCellNum++, data, style);
+            }
+
         }
         return rowNum;
     }
@@ -515,12 +547,32 @@ public class ReportExcelWriter {
         this.titleStyle = createCellStyle(workbook, titleFont);
         this.titleStyle.setVerticalAlignment(VerticalAlignment.BOTTOM);
 
-
         XSSFFont headerFont = createFont(workbook, (short) 16, FONT_TIMES_NEW_ROMAN, true);
         this.headerStyle = createCellStyle(workbook, headerFont);
         this.headerStyle.setAlignment(HorizontalAlignment.CENTER);
         this.headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
         this.headerStyle.setWrapText(true);
+
+        XSSFFont groupFont = createFont(workbook, (short) 16, FONT_TIMES_NEW_ROMAN, true);
+        groupFont.setItalic(true);
+        this.groupStyle = createCellStyle(workbook, groupFont);
+        this.groupStyle.setAlignment(HorizontalAlignment.LEFT);
+        this.groupStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        this.groupStyle.setWrapText(false);
+        this.groupStyle.setBorderBottom(BorderStyle.THIN);
+        this.groupStyle.setBorderTop(BorderStyle.THIN);
+
+        this.groupLastCellStyle = createCellStyle(workbook, groupFont);
+        this.groupLastCellStyle.setBorderTop(BorderStyle.THIN);
+        this.groupLastCellStyle.setBorderBottom(BorderStyle.THIN);
+        this.groupLastCellStyle.setBorderRight(BorderStyle.THIN);
+
+        this.groupFirstCellStyle = createCellStyle(workbook, groupFont);
+        this.groupFirstCellStyle.setBorderTop(BorderStyle.THIN);
+        this.groupFirstCellStyle.setBorderBottom(BorderStyle.THIN);
+        this.groupFirstCellStyle.setBorderLeft(BorderStyle.THIN);
+
+
 
         XSSFFont totalFont = createFont(workbook, (short) 16, FONT_TIMES_NEW_ROMAN, true);
         this.totalHeaderStyle = createCellStyle(workbook, totalFont);
