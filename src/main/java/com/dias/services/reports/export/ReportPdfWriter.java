@@ -32,11 +32,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
+
+import java.util.List;
 
 public class ReportPdfWriter {
 
@@ -151,7 +153,7 @@ public class ReportPdfWriter {
     private DefaultCategoryDataset getDefaultCategoryDataset(ResultSetWithTotal rs, ChartDescriptor chartDescriptor, boolean withSummary) {
         DefaultCategoryDataset ds = new DefaultCategoryDataset();
         List<List<Object>> rows = rs.getRows();
-        Map<String, Integer> columnMap = getColumnMap(rs);
+        Map<String, Integer> columnMap = rs.getColumnsMap();
         Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
         //последняя строка - итоговая в случае withSummary = true
@@ -209,23 +211,6 @@ public class ReportPdfWriter {
         }
     }
 
-    private Map<String, Integer> getColumnMap(ResultSetWithTotal rs) {
-        Map<String, Integer> result = new HashMap<>();
-        List<ColumnWithType> headers = rs.getHeaders();
-        for (int i = 0; i < headers.size(); i++) {
-            ColumnWithType column = headers.get(i);
-            String columnName = column.getColumn();
-            result.put(columnName, i);
-            result.put(column.getTitle(), i);
-            //продублируем колонку без имени таблицы
-            if (columnName.contains(".")) {
-                result.put(columnName.substring(columnName.indexOf(".") + 1), i);
-            }
-        }
-        return result;
-    }
-
-
     private void writeTableBody(ReportDTO report, ResultSetWithTotal rs, PdfPTable table, boolean withSummary) {
 
         List<List<Object>> rows = rs.getRows();
@@ -237,7 +222,7 @@ public class ReportPdfWriter {
             for (int j = 0; j < aggregations.length; j++) {
                 for (int i = 0; i < columns; i++) {
                     ColumnWithType column = headers.get(i);
-                    if (column.getColumn().equals(aggregations[j].getColumn()) || column.getTitle().equals(aggregations[j].getTitle())) {
+                    if (Objects.equals(column.getColumn(),aggregations[j].getColumn()) || Objects.equals(column.getTitle(), aggregations[j].getTitle())) {
                         calculatedColumnsIndicies.add(i);
                         break;
                     }
@@ -245,6 +230,7 @@ public class ReportPdfWriter {
             }
         }
 
+        List<Integer> groupRowIndexes = rs.getGroupRowsIndexes();
         for (int i = 0; i < rows.size(); i++) {
             List<Object> row = rows.get(i);
 
@@ -257,9 +243,10 @@ public class ReportPdfWriter {
                     cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
                     cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
                     cell.setPaddingBottom(3);
+                    cell.setBorder(0);
                     table.addCell(cell);
                 } else {
-                    addCell(table, "", font);
+                    addEmptyCellWithNoBorder(table, font);
                 }
             }
 
@@ -270,21 +257,51 @@ public class ReportPdfWriter {
                 addCell(table, "", font);
             }
 
-            for (int j = 0; j < row.size(); j++) {
-                Object cellValue = row.get(j);
-                String value = cellValue != null ? cellValue.toString() : "";
-                if (calculatedColumnsIndicies.contains(j) && !value.isEmpty()) {
-                    addBigDecimalCell(table, BigDecimal.valueOf(Double.valueOf(value)), font);
-                } else {
-                    addCell(table, value, font);
+            if (groupRowIndexes.remove(Integer.valueOf(i))) {
+                addGroupRow(table, row);
+            } else {
+                for (int j = 0; j < row.size(); j++) {
+                    Object cellValue = row.get(j);
+                    String value = cellValue != null ? cellValue.toString() : "";
+                    if (calculatedColumnsIndicies.contains(j) && !value.isEmpty()) {
+                        addBigDecimalCell(table, BigDecimal.valueOf(Double.valueOf(value)), font);
+                    } else {
+                        addCell(table, value, font);
+                    }
                 }
             }
+
+        }
+    }
+
+    private void addGroupRow(PdfPTable table, List<Object> row) {
+        Font font = BOLD_FONT;
+        PdfPCell cell;
+        for (int j = 0; j < row.size(); j++) {
+            //первая колонка содержит значение группы
+            if (j == 0) {
+                Object cellValue = row.get(j);
+                String value = cellValue != null ? " " + cellValue.toString() : "";
+                cell = cell(value, font);
+                cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+                cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            } else {
+                cell = cell("", font);
+            }
+
+            cell.setBorderWidth(0);
+            cell.setBorderWidthBottom(0.5F);
+            if (j == row.size() - 1) {
+                cell.setBorderWidthRight(0.5F);
+            }
+            cell.setPaddingBottom(3);
+            table.addCell(cell);
         }
     }
 
     private void writeTableHeader(ResultSetWithTotal rs, PdfPTable table, boolean withCalculations) {
         if (withCalculations) {
-            addCell(table, "");
+            addEmptyCellWithNoBorder(table, BOLD_FONT);
         }
         addCell(table, "№", BOLD_FONT);
         rs.getHeaders().forEach(header -> addCell(table, StringUtils.isEmpty(header.getTitle()) ? header.getColumn() : header.getTitle(), BOLD_FONT));

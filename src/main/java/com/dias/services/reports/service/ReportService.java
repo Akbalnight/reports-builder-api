@@ -237,7 +237,7 @@ public class ReportService extends AbstractService<Report> {
 
         List<TotalValue> total = template.query(result, getTotalExtractor(descriptor));
 
-        return new ResultSetWithTotal(resultSet.getRows(), resultSet.getHeaders(), total);
+        return new ResultSetWithTotal(resultSet.getRows(), resultSet.getHeaders(), total, null);
     }
 
     private ResultSetExtractor<List<TotalValue>> getTotalExtractor(QueryDescriptor queryDescriptor) {
@@ -265,18 +265,21 @@ public class ReportService extends AbstractService<Report> {
 
         List<TotalValue> total = template.query(result, getTotalExtractor(queryDescriptor));
 
-        return new ResultSetWithTotal(resultSet.getRows(), resultSet.getHeaders(), total);
+        return new ResultSetWithTotal(resultSet.getRows(), resultSet.getHeaders(), total, null);
     }
 
     public void exportToExcel(Report report, ByteArrayOutputStream out) throws IOException {
         ReportDTO reportDTO = convertToDTO(report);
-        ResultSetWithTotal rs = syncExecuteWithTotalReport(reportDTO.getQueryDescriptor(), null, null);;
+        ResultSetWithTotal rs = syncExecuteWithTotalReport(reportDTO.getQueryDescriptor(), null, null);
         new ReportExcelWriter(this, translator).writeExcel(reportDTO, rs, out);
     }
 
     public void exportToPdf(Report report, ByteArrayOutputStream out) throws DocumentException, IOException {
         ReportDTO reportDTO = convertToDTO(report);
         ResultSetWithTotal rs = syncExecuteWithTotalReport(reportDTO.getQueryDescriptor(), null, null);
+        if (reportDTO.getQueryDescriptor().getGroupBy() != null) {
+            rs = rs.convertToGroupped(reportDTO.getQueryDescriptor().getGroupBy(), reportDTO.getQueryDescriptor().getOrderBy());
+        }
         new ReportPdfWriter(this, translator).writePdf(reportDTO, rs, out);
     }
 
