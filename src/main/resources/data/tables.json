@@ -151,9 +151,7 @@
       "time_get_data",
       "time_read_data",
       "time_write_data",
-      "metering_device_id",
-      "pipeline_id",
-      "statement_id"
+      "metering_device_id"
     ],
     "translations": {
       "id": "Идентификатор",

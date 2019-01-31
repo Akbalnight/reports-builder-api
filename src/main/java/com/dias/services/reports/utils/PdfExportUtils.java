@@ -106,13 +106,12 @@ public class PdfExportUtils {
         table.addCell(cell);
     }
 
-    public static void addCell(PdfPTable table, String text, int rowspan) {
-        PdfPCell cell = cell(text, rowspan);
-        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        cell.setPaddingBottom(3);
+    public static void addEmptyCellWithNoBorder(PdfPTable table, Font font) {
+        PdfPCell cell = cell("", font);
+        cell.setBorder(0);
         table.addCell(cell);
     }
+
 
     public static void addBigDecimalCell(PdfPTable table, BigDecimal bigDecimal, Font font) {
         PdfPCell cell = cell(bigDecimalAsText(bigDecimal), font);

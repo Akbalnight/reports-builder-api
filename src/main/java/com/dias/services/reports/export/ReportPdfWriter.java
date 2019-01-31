@@ -38,6 +38,8 @@ import java.util.Objects;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
 
+import java.util.List;
+
 public class ReportPdfWriter {
 
     private static final int CHART_WIDTH = (int) PageSize.A4.getHeight() - 40;
@@ -241,9 +243,10 @@ public class ReportPdfWriter {
                     cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
                     cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
                     cell.setPaddingBottom(3);
+                    cell.setBorder(0);
                     table.addCell(cell);
                 } else {
-                    addCell(table, "", font);
+                    addEmptyCellWithNoBorder(table, font);
                 }
             }
 
@@ -298,7 +301,7 @@ public class ReportPdfWriter {
 
     private void writeTableHeader(ResultSetWithTotal rs, PdfPTable table, boolean withCalculations) {
         if (withCalculations) {
-            addCell(table, "");
+            addEmptyCellWithNoBorder(table, BOLD_FONT);
         }
         addCell(table, "№", BOLD_FONT);
         rs.getHeaders().forEach(header -> addCell(table, StringUtils.isEmpty(header.getTitle()) ? header.getColumn() : header.getTitle(), BOLD_FONT));
