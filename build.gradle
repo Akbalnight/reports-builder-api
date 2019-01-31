@@ -37,7 +37,7 @@ configurations {
 
 task bootWarCustom (type: Copy, dependsOn:bootWar){
 	from "build/libs"
-	into "../build"
+	into "./build"
 	include (project.name + "-" + project.version + ".war")
 	rename (project.name + "-" + project.version + ".war", project.name + ".war")
 }
