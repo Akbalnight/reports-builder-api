@@ -144,10 +144,6 @@ public class ResultSetWithTotal {
         return newRs;
     }
 
-    public boolean isGroupRowIndex(int index) {
-        return groupRowsIndexes != null && groupRowsIndexes.contains(index);
-    }
-
     private static List<Object> createGroupRow(String groupValue, Column group, int groupIndex, int columns) {
         List<Object> row = new ArrayList<>();
         for (int i = 0; i < columns; i++) {

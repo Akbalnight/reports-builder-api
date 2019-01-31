@@ -34,6 +34,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
 
@@ -219,7 +220,7 @@ public class ReportPdfWriter {
             for (int j = 0; j < aggregations.length; j++) {
                 for (int i = 0; i < columns; i++) {
                     ColumnWithType column = headers.get(i);
-                    if (column.getColumn().equals(aggregations[j].getColumn()) || column.getTitle().equals(aggregations[j].getTitle())) {
+                    if (Objects.equals(column.getColumn(),aggregations[j].getColumn()) || Objects.equals(column.getTitle(), aggregations[j].getTitle())) {
                         calculatedColumnsIndicies.add(i);
                         break;
                     }
@@ -227,6 +228,7 @@ public class ReportPdfWriter {
             }
         }
 
+        List<Integer> groupRowIndexes = rs.getGroupRowsIndexes();
         for (int i = 0; i < rows.size(); i++) {
             List<Object> row = rows.get(i);
 
@@ -252,7 +254,7 @@ public class ReportPdfWriter {
                 addCell(table, "", font);
             }
 
-            if (rs.isGroupRowIndex(i)) {
+            if (groupRowIndexes.remove(Integer.valueOf(i))) {
                 addGroupRow(table, row);
             } else {
                 for (int j = 0; j < row.size(); j++) {
