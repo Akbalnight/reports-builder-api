@@ -334,10 +334,10 @@ public class ReportService extends AbstractService<Report> {
                 series.setValueColumn(sNode.get(PROPERTY_KEY).asText());
                 series.setColor(sNode.get(PROPERTY_COLOR).asText());
                 JsonNode rowsRangeNode = sNode.get(PROPERTY_ROWS);
-                if (rowsRangeNode.get(PROPERTY_FROM) != null) {
+                if (rowsRangeNode != null && rowsRangeNode.get(PROPERTY_FROM) != null) {
                     series.setStartRow(rowsRangeNode.get(PROPERTY_FROM).asInt());
                 }
-                if (rowsRangeNode.get(PROPERTY_TO) != null) {
+                if (rowsRangeNode != null && rowsRangeNode.get(PROPERTY_TO) != null) {
                     series.setEndRow(rowsRangeNode.get(PROPERTY_TO).asInt());
                 }
                 series.setTitle(sNode.get(PROPERTY_KEY).asText());
