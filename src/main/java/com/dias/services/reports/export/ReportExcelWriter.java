@@ -235,7 +235,13 @@ public class ReportExcelWriter {
             CTNumDataSource ctNumDataSource = ctBarSer.addNewVal();
             CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
             int valueColumnIndex = columnMap.get(s.getValueColumn());
+
             String valueColumnName = CellReference.convertNumToColString(valueColumnIndex);
+            if (chartDescriptor.getShowLegend()) {
+                //если необходимо показывать легенду, указываем ячейку с наименованием колонки
+                ctBarSer.addNewTx().addNewStrRef().setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + firstDataRow);
+            }
+
             ctNumRef.setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
         }
 
