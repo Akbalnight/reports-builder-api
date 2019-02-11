@@ -242,6 +242,19 @@ public class ReportExcelWriter {
                 ctBarSer.addNewTx().addNewStrRef().setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + firstDataRow);
             }
 
+            //добавляем метки к столбцам
+            CTDLbls dLbls = ctBarSer.addNewDLbls();
+            //укажем положение - OUT_END (соответствует 7)
+            CTDLblPos ctdLblPos = dLbls.addNewDLblPos();
+            ctdLblPos.setVal(org.openxmlformats.schemas.drawingml.x2006.chart.STDLblPos.Enum.forInt(7));
+            dLbls.addNewShowVal().setVal(true);
+            //отключим отображение всего лишнего
+            dLbls.addNewShowSerName().setVal(false);
+            dLbls.addNewShowCatName().setVal(false);
+            dLbls.addNewShowBubbleSize().setVal(false);
+            dLbls.addNewShowLeaderLines().setVal(false);
+            dLbls.addNewShowLegendKey().setVal(false);
+
             ctNumRef.setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
         }
 
