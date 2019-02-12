@@ -139,7 +139,7 @@ public class ReportExcelWriter {
         ChartDescriptor chartDescriptor = tablesService.extractChartDescriptor(report);
         if (chartDescriptor != null) {
             Map<String, Integer> columnMap = getColumnMap(START_COLUMN_INDEX + 1 + (rs.containsTotal() ? 1 : 0), rs);
-            ExcelChartsHelper.buildChart(workbook, chartDescriptor, report, repType, firstRowWithData, rs, sheet, columnMap);
+            ExcelChartsHelper.addChartToWorkbook(workbook, chartDescriptor, report, repType, firstRowWithData, rs, sheet, columnMap);
         }
     }
 

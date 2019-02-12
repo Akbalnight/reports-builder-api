@@ -20,12 +20,135 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Хелпер для построения диаграмм в Excel. В виду сложной и запутанной логики код перенесен в отдельный класс
+ * Хелпер для построения диаграмм в Excel.
  */
 class ExcelChartsHelper {
 
     private static final int CHART_WIDTH = 15;
     private static final int CHART_HEIGHT = 20;
+    private static final int LABEL_POSITION_OUTSIDE_TOP = 7;
+    private static final int LABEL_POSITION_TOP = 9;
+
+    /**
+     * Интерфейс диаграммы с сериями. Служит для представления абстракции диаграммы
+     * для Apache POI, в которой отсутствует общий интерфейс для диаграмм не смотря на обилие
+     * одинаковой логики. Введение данного интерфейса позволяет избавится от многочисленного
+     * дублирования кода. Внутри реализации интерфейса происходит делегирование к Apache POI диаграмме
+     */
+    interface IChartWithSeries {
+        CTBoolean addNewVaryColors();
+        ISeries addNewSeries();
+        CTUnsignedInt addNewAxId();
+        CTShapeProperties addNewShapeProperties(int seriesIndex);
+    }
+
+    /**
+     * Интерфейс серии. Как и <code>IChartWithSeries</code> служит абстракцией для серий из
+     * Apache POI. Внутри реализации серии происходит делегирование к Apache POI серии
+     */
+    interface ISeries {
+
+        CTUnsignedInt addNewIdx();
+        CTAxDataSource addNewCat();
+        CTNumDataSource addNewVal();
+        CTSerTx addNewTx();
+        CTDLbls addNewDLbls();
+    }
+
+    /**
+     * Серия линейной диаграммы
+     */
+    static class LineSer implements ISeries {
+        @Delegate
+        private final CTLineSer series;
+        LineSer(CTLineSer ctLineSer) {
+            this.series = ctLineSer;
+        }
+    }
+
+    /**
+     * Серия для гистограммы
+     */
+    static class BarSer implements ISeries {
+        @Delegate
+        private final CTBarSer series;
+        BarSer(CTBarSer ctBarSer) {
+            this.series = ctBarSer;
+        }
+    }
+
+    /**
+     * График
+     */
+    static class LineChart implements IChartWithSeries {
+        @Delegate
+        private final CTLineChart lineChart;
+        private final CTPlotArea plot;
+        LineChart(CTLineChart ctLineChart, CTPlotArea plot) {
+            this.lineChart = ctLineChart;
+            this.plot = plot;
+        }
+
+        @Override
+        public ISeries addNewSeries() {
+            return new LineSer(lineChart.addNewSer());
+        }
+
+        @Override
+        public CTShapeProperties addNewShapeProperties(int seriesIndex) {
+            return plot.getLineChartList().get(0).getSerArray(seriesIndex).addNewSpPr();
+        }
+    }
+
+    /**
+     * Гистограмма
+     */
+    static class BarChart implements IChartWithSeries {
+        @Delegate
+        private final CTBarChart barChart;
+        private final CTPlotArea plot;
+        BarChart(CTBarChart ctBarChart, CTPlotArea plot) {
+            this.barChart = ctBarChart;
+            this.plot = plot;
+        }
+
+        @Override
+        public ISeries addNewSeries() {
+            return new BarSer(barChart.addNewSer());
+        }
+
+        @Override
+        public CTShapeProperties addNewShapeProperties(int seriesIndex) {
+            return plot.getBarChartArray(0).getSerArray(seriesIndex).addNewSpPr();
+        }
+    }
+
+    /**
+     * Добавление диаграммы в рабочую книгу excel
+     *
+     * @param workbook рабочая книга excel
+     * @param chartDescriptor описание диаграммы
+     * @param report отчет
+     * @param repType тип отчета
+     * @param firstRowWithData номер первой строки, содержащей данные
+     * @param rs набор данных
+     * @param sheet страница для добавления диагрммы
+     * @param columnMap соответствие имен колонок индексам
+     */
+    static void addChartToWorkbook(XSSFWorkbook workbook, ChartDescriptor chartDescriptor, ReportDTO report, ReportType repType, int firstRowWithData, ResultSetWithTotal rs, XSSFSheet sheet, Map<String, Integer> columnMap) {
+        XSSFChart xssfChart = xssfChart(workbook, chartDescriptor, report);
+        IChartWithSeries chart;
+        Integer dataLabelPos = LABEL_POSITION_OUTSIDE_TOP;
+        if (ReportType.hbar == repType) {
+            chart = addBarChart(xssfChart.getCTChart().getPlotArea(), STBarDir.BAR);
+        } else if (ReportType.bar == repType) {
+            chart = addBarChart(xssfChart.getCTChart().getPlotArea(), STBarDir.COL);
+        } else {
+            chart = addLineChart(xssfChart.getCTChart().getPlotArea());
+            dataLabelPos = LABEL_POSITION_TOP;
+        }
+        fillChart(sheet, columnMap, chart, xssfChart, chartDescriptor, firstRowWithData, rs.getRows().size(), dataLabelPos);
+    }
 
     private static XSSFChart xssfChart(XSSFWorkbook workbook,
                                        ChartDescriptor chartDescriptor,
@@ -48,82 +171,11 @@ class ExcelChartsHelper {
 
     }
 
-    interface IChart {
-        CTBoolean addNewVaryColors();
-        ISeries addNewSeries();
-        CTUnsignedInt addNewAxId();
-        CTShapeProperties addNewShapeProperties(int seriesIndex);
-    }
-
-    interface ISeries {
-
-        CTUnsignedInt addNewIdx();
-        CTAxDataSource addNewCat();
-        CTNumDataSource addNewVal();
-        CTSerTx addNewTx();
-        CTDLbls addNewDLbls();
-    }
-
-    static class LineSer implements ISeries {
-        @Delegate
-        private final CTLineSer series;
-        LineSer(CTLineSer ctLineSer) {
-            this.series = ctLineSer;
-        }
-    }
-
-    static class BarSer implements ISeries {
-        @Delegate
-        private final CTBarSer series;
-        BarSer(CTBarSer ctBarSer) {
-            this.series = ctBarSer;
-        }
-    }
-
-    static class LineChart implements IChart {
-        @Delegate
-        private final CTLineChart lineChart;
-        private final CTPlotArea plot;
-        LineChart(CTLineChart ctLineChart, CTPlotArea plot) {
-            this.lineChart = ctLineChart;
-            this.plot = plot;
-        }
-
-        @Override
-        public ISeries addNewSeries() {
-            return new LineSer(lineChart.addNewSer());
-        }
-
-        @Override
-        public CTShapeProperties addNewShapeProperties(int seriesIndex) {
-            return plot.getLineChartList().get(0).getSerArray(seriesIndex).addNewSpPr();
-        }
-    }
-
-    private static class BarChart implements IChart {
-        @Delegate
-        private final CTBarChart barChart;
-        private final CTPlotArea plot;
-        BarChart(CTBarChart ctBarChart, CTPlotArea plot) {
-            this.barChart = ctBarChart;
-            this.plot = plot;
-        }
-
-        @Override
-        public ISeries addNewSeries() {
-            return new BarSer(barChart.addNewSer());
-        }
-
-        @Override
-        public CTShapeProperties addNewShapeProperties(int seriesIndex) {
-            return plot.getBarChartArray(0).getSerArray(seriesIndex).addNewSpPr();
-        }
-    }
 
     private static void fillChart(
             XSSFSheet sheet,
             Map<String, Integer> columnMap,
-            IChart chart,
+            IChartWithSeries chart,
             XSSFChart xssfChart,
             ChartDescriptor chartDescriptor,
             Integer firstDataRow,
@@ -217,20 +269,6 @@ class ExcelChartsHelper {
 
 
 
-    public static void buildChart(XSSFWorkbook workbook, ChartDescriptor chartDescriptor, ReportDTO report, ReportType repType, int firstRowWithData, ResultSetWithTotal rs, XSSFSheet sheet, Map<String, Integer> columnMap) {
-        XSSFChart xssfChart = xssfChart(workbook, chartDescriptor, report);
-        IChart chart;
-        Integer dataLabelPos = 7;
-        if (ReportType.hbar == repType) {
-            chart = addBarChart(xssfChart.getCTChart().getPlotArea(), STBarDir.BAR);
-        } else if (ReportType.bar == repType) {
-            chart = addBarChart(xssfChart.getCTChart().getPlotArea(), STBarDir.COL);
-        } else {
-            chart = addLineChart(xssfChart.getCTChart().getPlotArea());
-            dataLabelPos = 9;
-        }
-        fillChart(sheet, columnMap, chart, xssfChart, chartDescriptor, firstRowWithData, rs.getRows().size(), dataLabelPos);
-    }
 
     private static void nameAxis(ChartDescriptor chartDescriptor, XSSFChart chart) {
         if (!StringUtils.isEmpty(chartDescriptor.getAxisYTitle())) {
