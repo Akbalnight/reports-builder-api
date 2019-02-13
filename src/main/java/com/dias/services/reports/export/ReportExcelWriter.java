@@ -13,22 +13,14 @@ import com.dias.services.reports.translation.Translator;
 import com.dias.services.reports.utils.ExcelExportUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.usermodel.charts.*;
-import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
-import org.apache.poi.util.Units;
 import org.apache.poi.xssf.usermodel.*;
-import org.openxmlformats.schemas.drawingml.x2006.chart.*;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTTextBody;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTTextParagraph;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.dias.services.reports.utils.ExcelExportUtils.createCell;
@@ -51,8 +43,6 @@ public class ReportExcelWriter {
     private static final short TOTAL_HEIGHT = (short) 400;
     private static final int START_COLUMN_INDEX = 1;
     private static final String DATA_SHEET_DEFAULT_NAME = "Данные";
-    private static final int CHART_WIDTH = 15;
-    private static final int CHART_HEIGHT = 20;
     private static final Map<String, String> FUNCTIONS_MAP;
     private static final String ROW_NUMBER_TITLE = "№";
 
@@ -149,30 +139,7 @@ public class ReportExcelWriter {
         ChartDescriptor chartDescriptor = tablesService.extractChartDescriptor(report);
         if (chartDescriptor != null) {
             Map<String, Integer> columnMap = getColumnMap(START_COLUMN_INDEX + 1 + (rs.containsTotal() ? 1 : 0), rs);
-            if (ReportType.hbar == repType) {
-                addBarChartWithType(STBarDir.BAR,
-                        sheet,
-                        firstRowWithData,
-                        rs.getRows().size(),
-                        columnMap,
-                        chartDescriptor,
-                        report);
-            } else if (ReportType.bar == repType) {
-                addBarChartWithType(STBarDir.COL,
-                        sheet,
-                        firstRowWithData,
-                        rs.getRows().size(),
-                        columnMap,
-                        chartDescriptor,
-                        report);
-            } else {
-                addLineChart(sheet,
-                        firstRowWithData,
-                        rs.getRows().size(),
-                        columnMap,
-                        chartDescriptor,
-                        report);
-            }
+            ExcelChartsHelper.addChartToWorkbook(workbook, chartDescriptor, report, repType, firstRowWithData, rs, sheet, columnMap);
         }
     }
 
@@ -195,105 +162,6 @@ public class ReportExcelWriter {
         return firstDataRowIndex;
     }
 
-    private void addBarChartWithType(
-            STBarDir.Enum barChartType,
-            XSSFSheet sheet,
-            int firstDataRow,
-            int rowsNumber,
-            Map<String, Integer> columnMap,
-            ChartDescriptor chartDescriptor,
-            ReportDTO report) {
-
-        int xColumn = columnMap.get(chartDescriptor.getAxisXColumn());
-        String xColumnName = CellReference.convertNumToColString(xColumn);
-        List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
-        String title = chartDescriptor.getTitle();
-
-        XSSFSheet dataSheet = workbook.createSheet(title != null ? title : report.getTitle());
-
-        XSSFDrawing drawing = dataSheet.createDrawingPatriarch();
-        ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 0, 0, CHART_WIDTH, CHART_HEIGHT);
-
-        XSSFChart chart = drawing.createChart(anchor);
-        chart.setTitleText(title);
-
-        CTChart ctChart = chart.getCTChart();
-        CTPlotArea ctPlotArea = ctChart.getPlotArea();
-        CTBarChart ctBarChart = ctPlotArea.addNewBarChart();
-        ctBarChart.addNewBarDir().setVal(barChartType);
-        ctBarChart.addNewVaryColors().setVal(false);
-
-        for (int i = 0; i < series.size(); i++) {
-            ChartDescriptor.Series s = series.get(i);
-            CTBarSer ctBarSer = ctBarChart.addNewSer();
-            ctBarSer.addNewIdx().setVal(i);
-            CTAxDataSource cttAxDataSource = ctBarSer.addNewCat();
-            CTStrRef ctStrRef = cttAxDataSource.addNewStrRef();
-            int from = s.getStartRow() != null && s.getStartRow() > 0 ? firstDataRow + s.getStartRow() : firstDataRow + 1;
-            int to = s.getEndRow() != null && s.getEndRow() > 0 ? firstDataRow + s.getEndRow() : firstDataRow + rowsNumber;
-            ctStrRef.setF(sheet.getSheetName() + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
-            CTNumDataSource ctNumDataSource = ctBarSer.addNewVal();
-            CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
-            int valueColumnIndex = columnMap.get(s.getValueColumn());
-            String valueColumnName = CellReference.convertNumToColString(valueColumnIndex);
-            ctNumRef.setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
-        }
-
-        //telling the BarChart that it has axes and giving them Ids
-        ctBarChart.addNewAxId().setVal(1);
-        ctBarChart.addNewAxId().setVal(2);
-
-        //cat axis
-        CTCatAx ctCatAx = ctPlotArea.addNewCatAx();
-        ctCatAx.addNewAxId().setVal(1); //id of the cat axis
-        CTScaling ctScaling = ctCatAx.addNewScaling();
-        ctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
-        ctCatAx.addNewDelete().setVal(false);
-        ctCatAx.addNewAxPos().setVal(STAxPos.B);
-        ctCatAx.addNewCrossAx().setVal(2); //id of the val axis
-        ctCatAx.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
-
-
-        //val axis
-        CTValAx ctValAx = ctPlotArea.addNewValAx();
-        ctValAx.addNewAxId().setVal(2); //id of the val axis
-        ctScaling = ctValAx.addNewScaling();
-        ctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
-        ctValAx.addNewDelete().setVal(false);
-        ctValAx.addNewAxPos().setVal(STAxPos.L);
-        ctValAx.addNewCrossAx().setVal(1); //id of the cat axis
-        ctValAx.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
-
-        //legend
-        if (chartDescriptor.getShowLegend()) {
-            CTLegend ctLegend = ctChart.addNewLegend();
-            ctLegend.addNewLegendPos().setVal(STLegendPos.R);
-            ctLegend.addNewOverlay().setVal(false);
-        }
-
-        nameAxis(chartDescriptor, chart);
-
-        // line style of the series
-        for (int i = 0; i < series.size(); i++) {
-            java.awt.Color color = series.get(i).getAwtColor();
-            if (color != null) {
-                CTShapeProperties seriesShapeProperties = chart.getCTChart().getPlotArea().getBarChartArray(0).getSerArray(i).addNewSpPr();
-                seriesShapeProperties.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
-            }
-        }
-
-    }
-
-    private void nameAxis(ChartDescriptor chartDescriptor, XSSFChart chart) {
-        if (!StringUtils.isEmpty(chartDescriptor.getAxisYTitle())) {
-            setValuesAxisTitle(chart, chartDescriptor.getAxisYTitle());
-        }
-
-        if (!StringUtils.isEmpty(chartDescriptor.getAxisXTitle())) {
-            setCatAxisTitle(chart, chartDescriptor.getAxisXTitle());
-        }
-    }
-
     private static Map<String, Integer> getColumnMap(int startColumn, ResultSetWithTotal rs) {
         Map<String, Integer> result = new HashMap<>();
         List<ColumnWithType> headers = rs.getHeaders();
@@ -307,109 +175,6 @@ public class ReportExcelWriter {
             }
         }
         return result;
-    }
-
-    private void addLineChart(XSSFSheet sheet,
-                              int firstDataRow,
-                              int rowsNumber,
-                              Map<String, Integer> columnMap,
-                              ChartDescriptor chartDescriptor,
-                              ReportDTO report) {
-
-        int xColumn = columnMap.get(chartDescriptor.getAxisXColumn());
-        List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
-        String title = chartDescriptor.getTitle();
-
-        XSSFSheet dataSheet = workbook.createSheet(title != null ? title : report.getTitle());
-
-        XSSFDrawing drawing = dataSheet.createDrawingPatriarch();
-        ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 0, 0, CHART_WIDTH, CHART_HEIGHT);
-
-        XSSFChart chart = drawing.createChart(anchor);
-
-        chart.setTitleText(title);
-
-        ChartLegend legend = chart.getOrCreateLegend();
-        legend.setPosition(LegendPosition.RIGHT);
-
-        LineChartData data = chart.getChartDataFactory().createLineChartData();
-
-
-        ChartAxis bottomAxis = chart.getChartAxisFactory().createCategoryAxis(AxisPosition.BOTTOM);
-        ValueAxis leftAxis = chart.getChartAxisFactory().createValueAxis(AxisPosition.LEFT);
-
-
-        leftAxis.setCrosses(AxisCrosses.AUTO_ZERO);
-
-
-        List<Integer> startRows = series.stream().map(ChartDescriptor.Series::getStartRow).collect(Collectors.toList());
-        List<Integer> endRows = series.stream().map(ChartDescriptor.Series::getEndRow).collect(Collectors.toList());
-        startRows = startRows.stream().map(integer -> integer != null ? integer : 0).collect(Collectors.toList());
-        endRows = endRows.stream().map(integer -> integer != null ? integer : 0).collect(Collectors.toList());
-
-        Integer minStartRow = startRows.stream().min(Comparator.comparingInt(o -> o)).get();
-        Integer maxEndRow = endRows.stream().max(Comparator.comparingInt(o -> o)).get();
-
-        maxEndRow = maxEndRow > 0 ? Math.min(maxEndRow, rowsNumber): rowsNumber;
-
-
-
-        ChartDataSource<Number> xs = DataSources.fromNumericCellRange(sheet, new CellRangeAddress(firstDataRow + minStartRow - 1, firstDataRow + maxEndRow - 1, xColumn, xColumn));
-        for (ChartDescriptor.Series s : series) {
-            int from = s.getStartRow() != null && s.getStartRow() > 0 ? firstDataRow + s.getStartRow() - 1 : firstDataRow;
-            int to = s.getEndRow() != null && s.getEndRow() > 0 ? firstDataRow + s.getEndRow() - 1 : firstDataRow + rowsNumber - 1;
-            Integer yColumn = columnMap.get(s.getValueColumn());
-            ChartDataSource<Number> ys = DataSources.fromNumericCellRange(sheet, new CellRangeAddress(from, to, yColumn, yColumn));
-            LineChartSeries lineChartSeries = data.addSeries(xs, ys);
-            lineChartSeries.setTitle(s.getTitle());
-        }
-        chart.plot(data, bottomAxis, leftAxis);
-
-        nameAxis(chartDescriptor, chart);
-
-        // line style of the series
-        for (int i = 0; i < series.size(); i++) {
-            java.awt.Color color = series.get(i).getAwtColor();
-            if (color != null) {
-                CTShapeProperties seriesShapeProperties = chart.getCTChart().getPlotArea().getLineChartArray(0).getSerArray(i).addNewSpPr();
-                seriesShapeProperties.addNewLn();
-                seriesShapeProperties.getLn().setW(Units.pixelToEMU(3));
-                seriesShapeProperties.getLn().addNewSolidFill();
-                seriesShapeProperties.getLn().getSolidFill().addNewSrgbClr();
-                seriesShapeProperties.getLn().getSolidFill().getSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
-            }
-        }
-
-    }
-
-    private void setValuesAxisTitle(XSSFChart chart, String title) {
-
-        CTPlotArea plotArea = chart.getCTChart().getPlotArea();
-        CTValAx valAx = plotArea.getValAxArray(0);
-        CTTitle ctTitle = valAx.addNewTitle();
-        ctTitle.addNewLayout();
-        ctTitle.addNewOverlay().setVal(false);
-        CTTextBody rich = ctTitle.addNewTx().addNewRich();
-        rich.addNewBodyPr();
-        rich.addNewLstStyle();
-        CTTextParagraph p = rich.addNewP();
-        p.addNewPPr().addNewDefRPr();
-        p.addNewR().setT(title);
-        p.addNewEndParaRPr();
-    }
-
-    private void setCatAxisTitle(XSSFChart chart, String title) {
-        CTCatAx valAx = chart.getCTChart().getPlotArea().getCatAxArray(0);
-        CTTitle ctTitle = valAx.addNewTitle();
-        ctTitle.addNewLayout();
-        ctTitle.addNewOverlay().setVal(false);
-        CTTextBody rich = ctTitle.addNewTx().addNewRich();
-        rich.addNewBodyPr();
-        rich.addNewLstStyle();
-        CTTextParagraph p = rich.addNewP();
-        p.addNewPPr().addNewDefRPr();
-        p.addNewR().setT(title);
-        p.addNewEndParaRPr();
     }
 
     private void writeTotal(ReportDTO report, ResultSetWithTotal rs, XSSFSheet sheet, int numberOfColumns, int rowNum, int titleAndHeadersHeight) {
