@@ -16,14 +16,20 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import org.apache.commons.lang3.StringUtils;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartUtilities;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.AxisLocation;
-import org.jfree.chart.axis.CategoryLabelPositions;
+import org.jfree.chart.*;
+import org.jfree.chart.axis.*;
+import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.title.LegendTitle;
+import org.jfree.chart.urls.StandardXYURLGenerator;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.xy.XYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.RectangleEdge;
 
 import java.awt.*;
@@ -31,19 +37,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
-
-import java.util.List;
 
 public class ReportPdfWriter {
 
     private static final int CHART_WIDTH = (int) PageSize.A4.getHeight() - 40;
     private static final int CHART_HEIGHT = (int) PageSize.A4.getWidth() - 40;
+    private static ChartTheme currentTheme = new StandardChartTheme("JFree");
     private final ReportService tablesService;
     private final Translator translator;
 
@@ -75,20 +80,86 @@ public class ReportPdfWriter {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ChartDescriptor chartDescriptor = tablesService.extractChartDescriptor(report);
         if (chartDescriptor != null) {
-            DefaultCategoryDataset defaultCategoryDataset = getDefaultCategoryDataset(rs, chartDescriptor, withSummary);
-            JFreeChart chart;
-            if (ReportType.bar == reportType) {
+
+            List<Integer> dateColumnIndexes = rs.getDateColumnsIndexes();
+            List<Integer> numericColumnIndexes = rs.getNumericColumnsIndexes();
+            Map<String, Integer> columnMap = rs.getColumnsMap();
+            Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
+            boolean categoryIsDate = dateColumnIndexes.contains(categoryColumnIndex);
+            boolean categoryIsNumber = !categoryIsDate && numericColumnIndexes.contains(categoryColumnIndex);
+
+            //Определим, какого типа датасет нужно будет использовать
+            DefaultCategoryDataset defaultCategoryDataset = null;
+            SimpleDateFormat[] dateFormat = {null};
+            XYDataset xyDataSet = null;
+            if (!categoryIsDate && !categoryIsNumber) {
+                defaultCategoryDataset = getDefaultCategoryDataset(rs, chartDescriptor, withSummary);
+            } else {
+                xyDataSet = getXYDataset(rs, columnMap, chartDescriptor, withSummary, dateFormat, categoryIsDate);
+            }
+
+            JFreeChart chart = null;
+            if (ReportType.bar == reportType && xyDataSet != null) {
+
+                chart = createXYBarChart(
+                        chartDescriptor.getTitle(),
+                        chartDescriptor.getAxisXTitle(),
+                        categoryIsDate,
+                        chartDescriptor.getAxisYTitle(),
+                        xyDataSet,
+                        PlotOrientation.VERTICAL,
+                        chartDescriptor.getShowLegend(),
+                        false,
+                        false,
+                        dateFormat);
+
+                if (categoryIsDate) {
+                    rotateCategoryLabels(xyDataSet, chart);
+                }
+
+            } else if (ReportType.bar == reportType && defaultCategoryDataset != null) {
+
                 chart = addColumnChart(chartDescriptor, defaultCategoryDataset);
                 rotateCategoryLabelsIfNeeded(defaultCategoryDataset, chart);
-            } else if (ReportType.hbar == reportType) {
+
+            } else if (ReportType.hbar == reportType && xyDataSet != null) {
+
+                chart = createXYBarChart(
+                        chartDescriptor.getTitle(),
+                        chartDescriptor.getAxisXTitle(),
+                        categoryIsDate,
+                        chartDescriptor.getAxisYTitle(),
+                        xyDataSet,
+                        PlotOrientation.HORIZONTAL,
+                        chartDescriptor.getShowLegend(),
+                        false,
+                        false,
+                        dateFormat);
+
+                chart.getXYPlot().setRangeAxisLocation(AxisLocation.BOTTOM_OR_RIGHT);
+
+            } else if (ReportType.hbar == reportType && defaultCategoryDataset != null) {
+
                 chart = addBarChart(chartDescriptor, defaultCategoryDataset);
-            } else {
+
+            } else if (ReportType.linear == reportType && xyDataSet != null) {
+
+                chart = addXYLineChart(chartDescriptor, xyDataSet, categoryIsDate, dateFormat);
+                if (categoryIsDate) {
+                    rotateCategoryLabels(xyDataSet, chart);
+                }
+
+            } else if (ReportType.linear == reportType && defaultCategoryDataset != null) {
+
                 chart = addLineChart(chartDescriptor, defaultCategoryDataset);
                 rotateCategoryLabelsIfNeeded(defaultCategoryDataset, chart);
             }
-            colorize(chart, chartDescriptor);
-            setPositionToLegend(chart);
-            ChartUtilities.writeChartAsPNG(os, chart, CHART_WIDTH, CHART_HEIGHT);
+
+            if (chart != null) {
+                colorize(chart, chartDescriptor, defaultCategoryDataset != null);
+                setPositionToLegend(chart);
+                ChartUtilities.writeChartAsPNG(os, chart, CHART_WIDTH, CHART_HEIGHT);
+            }
         }
         if (os.size() > 0) {
             Image image = Image.getInstance(os.toByteArray());
@@ -134,6 +205,12 @@ public class ReportPdfWriter {
         }
     }
 
+    private void rotateCategoryLabels(XYDataset ds, JFreeChart chart) {
+        ValueAxis domain = chart.getXYPlot().getDomainAxis();
+        domain.setVerticalTickLabels(true);
+    }
+
+
     private JFreeChart addBarChart(ChartDescriptor chartDescriptor, DefaultCategoryDataset ds) throws IOException {
 
         JFreeChart chart = ChartFactory.createBarChart(
@@ -150,6 +227,47 @@ public class ReportPdfWriter {
         return chart;
     }
 
+    private XYDataset getXYDataset(ResultSetWithTotal rs, Map<String, Integer> columnMap, ChartDescriptor chartDescriptor, boolean withSummary, final SimpleDateFormat[] dateFormat, boolean categoryIsDate) {
+        XYSeriesCollection ds = new XYSeriesCollection();
+        List<List<Object>> rows = rs.getRows();
+        Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
+        List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
+
+        //последняя строка - итоговая в случае withSummary = true
+        int sizeOfRows = withSummary ? rows.size() - 1 : rows.size();
+
+        for (ChartDescriptor.Series s : series) {
+
+            XYSeries xySeries = new XYSeries(s.getTitle());
+            ds.addSeries(xySeries);
+            String valueColumn = s.getValueColumn();
+            Integer seriesVaueIndex = columnMap.get(valueColumn);
+            int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
+            int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow(): sizeOfRows, sizeOfRows);
+            if (from < sizeOfRows) {
+                for (List<Object> row : rows.subList(from, to)) {
+                    Object categoryValue = row.get(categoryColumnIndex);
+                    Number categoryNumber = null;
+                    if (categoryIsDate) {
+                        Date value = toDate(dateFormat, categoryValue);
+                        if (value != null) {
+                            categoryNumber = value.getTime();
+                        }
+                    } else if (Number.class.isAssignableFrom(categoryValue.getClass())) {
+                        categoryNumber = (Number) categoryValue;
+                    } else {
+                        continue;
+                    }
+                    Object value = row.get(seriesVaueIndex);
+                    Number seriesValueNumber = value != null && Number.class.isAssignableFrom(value.getClass()) ? (Number) value : 0;
+                    xySeries.add(categoryNumber, seriesValueNumber);
+                }
+            }
+        }
+        return ds;
+    }
+
+
     private DefaultCategoryDataset getDefaultCategoryDataset(ResultSetWithTotal rs, ChartDescriptor chartDescriptor, boolean withSummary) {
         DefaultCategoryDataset ds = new DefaultCategoryDataset();
         List<List<Object>> rows = rs.getRows();
@@ -165,8 +283,7 @@ public class ReportPdfWriter {
             int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
             int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow(): sizeOfRows, sizeOfRows);
             if (from < sizeOfRows) {
-                for (int i = from; i < to; i++) {
-                    List<Object> row = rows.get(i);
+                for (List<Object> row : rows.subList(from, to)) {
                     Object categoryValue = row.get(categoryColumnIndex);
                     categoryValue = categoryValue == null ? "" : categoryValue;
                     Object value = row.get(seriesVaueIndex);
@@ -176,6 +293,22 @@ public class ReportPdfWriter {
             }
         }
         return ds;
+    }
+
+    private static Date toDate(SimpleDateFormat[] dateFormat, Object value) {
+        if (dateFormat[0] == null && value != null) {
+            String pattern = ExportChartsHelper.calculateDateFormatPattern(value.toString());
+            if (pattern != null) {
+                dateFormat[0] = new SimpleDateFormat(pattern);
+            }
+        }
+        if (dateFormat[0] != null && value != null) {
+            try {
+                return dateFormat[0].parse(value.toString());
+            } catch (ParseException ignore) {
+            }
+        }
+        return null;
     }
 
     private JFreeChart addLineChart(ChartDescriptor chartDescriptor, DefaultCategoryDataset ds) throws IOException {
@@ -194,12 +327,35 @@ public class ReportPdfWriter {
 
     }
 
-    private void colorize(JFreeChart chart, ChartDescriptor chartDescriptor) {
+    private JFreeChart addXYLineChart(ChartDescriptor chartDescriptor, XYDataset ds, boolean categoryIsDate, SimpleDateFormat[] dateFormat) throws IOException {
+
+        JFreeChart chart = createXYLineChart(
+                chartDescriptor.getTitle(),
+                chartDescriptor.getAxisXTitle(),
+                chartDescriptor.getAxisYTitle(),
+                ds,
+                PlotOrientation.VERTICAL,
+                chartDescriptor.getShowLegend(),
+                true,
+                false,
+                categoryIsDate,
+                dateFormat);
+
+        return chart;
+
+    }
+
+    private void colorize(JFreeChart chart, ChartDescriptor chartDescriptor, boolean isCategory) {
         chart.getPlot().setBackgroundPaint(Color.white);
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
         for (int i = 0; i < series.size(); i++) {
             ChartDescriptor.Series s = series.get(i);
-            chart.getCategoryPlot().getRenderer().setSeriesPaint(i, new Color(Integer.parseInt( s.getColor().substring(1),16)));
+            if (isCategory) {
+                chart.getCategoryPlot().getRenderer().setSeriesPaint(i, new Color(Integer.parseInt( s.getColor().substring(1),16)));
+            } else {
+                chart.getXYPlot().getRenderer().setSeriesPaint(i, new Color(Integer.parseInt( s.getColor().substring(1),16)));
+            }
+
         }
 
     }
@@ -324,4 +480,97 @@ public class ReportPdfWriter {
             document.add(Chunk.NEWLINE);
         }
     }
+
+    private static JFreeChart createXYLineChart(
+            String title,
+            String xAxisLabel,
+            String yAxisLabel,
+            XYDataset dataset,
+            PlotOrientation orientation,
+            boolean legend,
+            boolean tooltips,
+            boolean urls,
+            boolean categoryIsDate,
+            SimpleDateFormat[] dateFormat) {
+
+        if (orientation == null) {
+            throw new IllegalArgumentException("Null 'orientation' argument.");
+        } else {
+            ValueAxis xAxis = null;
+            if (categoryIsDate) {
+                xAxis = new DateAxis(xAxisLabel);
+                ((DateAxis) xAxis).setDateFormatOverride(dateFormat[0]);
+            } else {
+                xAxis = new NumberAxis(yAxisLabel);
+                ((NumberAxis) xAxis).setAutoRangeIncludesZero(false);
+            }
+
+            NumberAxis yAxis = new NumberAxis(yAxisLabel);
+            XYItemRenderer renderer = new XYLineAndShapeRenderer(true, false);
+            XYPlot plot = new XYPlot(dataset, xAxis, yAxis, renderer);
+            plot.setOrientation(orientation);
+            if (tooltips) {
+                renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
+            }
+
+            if (urls) {
+                renderer.setURLGenerator(new StandardXYURLGenerator());
+            }
+
+            JFreeChart chart = new JFreeChart(title, JFreeChart.DEFAULT_TITLE_FONT, plot, legend);
+            currentTheme.apply(chart);
+            return chart;
+        }
+    }
+
+    private static JFreeChart createXYBarChart(String title,
+                                               String xAxisLabel,
+                                               boolean dateAxis,
+                                               String yAxisLabel,
+                                               XYDataset dataset,
+                                               PlotOrientation orientation,
+                                               boolean legend,
+                                               boolean tooltips,
+                                               boolean urls,
+                                               SimpleDateFormat[] dateFormat) {
+        if (orientation == null) {
+            throw new IllegalArgumentException("Null 'orientation' argument.");
+        } else {
+            ValueAxis domainAxis = null;
+            NumberAxis valueAxis;
+            if (dateAxis) {
+                domainAxis = new DateAxis(xAxisLabel);
+                ((DateAxis) domainAxis).setDateFormatOverride(dateFormat[0]);
+            } else {
+                valueAxis = new NumberAxis(xAxisLabel);
+                valueAxis.setAutoRangeIncludesZero(false);
+                domainAxis = valueAxis;
+            }
+
+            valueAxis = new NumberAxis(yAxisLabel);
+            XYBarRenderer renderer = new XYBarRenderer();
+            if (tooltips) {
+                StandardXYToolTipGenerator tt;
+                if (dateAxis) {
+                    tt = StandardXYToolTipGenerator.getTimeSeriesInstance();
+                } else {
+                    tt = new StandardXYToolTipGenerator();
+                }
+
+                renderer.setBaseToolTipGenerator(tt);
+            }
+
+            if (urls) {
+                renderer.setURLGenerator(new StandardXYURLGenerator());
+            }
+
+            XYPlot plot = new XYPlot(dataset, (ValueAxis)domainAxis, valueAxis, renderer);
+            plot.setOrientation(orientation);
+            JFreeChart chart = new JFreeChart(title, JFreeChart.DEFAULT_TITLE_FONT, plot, legend);
+            currentTheme.apply(chart);
+            return chart;
+        }
+    }
+
+
 }

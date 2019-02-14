@@ -6,7 +6,6 @@ import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.Calculation;
 import com.dias.services.reports.report.query.Condition;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
-import com.dias.services.reports.service.ReportBuilderService;
 import com.dias.services.reports.service.ReportService;
 import com.dias.services.reports.subsystem.ColumnWithType;
 import com.dias.services.reports.translation.Translator;
@@ -20,7 +19,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 import static com.dias.services.reports.utils.ExcelExportUtils.createCell;
@@ -45,38 +47,6 @@ public class ReportExcelWriter {
     private static final String DATA_SHEET_DEFAULT_NAME = "Данные";
     private static final Map<String, String> FUNCTIONS_MAP;
     private static final String ROW_NUMBER_TITLE = "№";
-
-    //Регулярные выражения для определения формата даты в базе данных
-    //Необходимо для записи стиля ячеек в excel,
-    private static final Map<String, String> DATE_FORMAT_REGEXPS = new HashMap<String, String>() {{
-        put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{2}:\\d{2}.\\d{1}$", "yyyy-MM-dd HH:mm:ss");
-        put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{2}:\\d{2}$", "yyyy-MM-dd HH:mm:ss");
-        put("^\\d{8}$", "yyyyMMdd");
-        put("^\\d{1,2}-\\d{1,2}-\\d{4}$", "dd-MM-yyyy");
-        put("^\\d{4}-\\d{1,2}-\\d{1,2}$", "yyyy-MM-dd");
-        put("^\\d{1,2}/\\d{1,2}/\\d{4}$", "MM/dd/yyyy");
-        put("^\\d{4}/\\d{1,2}/\\d{1,2}$", "yyyy/MM/dd");
-        put("^\\d{1,2}\\s[a-z]{3}\\s\\d{4}$", "dd MMM yyyy");
-        put("^\\d{1,2}\\s[a-z]{4,}\\s\\d{4}$", "dd MMMM yyyy");
-        put("^\\d{12}$", "yyyyMMddHHmm");
-        put("^\\d{8}\\s\\d{4}$", "yyyyMMdd HHmm");
-        put("^\\d{1,2}-\\d{1,2}-\\d{4}\\s\\d{1,2}:\\d{2}$", "dd-MM-yyyy HH:mm");
-        put("^\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{2}$", "yyyy-MM-dd HH:mm");
-        put("^\\d{1,2}/\\d{1,2}/\\d{4}\\s\\d{1,2}:\\d{2}$", "MM/dd/yyyy HH:mm");
-        put("^\\d{4}/\\d{1,2}/\\d{1,2}\\s\\d{1,2}:\\d{2}$", "yyyy/MM/dd HH:mm");
-        put("^\\d{1,2}\\s[a-z]{3}\\s\\d{4}\\s\\d{1,2}:\\d{2}$", "dd MMM yyyy HH:mm");
-        put("^\\d{1,2}\\s[a-z]{4,}\\s\\d{4}\\s\\d{1,2}:\\d{2}$", "dd MMMM yyyy HH:mm");
-        put("^\\d{14}$", "yyyyMMddHHmmss");
-        put("^\\d{8}\\s\\d{6}$", "yyyyMMdd HHmmss");
-        put("^\\d{1,2}-\\d{1,2}-\\d{4}\\s\\d{1,2}:\\d{2}:\\d{2}$", "dd-MM-yyyy HH:mm:ss");
-        put("^\\d{1,2}/\\d{1,2}/\\d{4}\\s\\d{1,2}:\\d{2}:\\d{2}$", "MM/dd/yyyy HH:mm:ss");
-        put("^\\d{4}/\\d{1,2}/\\d{1,2}\\s\\d{1,2}:\\d{2}:\\d{2}$", "yyyy/MM/dd HH:mm:ss");
-        put("^\\d{1,2}\\s[a-z]{3}\\s\\d{4}\\s\\d{1,2}:\\d{2}:\\d{2}$", "dd MMM yyyy HH:mm:ss");
-        put("^\\d{1,2}\\s[a-z]{4,}\\s\\d{4}\\s\\d{1,2}:\\d{2}:\\d{2}$", "dd MMMM yyyy HH:mm:ss");
-    }};
-
-
-
 
     static {
         FUNCTIONS_MAP = new HashMap<>();
@@ -220,16 +190,8 @@ public class ReportExcelWriter {
 
     private int writeRows(ResultSetWithTotal rs, XSSFSheet sheet, int rowNum) {
         List<Integer> groupRowsIndexes = rs.getGroupRowsIndexes();
-        List<Integer> dateTypeColumnsIndexes = new ArrayList<>();
-        List<Integer> numericTypeColumnsIndexes = new ArrayList<>();
-        List<ColumnWithType> headers = rs.getHeaders();
-        for (int i = 0; i < headers.size(); i++) {
-            if (ReportBuilderService.JAVA_TYPE_DATE.equals(headers.get(i).getType())) {
-                dateTypeColumnsIndexes.add(i);
-            } else if (ReportBuilderService.JAVA_TYPE_NUMERIC.equals(headers.get(i).getType())) {
-                numericTypeColumnsIndexes.add(i);
-            }
-        }
+        List<Integer> dateTypeColumnsIndexes = rs.getDateColumnsIndexes();
+        List<Integer> numericTypeColumnsIndexes = rs.getNumericColumnsIndexes();
         List<List<Object>> rows = rs.getRows();
         String dateFormatPattern = null;
         SimpleDateFormat dateFormat = null;
@@ -264,7 +226,7 @@ public class ReportExcelWriter {
                     boolean isNumeric = !isDate && numericTypeColumnsIndexes.indexOf(j) >= 0;
                     if (isDate) {
                         if (dateFormatPattern == null && data != null) {
-                            dateFormatPattern = calculateDateFormatPattern(data.toString());
+                            dateFormatPattern = ExportChartsHelper.calculateDateFormatPattern(data.toString());
                         }
                         if (dateFormat == null && dateFormatPattern != null) {
                             dateFormat = new SimpleDateFormat(dateFormatPattern);
@@ -350,7 +312,7 @@ public class ReportExcelWriter {
         String cellValue = value != null ? value.toString() : "";
         Cell cell = createCell(row, cellNum, defaultStyle, cellValue);
         if (dateFormatPattern == null) {
-            dateFormatPattern = calculateDateFormatPattern(cellValue);
+            dateFormatPattern = ExportChartsHelper.calculateDateFormatPattern(cellValue);
         }
         if (dateFormat == null && dateFormatPattern != null) {
             dateFormat = new SimpleDateFormat(dateFormatPattern);
@@ -465,16 +427,5 @@ public class ReportExcelWriter {
         style.setAlignment(alignment);
         return style;
     }
-
-    private static String calculateDateFormatPattern(String value) {
-        for (Map.Entry<String, String> dateFormat : DATE_FORMAT_REGEXPS.entrySet()) {
-            String regexp = dateFormat.getKey();
-            if (value.matches(regexp)) {
-                return dateFormat.getValue();
-            }
-        }
-        return null;
-    }
-
 
 }
