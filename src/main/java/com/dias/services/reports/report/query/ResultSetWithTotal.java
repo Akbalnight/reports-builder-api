@@ -1,6 +1,7 @@
 package com.dias.services.reports.report.query;
 
 import com.dias.services.reports.query.TotalValue;
+import com.dias.services.reports.service.ReportBuilderService;
 import com.dias.services.reports.subsystem.ColumnWithType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
@@ -160,6 +161,28 @@ public class ResultSetWithTotal {
             }
         }
         return row;
+    }
+
+    @JsonIgnore
+    public List<Integer> getDateColumnsIndexes() {
+        List<Integer> indexes = new ArrayList<>();
+        for (int i = 0; i < headers.size(); i++) {
+            if (ReportBuilderService.JAVA_TYPE_DATE.equals(headers.get(i).getType())) {
+                indexes.add(i);
+            }
+        }
+        return indexes;
+    }
+
+    @JsonIgnore
+    public List<Integer> getNumericColumnsIndexes() {
+        List<Integer> indexes = new ArrayList<>();
+        for (int i = 0; i < headers.size(); i++) {
+            if (ReportBuilderService.JAVA_TYPE_NUMERIC.equals(headers.get(i).getType())) {
+               indexes.add(i);
+            }
+        }
+        return indexes;
     }
 
 }
