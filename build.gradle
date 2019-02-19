@@ -35,15 +35,16 @@ configurations {
 	providedRuntime
 }
 
-task bootWarCustom (type: Copy, dependsOn:bootWar){
-	from "build/libs"
-	into "./build"
-	include (project.name + "-" + project.version + ".war")
-	rename (project.name + "-" + project.version + ".war", project.name + ".war")
+task bootJarCustom (type: Copy, dependsOn:bootJar){
+    from "build/libs"
+    into "./build"
+    include (project.name + "-" + project.version + ".jar")
+    rename (project.name + "-" + project.version + ".jar", project.name + ".jar")
 }
-configure(bootWarCustom) {
-	group = BasePlugin.BUILD_GROUP
-	description = 'Assembles bootWar task and copy wars to build directory of root project'
+
+configure(bootJarCustom) {
+    group = BasePlugin.BUILD_GROUP
+    description = 'Assembles bootJar task and copy wars to build directory of root project'
 }
 
 dependencies {
