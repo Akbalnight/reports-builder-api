@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -16,11 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -53,17 +51,16 @@ public class ReportBuilderController {
         List<String> availableTables = extractUserTablesFromRoles(userRoles);
 
         //subsystem is hardcoded with list of available tables/views
-        URL url = ReportBuilderController.class.getClassLoader().getResource("data/subsystems.json");
-        if (url != null) {
-            try {
-                String content = new String(Files.readAllBytes(Paths.get(url.toURI())), StandardCharsets.UTF_8);
-                Map<String, Map<String, Map<String, List<Object>>>> subsystems = objectMapper.readerFor(Map.class).readValue(content);
-                if (subsystems != null) {
-                    filterSubSystemsByPermissions(subsystems, availableTables);
-                    return new ResponseEntity<>(subsystems, HttpStatus.OK);
-                }
-            } catch (Exception ignored) {
+        try {
+            byte[] bytes = IOUtils.toByteArray(getClass().getResourceAsStream("/data/subsystems.json"));
+            String content = new String(bytes, StandardCharsets.UTF_8);
+            Map<String, Map<String, Map<String, List<Object>>>> subsystems = objectMapper.readerFor(Map.class).readValue(content);
+            if (subsystems != null) {
+                filterSubSystemsByPermissions(subsystems, availableTables);
+                return new ResponseEntity<>(subsystems, HttpStatus.OK);
             }
+        } catch (Exception ex) {
+            throw new IOException(ex);
         }
         return new ResponseEntity<>(Collections.EMPTY_MAP, HttpStatus.OK);
     }
