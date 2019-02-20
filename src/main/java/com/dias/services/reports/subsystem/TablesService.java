@@ -4,15 +4,12 @@ import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.QueryDescriptor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -36,50 +33,38 @@ public class TablesService {
     }
 
     @PostConstruct
-    public void init() {
-        Map<String, Map<String, Object>> map = new HashMap<>();
+    public void init() throws IOException {
+        Map<String, Map<String, Object>> map;
         this.tables = new HashMap<>();
         tableNamesRussianToEnglish = new HashMap<>();
         tableNamesEnglishToRussian = new HashMap<>();
-        try {
-            Path path = new File(getClass().getResource("/data/tables.json").toURI()).toPath();
-            byte[] data = Files.readAllBytes(path);
-            String strData = new String(data, "UTF-8");
-            map = objectMapper.readerFor(Map.class).readValue(strData);
-            map.forEach((s, stringObjectMap) -> {
-                Table t = new Table();
-                t.setTitle((String) stringObjectMap.get("title"));
-                t.setIgnoreFields((List<String>) stringObjectMap.get("ignoreFields"));
-                t.setTranslations((Map<String, String>) stringObjectMap.get("translations"));
-                tables.put(s, t);
-                tableNamesRussianToEnglish.put(t.getTitle(), s);
-                tableNamesEnglishToRussian.put(s, t.getTitle());
-            });
-        } catch (IOException | URISyntaxException e) {
-            e.printStackTrace();
-        }
 
-        try {
-            tablesJoinRules = new HashMap<>();
-            Path path = new File(getClass().getResource("/data/joins.json").toURI()).toPath();
-            byte[] data = Files.readAllBytes(path);
-            String strData = new String(data, "UTF-8");
-            JsonNode joins = objectMapper.readTree(strData);
-            for (int i = 0; i < joins.size(); i++) {
-                List<String> tables = new ArrayList<>();
-                JsonNode joinNode = joins.get(i);
-                JsonNode tablesNode = joinNode.get("tables");
-                for (int j = 0; j < tablesNode.size(); j++) {
-                    tables.add(tablesNode.get(j).asText());
-                }
-                tablesJoinRules.put(tables, joinNode.get("rule").asText());
+        byte[] data = IOUtils.toByteArray(getClass().getResourceAsStream("/data/tables.json"));
+        String strData = new String(data, "UTF-8");
+        map = objectMapper.readerFor(Map.class).readValue(strData);
+        map.forEach((s, stringObjectMap) -> {
+            Table t = new Table();
+            t.setTitle((String) stringObjectMap.get("title"));
+            t.setIgnoreFields((List<String>) stringObjectMap.get("ignoreFields"));
+            t.setTranslations((Map<String, String>) stringObjectMap.get("translations"));
+            tables.put(s, t);
+            tableNamesRussianToEnglish.put(t.getTitle(), s);
+            tableNamesEnglishToRussian.put(s, t.getTitle());
+        });
+
+        tablesJoinRules = new HashMap<>();
+        data = IOUtils.toByteArray(getClass().getResourceAsStream("/data/joins.json"));
+        strData = new String(data, "UTF-8");
+        JsonNode joins = objectMapper.readTree(strData);
+        for (int i = 0; i < joins.size(); i++) {
+            List<String> tables = new ArrayList<>();
+            JsonNode joinNode = joins.get(i);
+            JsonNode tablesNode = joinNode.get("tables");
+            for (int j = 0; j < tablesNode.size(); j++) {
+                tables.add(tablesNode.get(j).asText());
             }
-        } catch (IOException | URISyntaxException e) {
-            e.printStackTrace();
+            tablesJoinRules.put(tables, joinNode.get("rule").asText());
         }
-
-
-
 
     }
 
