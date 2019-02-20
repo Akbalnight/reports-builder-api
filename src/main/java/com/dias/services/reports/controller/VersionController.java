@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author Eliseev Anton
  */
 @RestController
-@RequestMapping("version")
+@RequestMapping("/reports/version")
 @Api(value = "Api for vesion", description = "Контроллер вывода версии модуля")
 public class VersionController {
 
