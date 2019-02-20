@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/analytics")
+@RequestMapping("/reports/analytics")
 @Api(value = "Api for SubSystemController", description = "Контроллер для подсистем")
 public class ReportBuilderController {
 

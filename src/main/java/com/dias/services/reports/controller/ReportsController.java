@@ -21,7 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 @RestController
-@RequestMapping("/analytics")
+@RequestMapping("/reports/analytics")
 @Api(tags = "REST API модуля отчетов", description = "Контроллер для работы с отчетами")
 public class ReportsController extends AbstractController {
 
