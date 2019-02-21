@@ -2,6 +2,7 @@ package com.dias.services.reports.service;
 
 import com.dias.services.reports.dto.reports.ReportDTO;
 import com.dias.services.reports.exception.ObjectNotFoundException;
+import com.dias.services.reports.exception.ReportsException;
 import com.dias.services.reports.export.ReportExcelWriter;
 import com.dias.services.reports.export.ReportPdfWriter;
 import com.dias.services.reports.model.Report;
@@ -323,16 +324,27 @@ public class ReportService extends AbstractService<Report> {
 
     public ChartDescriptor extractChartDescriptor(ReportDTO reportDTO) throws IOException {
         JsonNode description = reportDTO.getDescription();
-        if (description != null && description.get(PROPERTY_VALUE_AXIS) != null) {
-            ChartDescriptor descriptor = new ChartDescriptor();
-            JsonNode seriesNode = description.get(PROPERTY_VALUE_AXIS);
-            List<ChartDescriptor.Series> seriesList = new ArrayList<>();
-            descriptor.setSeries(seriesList);
-            for (int i = 0; i < seriesNode.size(); i++) {
-                JsonNode sNode = seriesNode.get(i);
-                ChartDescriptor.Series series = new ChartDescriptor.Series();
-                series.setValueColumn(sNode.get(PROPERTY_KEY).asText());
-                series.setColor(sNode.get(PROPERTY_COLOR).asText());
+        if (description == null) {
+            throw new ReportsException(ReportsException.WRONG_DIAGRAMM_FORMAT, reportDTO.getId(), PROPERTY_VALUE_AXIS);
+        }
+        ChartDescriptor descriptor = new ChartDescriptor();
+        JsonNode seriesNode = description.get(PROPERTY_VALUE_AXIS);
+        if (seriesNode == null) {
+            throw new ReportsException(ReportsException.WRONG_DIAGRAMM_FORMAT, reportDTO.getId(), PROPERTY_VALUE_AXIS);
+        }
+        List<ChartDescriptor.Series> seriesList = new ArrayList<>();
+        descriptor.setSeries(seriesList);
+        int wrongSeriesCount = 0;
+        for (int i = 0; i < seriesNode.size(); i++) {
+            JsonNode sNode = seriesNode.get(i);
+            ChartDescriptor.Series series = new ChartDescriptor.Series();
+            JsonNode columnKeyNode = sNode.get(PROPERTY_KEY);
+            if (columnKeyNode != null) {
+                series.setValueColumn(columnKeyNode.asText());
+                JsonNode seriesColorNode = sNode.get(PROPERTY_COLOR);
+                if (seriesColorNode != null) {
+                    series.setColor(seriesColorNode.asText());
+                }
                 JsonNode rowsRangeNode = sNode.get(PROPERTY_ROWS);
                 if (rowsRangeNode != null && rowsRangeNode.get(PROPERTY_FROM) != null) {
                     series.setStartRow(rowsRangeNode.get(PROPERTY_FROM).asInt());
@@ -340,29 +352,39 @@ public class ReportService extends AbstractService<Report> {
                 if (rowsRangeNode != null && rowsRangeNode.get(PROPERTY_TO) != null) {
                     series.setEndRow(rowsRangeNode.get(PROPERTY_TO).asInt());
                 }
-                series.setTitle(sNode.get(PROPERTY_KEY).asText());
+                series.setTitle(columnKeyNode.asText());
                 seriesList.add(series);
-
+            } else {
+                wrongSeriesCount++;
             }
-            JsonNode namesNode = description.get(PROPERTY_NAMES);
-            if (!StringUtils.isEmpty(namesNode.get(PROPERTY_CHART).asText())) {
-                descriptor.setTitle(namesNode.get(PROPERTY_CHART).asText());
-            }
-            if (!StringUtils.isEmpty(namesNode.get(PROPERTY_X_AXIS).asText())) {
-                descriptor.setAxisXTitle(namesNode.get(PROPERTY_X_AXIS).asText());
-            }
-            if (!StringUtils.isEmpty(namesNode.get(PROPERTY_Y_AXIS).asText())) {
-                descriptor.setAxisYTitle(namesNode.get(PROPERTY_Y_AXIS).asText());
-            }
-            JsonNode generalNode = description.get(PROPERTY_GENERAL);
-            descriptor.setShowLegend(generalNode.get(PROPERTY_SHOW_LEGEND) != null && generalNode.get(PROPERTY_SHOW_LEGEND).asBoolean());
-
-            JsonNode categoriesNode = description.get(PROPERTY_DATA_AXIS);
-            descriptor.setAxisXColumn(categoriesNode.get(PROPERTY_KEY).asText());
-
-            return descriptor;
         }
-        return null;
+        if (wrongSeriesCount > 0) {
+            ReportsException reportsException = new ReportsException(ReportsException.WRONG_DIAGRAMM_SERIES_FORMAT, reportDTO.getId(), PROPERTY_KEY);
+            if (wrongSeriesCount == seriesNode.size()) {
+                throw reportsException;
+            } else {
+                //есть что вывести, поэтому запишем ошибку в лог
+                LOG.severe(reportsException.getMessage());
+            }
+        }
+
+        JsonNode namesNode = description.get(PROPERTY_NAMES);
+        if (!StringUtils.isEmpty(namesNode.get(PROPERTY_CHART).asText())) {
+            descriptor.setTitle(namesNode.get(PROPERTY_CHART).asText());
+        }
+        if (!StringUtils.isEmpty(namesNode.get(PROPERTY_X_AXIS).asText())) {
+            descriptor.setAxisXTitle(namesNode.get(PROPERTY_X_AXIS).asText());
+        }
+        if (!StringUtils.isEmpty(namesNode.get(PROPERTY_Y_AXIS).asText())) {
+            descriptor.setAxisYTitle(namesNode.get(PROPERTY_Y_AXIS).asText());
+        }
+        JsonNode generalNode = description.get(PROPERTY_GENERAL);
+        descriptor.setShowLegend(generalNode.get(PROPERTY_SHOW_LEGEND) != null && generalNode.get(PROPERTY_SHOW_LEGEND).asBoolean());
+
+        JsonNode categoriesNode = description.get(PROPERTY_DATA_AXIS);
+        descriptor.setAxisXColumn(categoriesNode.get(PROPERTY_KEY).asText());
+
+        return descriptor;
     }
 
     /**

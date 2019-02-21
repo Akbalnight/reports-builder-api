@@ -300,8 +300,10 @@ public class ReportExcelWriter {
         Cell cell = createCell(row, cellNum, cellStyle, cellValue);
         if (isNumeric) {
             cell.setCellType(CellType.NUMERIC);
-            if (value instanceof Integer) {
-                cell.setCellValue((Integer)value);
+            if (cellValue.isEmpty()) {
+                cell.setCellValue(0);
+            } else if (value instanceof Integer) {
+                cell.setCellValue((Integer) value);
             } else {
                 cell.setCellValue(Double.valueOf(cellValue));
             }
