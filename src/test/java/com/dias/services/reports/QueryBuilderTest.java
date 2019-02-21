@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +28,7 @@ public class QueryBuilderTest {
     private TablesService tablesService;
 
     @Before
-    public void setup() {
+    public void setup() throws IOException {
         tablesService = new TablesService(new ObjectMapper());
         tablesService.init();
     }
