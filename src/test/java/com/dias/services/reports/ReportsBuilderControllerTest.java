@@ -32,7 +32,7 @@ public class ReportsBuilderControllerTest extends AbstractReportsModuleTest {
 
     @Test
     public void getSubSystemsTest() throws Exception {
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/analytics/subsystems"))
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/reports/analytics/subsystems"))
                 .andExpect(status().isOk()).andReturn();
         JsonNode resultJson = objectMapper.readTree(result.getResponse().getContentAsString());
         JsonNode historyDayData = resultJson.get("Коммерческий учет").get("Суточные ведомости").get(HISTORY_DAY_DATA_TABLE_NAME_TITLE);

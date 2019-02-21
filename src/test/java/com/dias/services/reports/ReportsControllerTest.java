@@ -43,7 +43,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
 
     @Test
     public void order010createNewReport() throws Exception {
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/analytics/reports")
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/reports//analytics/reports")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(Util.readResource("ReportsController/report.json")))
                 .andExpect(status().isCreated()).andReturn();
@@ -56,7 +56,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
 
     @Test
     public void order020updateReport() throws Exception {
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.put("/analytics/reports/" + createdReportId)
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.put("/reports/analytics/reports/" + createdReportId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(Util.readResource("ReportsController/updateReport.json")))
                 .andExpect(status().isOk()).andReturn();
@@ -68,7 +68,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
 
     @Test
     public void order030getAllReports() throws Exception {
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/analytics/reports")
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/reports/analytics/reports")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
         List<Object> listResports = new JacksonJsonParser().parseList(result.getResponse().getContentAsString());
@@ -79,7 +79,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     @Test
     public void order040executeReport() throws Exception {
 
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/analytics/reports/" + createdReportId + "/_execute")
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/" + createdReportId + "/_execute")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
         Map listResports = new JacksonJsonParser().parseMap(result.getResponse().getContentAsString());
@@ -94,7 +94,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     public void order045previewByDescriptor() throws Exception {
 
 
-        MvcResult previewResult = mockMvc.perform(MockMvcRequestBuilders.post("/analytics/reports/_preview")
+        MvcResult previewResult = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/_preview")
                 .content(getQueryDescriptorByReportId())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
@@ -112,7 +112,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     }
 
     private String getQueryDescriptorByReportId() throws Exception {
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/analytics/reports/" + createdReportId))
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/reports/analytics/reports/" + createdReportId))
                 .andExpect(status().isOk()).andReturn();
 
         JsonNode reportJson = objectMapper.readTree(result.getResponse().getContentAsString());
@@ -122,7 +122,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     @Test
     public void order046previewByDescriptorWithTotal() throws Exception {
 
-        MvcResult previewResult = mockMvc.perform(MockMvcRequestBuilders.post("/analytics/reports/_previewWithTotal")
+        MvcResult previewResult = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/_previewWithTotal")
                 .content(getQueryDescriptorByReportId())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
@@ -145,7 +145,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     @Test
     public void order047executeWithTotal() throws Exception {
 
-        MvcResult previewResult = mockMvc.perform(MockMvcRequestBuilders.post("/analytics/reports/" + createdReportId + "/_executeWithTotal"))
+        MvcResult previewResult = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/" + createdReportId + "/_executeWithTotal"))
                 .andExpect(status().isOk()).andReturn();
 
         ResultSetWithTotal data = objectMapper.readerFor(ResultSetWithTotal.class).readValue(previewResult.getResponse().getContentAsString());
@@ -165,7 +165,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     @Ignore
     public void order050exportToExcel() throws Exception {
 
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/analytics/reports/" + createdReportId + "/_export?format=XLSX"))
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/" + createdReportId + "/_export?format=XLSX"))
                 .andExpect(status().isOk()).andReturn();
 
         String expected = Util.readResource("ReportsController/excelRows.txt");
@@ -204,11 +204,11 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     @Test
     public void order060deleteReport() throws Exception {
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/analytics/reports/" + createdReportId)
+        mockMvc.perform(MockMvcRequestBuilders.delete("/reports/analytics/reports/" + createdReportId)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
 
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/analytics/reports"))
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/reports/analytics/reports"))
                 .andExpect(status().isOk()).andReturn();
         List<Object> resultList = new JacksonJsonParser().parseList(result.getResponse().getContentAsString());
         Assert.assertEquals(0, resultList.size());
@@ -218,7 +218,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     @Test
     public void order070previewReportWithJoin() throws Exception {
 
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/analytics/reports/_preview")
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/_preview")
                 .content(Util.readResource("ReportsController/descriptor_join.json"))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
