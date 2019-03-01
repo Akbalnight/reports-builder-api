@@ -182,12 +182,12 @@ public class ReportPdfWriter {
                 if (xyDataSet != null) {
                     XYItemRenderer renderer = chart.getXYPlot().getRenderer();
                     renderer.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());
-                    renderer.setBaseItemLabelsVisible(true);
+                    renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
 
                 } else {
                     CategoryItemRenderer renderer = chart.getCategoryPlot().getRenderer();
                     renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
-                    renderer.setBaseItemLabelsVisible(true);
+                    renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
                 }
 
                 ChartUtilities.writeChartAsPNG(os, chart, CHART_WIDTH, CHART_HEIGHT);

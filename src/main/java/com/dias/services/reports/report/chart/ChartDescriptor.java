@@ -19,6 +19,9 @@ public class ChartDescriptor {
     private String axisXColumn;
     private Boolean showLegend;
     private List<Series> series;
+    private boolean calculatedXRange;
+    private boolean calculatedYRange;
+    private boolean showDotValues;
 
     @Getter
     @Setter
