@@ -125,17 +125,16 @@ class ExcelChartsHelper {
 
     /**
      * Добавление диаграммы в рабочую книгу excel
-     *
-     * @param workbook рабочая книга excel
+     *  @param workbook рабочая книга excel
      * @param chartDescriptor описание диаграммы
      * @param report отчет
      * @param repType тип отчета
      * @param firstRowWithData номер первой строки, содержащей данные
      * @param rs набор данных
      * @param sheet страница для добавления диагрммы
-     * @param columnMap соответствие имен колонок индексам
+     * @param excelColumnsMap соответствие имен колонок индексам на странице excel
      */
-    static void addChartToWorkbook(XSSFWorkbook workbook, ChartDescriptor chartDescriptor, ReportDTO report, ReportType repType, int firstRowWithData, ResultSetWithTotal rs, XSSFSheet sheet, Map<String, Integer> columnMap) {
+    static void addChartToWorkbook(XSSFWorkbook workbook, ChartDescriptor chartDescriptor, ReportDTO report, ReportType repType, int firstRowWithData, ResultSetWithTotal rs, XSSFSheet sheet, Map<String, Integer> excelColumnsMap) {
         XSSFChart xssfChart = xssfChart(workbook, chartDescriptor, report);
         IChartWithSeries chart;
         Integer dataLabelPos = LABEL_POSITION_OUTSIDE_TOP;
@@ -147,7 +146,7 @@ class ExcelChartsHelper {
             chart = addLineChart(xssfChart.getCTChart().getPlotArea());
             dataLabelPos = LABEL_POSITION_TOP;
         }
-        fillChart(sheet, columnMap, chart, xssfChart, chartDescriptor, firstRowWithData, rs.getRows().size(), dataLabelPos);
+        fillChart(sheet, excelColumnsMap, chart, xssfChart, chartDescriptor, firstRowWithData, rs, dataLabelPos);
     }
 
     private static XSSFChart xssfChart(XSSFWorkbook workbook,
@@ -174,31 +173,51 @@ class ExcelChartsHelper {
 
     private static void fillChart(
             XSSFSheet sheet,
-            Map<String, Integer> columnMap,
+            Map<String, Integer> excelColumnsMap,
             IChartWithSeries chart,
             XSSFChart xssfChart,
             ChartDescriptor chartDescriptor,
             Integer firstDataRow,
-            Integer rowsNumber,
+            ResultSetWithTotal rs,
             Integer dataLabelPos) {
 
+        Integer rowsNumber = rs.getRows().size();
         xssfChart.setTitleText(chartDescriptor.getTitle());
         chart.addNewVaryColors().setVal(false);
-        int xColumn = columnMap.get(chartDescriptor.getAxisXColumn());
+        int xColumn = excelColumnsMap.get(chartDescriptor.getAxisXColumn());
         String xColumnName = CellReference.convertNumToColString(xColumn);
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
+
+        double[] xMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
+        double[] yMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
+        int[] xFromTo = new int[]{-1,0};
+        Map<String, Integer> rsColumnsMap = rs.getColumnsMap();
+
         for (int i = 0; i < series.size(); i++) {
             ChartDescriptor.Series s = series.get(i);
             ISeries ctBarSer = chart.addNewSeries();
             ctBarSer.addNewIdx().setVal(i);
             CTAxDataSource cttAxDataSource = ctBarSer.addNewCat();
             CTStrRef ctStrRef = cttAxDataSource.addNewStrRef();
-            int from = s.getStartRow() != null && s.getStartRow() > 0 ? firstDataRow + s.getStartRow() : firstDataRow + 1;
-            int to = s.getEndRow() != null && s.getEndRow() > 0 ? firstDataRow + s.getEndRow() : firstDataRow + rowsNumber;
+            int fromRowIndex = (s.getStartRow() != null && s.getStartRow() > 0) ? s.getStartRow() - 1 : 0;
+            int toRowIndex = (s.getEndRow() != null && s.getEndRow() > 0) ? s.getEndRow(): rowsNumber;
+            int from = firstDataRow + fromRowIndex + 1;
+            int to = firstDataRow + toRowIndex;
             ctStrRef.setF(sheet.getSheetName() + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
             CTNumDataSource ctNumDataSource = ctBarSer.addNewVal();
             CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
-            int valueColumnIndex = columnMap.get(s.getValueColumn());
+            int valueColumnIndex = excelColumnsMap.get(s.getValueColumn());
+            if (chartDescriptor.isCalculatedXRange()) {
+                if (xFromTo[0] > fromRowIndex || xFromTo[0] == -1){
+                    xFromTo[0] = fromRowIndex;
+                }
+                if (xFromTo[1] < toRowIndex) {
+                    xFromTo[1] = toRowIndex;
+                }
+            }
+            if (chartDescriptor.isCalculatedYRange()) {
+                defineMinMax(yMinMax, rsColumnsMap.get(s.getValueColumn()), rs, fromRowIndex, toRowIndex);
+            }
 
             String valueColumnName = CellReference.convertNumToColString(valueColumnIndex);
             if (chartDescriptor.getShowLegend()) {
@@ -232,23 +251,45 @@ class ExcelChartsHelper {
         //cat axis
         CTCatAx ctCatAx = plotArea.addNewCatAx();
         ctCatAx.addNewAxId().setVal(1); //id of the cat axis
-        CTScaling ctScaling = ctCatAx.addNewScaling();
-        ctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
         ctCatAx.addNewDelete().setVal(false);
         ctCatAx.addNewAxPos().setVal(STAxPos.B);
         ctCatAx.addNewCrossAx().setVal(2); //id of the val axis
         ctCatAx.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
 
-
         //val axis
         CTValAx ctValAx = plotArea.addNewValAx();
         ctValAx.addNewAxId().setVal(2); //id of the val axis
-        ctScaling = ctValAx.addNewScaling();
-        ctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
         ctValAx.addNewDelete().setVal(false);
         ctValAx.addNewAxPos().setVal(STAxPos.L);
         ctValAx.addNewCrossAx().setVal(1); //id of the cat axis
         ctValAx.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
+
+        CTScaling xctScaling = ctCatAx.addNewScaling();
+        xctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
+        if (chartDescriptor.isCalculatedXRange()) {
+            defineMinMax(xMinMax, rsColumnsMap.get(chartDescriptor.getAxisXColumn()), rs, xFromTo[0], xFromTo[1]);
+            fixRange(xMinMax);
+
+            // блок определения минимума/максимума оси
+            xctScaling.addNewMin().setVal(xMinMax[0]);
+            xctScaling.addNewMax().setVal(xMinMax[1]);
+            // укажем, что ось значений должна пересечь ось категорий в минимуме
+            ctValAx.addNewCrossesAt().setVal(xMinMax[0]);
+        }
+
+        CTScaling yctScaling = ctValAx.addNewScaling();
+        yctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
+        if (chartDescriptor.isCalculatedYRange()) {
+
+            fixRange(yMinMax);
+
+            // блок определения минимума/максимума оси
+            yctScaling.addNewMin().setVal(yMinMax[0]);
+            yctScaling.addNewMax().setVal(yMinMax[1]);
+            // укажем, что ось значений должна пересечь ось значений в минимуме
+            ctCatAx.addNewCrossesAt().setVal(yMinMax[0]);
+        }
+
 
         //legend
         if (chartDescriptor.getShowLegend()) {
@@ -269,8 +310,36 @@ class ExcelChartsHelper {
         }
     }
 
+    private static void defineMinMax(double[] minmax, int valueColumnIndex, ResultSetWithTotal rs, int from, int to) {
+        List<List<Object>> rows = rs.getRows();
+        for (int i = from; i < to; i++) {
+            List<Object> row = rows.get(i);
+            Object value = row.get(valueColumnIndex);
+            if (value != null) {
+                try {
+                    Double doubleValue = Double.valueOf(value.toString());
+                    if (minmax[0] > doubleValue || minmax[0] == Double.MIN_NORMAL) {
+                        minmax[0] = doubleValue;
+                    }
+                    if (minmax[1] < doubleValue || minmax[1] == Double.MIN_NORMAL) {
+                        minmax[1] = doubleValue;
+                    }
+                } catch (Exception ignore) {
+                }
+            }
+        }
+    }
 
-
+    private static void fixRange(double[] minmax) {
+        // подгон минимума и максимума значений - алогоритм аналогичен конструктору отчета (UI)
+        if (minmax[0] > Double.MIN_NORMAL) {
+            double margin = Math.abs((minmax[1] - minmax[0]) / 15);
+            double lower = ((long) ((minmax[0] - margin) * 100)) / 100;
+            double upper = ((long) ((minmax[1] + margin) * 100)) / 100;
+            minmax[0] = lower;
+            minmax[1] = upper;
+        }
+    }
 
     private static void nameAxis(ChartDescriptor chartDescriptor, XSSFChart chart) {
         if (!StringUtils.isEmpty(chartDescriptor.getAxisYTitle())) {

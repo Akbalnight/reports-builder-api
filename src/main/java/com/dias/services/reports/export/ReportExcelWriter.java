@@ -108,8 +108,9 @@ public class ReportExcelWriter {
     private void writeChartReport(ReportDTO report, ResultSetWithTotal rs, XSSFSheet sheet, ReportType repType, int firstRowWithData) throws IOException {
         ChartDescriptor chartDescriptor = tablesService.extractChartDescriptor(report);
         if (chartDescriptor != null) {
-            Map<String, Integer> columnMap = getColumnMap(START_COLUMN_INDEX + 1 + (rs.containsTotal() ? 1 : 0), rs);
-            ExcelChartsHelper.addChartToWorkbook(workbook, chartDescriptor, report, repType, firstRowWithData, rs, sheet, columnMap);
+            int excelStartColumn = START_COLUMN_INDEX + 1 + (rs.containsTotal() ? 1 : 0);
+            Map<String, Integer> excelColumnsMap = getColumnMap(excelStartColumn, rs);
+            ExcelChartsHelper.addChartToWorkbook(workbook, chartDescriptor, report, repType, firstRowWithData, rs, sheet, excelColumnsMap);
         }
     }
 
