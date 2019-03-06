@@ -40,6 +40,7 @@ class ExcelChartsHelper {
         ISeries addNewSeries();
         CTUnsignedInt addNewAxId();
         CTShapeProperties addNewShapeProperties(int seriesIndex);
+        IAxisX addAxisX(CTPlotArea plotArea);
     }
 
     /**
@@ -49,8 +50,8 @@ class ExcelChartsHelper {
     interface ISeries {
 
         CTUnsignedInt addNewIdx();
-        CTAxDataSource addNewCat();
         CTNumDataSource addNewVal();
+        void setFforX(String formula);
         CTSerTx addNewTx();
         CTDLbls addNewDLbls();
     }
@@ -64,6 +65,57 @@ class ExcelChartsHelper {
         LineSer(CTLineSer ctLineSer) {
             this.series = ctLineSer;
         }
+        @Override
+        public void setFforX(String formula) {
+            series.addNewCat().addNewStrRef().setF(formula);
+        }
+    }
+
+    /**
+     * Серия графика с числовой осью X
+     */
+    static class ScatterSer implements ISeries {
+        @Delegate
+        private final CTScatterSer series;
+        ScatterSer(CTScatterSer ctScatterSer) {
+            this.series = ctScatterSer;
+        }
+
+        @Override
+        public CTNumDataSource addNewVal() {
+            return series.addNewYVal();
+        }
+
+        @Override
+        public void setFforX(String formula) {
+            series.addNewXVal().addNewNumRef().setF(formula);
+        }
+    }
+
+    interface IAxisX {
+        CTUnsignedInt addNewAxId();
+        CTBoolean addNewDelete();
+        CTAxPos addNewAxPos();
+        CTUnsignedInt addNewCrossAx();
+        CTTickLblPos addNewTickLblPos();
+        CTScaling addNewScaling();
+        CTDouble addNewCrossesAt();
+    }
+
+    static class Category implements IAxisX {
+        @Delegate
+        private final CTCatAx ctCatAx;
+        Category(CTCatAx ctCatAx) {
+            this.ctCatAx = ctCatAx;
+        }
+    }
+
+    static class Values implements IAxisX {
+        @Delegate
+        private final CTValAx ctValAx;
+        Values(CTValAx ctValAx) {
+            this.ctValAx = ctValAx;
+        }
     }
 
     /**
@@ -75,10 +127,15 @@ class ExcelChartsHelper {
         BarSer(CTBarSer ctBarSer) {
             this.series = ctBarSer;
         }
+
+        @Override
+        public void setFforX(String formula) {
+            series.addNewCat().addNewStrRef().setF(formula);
+        }
     }
 
     /**
-     * График
+     * График с категориями по оси X
      */
     static class LineChart implements IChartWithSeries {
         @Delegate
@@ -97,6 +154,39 @@ class ExcelChartsHelper {
         @Override
         public CTShapeProperties addNewShapeProperties(int seriesIndex) {
             return plot.getLineChartList().get(0).getSerArray(seriesIndex).addNewSpPr();
+        }
+
+        @Override
+        public IAxisX addAxisX(CTPlotArea plotArea) {
+            return new Category(plotArea.addNewCatAx());
+        }
+    }
+
+    /**
+     * График c числами по оси X
+     */
+    static class ScatterChart implements IChartWithSeries {
+        @Delegate
+        private final CTScatterChart ctScatterChart;
+        private final CTPlotArea plot;
+        ScatterChart(CTScatterChart ctScatterChart, CTPlotArea plot) {
+            this.ctScatterChart = ctScatterChart;
+            this.plot = plot;
+        }
+
+        @Override
+        public ISeries addNewSeries() {
+            return new ScatterSer(ctScatterChart.addNewSer());
+        }
+
+        @Override
+        public CTShapeProperties addNewShapeProperties(int seriesIndex) {
+            return plot.getScatterChartList().get(0).getSerArray(seriesIndex).addNewSpPr();
+        }
+
+        @Override
+        public IAxisX addAxisX(CTPlotArea plotArea) {
+            return new Values(plotArea.addNewValAx());
         }
     }
 
@@ -121,6 +211,11 @@ class ExcelChartsHelper {
         public CTShapeProperties addNewShapeProperties(int seriesIndex) {
             return plot.getBarChartArray(0).getSerArray(seriesIndex).addNewSpPr();
         }
+
+        @Override
+        public IAxisX addAxisX(CTPlotArea plotArea) {
+            return new Category(plotArea.addNewCatAx());
+        }
     }
 
     /**
@@ -143,7 +238,12 @@ class ExcelChartsHelper {
         } else if (ReportType.bar == repType) {
             chart = addBarChart(xssfChart.getCTChart().getPlotArea(), STBarDir.COL);
         } else {
-            chart = addLineChart(xssfChart.getCTChart().getPlotArea());
+            Integer categoryRsColumnIndex = rs.getColumnsMap().get(chartDescriptor.getAxisXColumn());
+            if (rs.getNumericColumnsIndexes().contains(categoryRsColumnIndex)) {
+                chart = addScatterChart(xssfChart.getCTChart().getPlotArea());
+            } else {
+                chart = addLineChart(xssfChart.getCTChart().getPlotArea());
+            }
             dataLabelPos = LABEL_POSITION_TOP;
         }
         fillChart(sheet, excelColumnsMap, chart, xssfChart, chartDescriptor, firstRowWithData, rs, dataLabelPos);
@@ -161,6 +261,12 @@ class ExcelChartsHelper {
 
     private static LineChart addLineChart(CTPlotArea plot) {
         return new LineChart(plot.addNewLineChart(), plot);
+    }
+
+    private static IChartWithSeries addScatterChart(CTPlotArea plot) {
+        CTScatterChart ctScatterChart = plot.addNewScatterChart();
+        ctScatterChart.addNewScatterStyle().setVal(STScatterStyle.Enum.forString("smoothMarker"));
+        return new ScatterChart(ctScatterChart, plot);
     }
 
     private static BarChart addBarChart(CTPlotArea plot, STBarDir.Enum barChartType) {
@@ -197,13 +303,11 @@ class ExcelChartsHelper {
             ChartDescriptor.Series s = series.get(i);
             ISeries ctBarSer = chart.addNewSeries();
             ctBarSer.addNewIdx().setVal(i);
-            CTAxDataSource cttAxDataSource = ctBarSer.addNewCat();
-            CTStrRef ctStrRef = cttAxDataSource.addNewStrRef();
             int fromRowIndex = (s.getStartRow() != null && s.getStartRow() > 0) ? s.getStartRow() - 1 : 0;
-            int toRowIndex = (s.getEndRow() != null && s.getEndRow() > 0) ? s.getEndRow(): rowsNumber;
+            int toRowIndex = (s.getEndRow() != null && s.getEndRow() < rowsNumber) ? s.getEndRow(): rowsNumber;
             int from = firstDataRow + fromRowIndex + 1;
             int to = firstDataRow + toRowIndex;
-            ctStrRef.setF(sheet.getSheetName() + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
+            ctBarSer.setFforX(sheet.getSheetName() + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
             CTNumDataSource ctNumDataSource = ctBarSer.addNewVal();
             CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
             int valueColumnIndex = excelColumnsMap.get(s.getValueColumn());
@@ -248,8 +352,9 @@ class ExcelChartsHelper {
         chart.addNewAxId().setVal(2);
 
         CTPlotArea plotArea = xssfChart.getCTChart().getPlotArea();
+
         //cat axis
-        CTCatAx ctCatAx = plotArea.addNewCatAx();
+        IAxisX ctCatAx = chart.addAxisX(plotArea);
         ctCatAx.addNewAxId().setVal(1); //id of the cat axis
         ctCatAx.addNewDelete().setVal(false);
         ctCatAx.addNewAxPos().setVal(STAxPos.B);
@@ -266,8 +371,10 @@ class ExcelChartsHelper {
 
         CTScaling xctScaling = ctCatAx.addNewScaling();
         xctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
-        if (chartDescriptor.isCalculatedXRange()) {
-            defineMinMax(xMinMax, rsColumnsMap.get(chartDescriptor.getAxisXColumn()), rs, xFromTo[0], xFromTo[1]);
+        Integer categoryRsColumnIndex = rsColumnsMap.get(chartDescriptor.getAxisXColumn());
+        boolean isCategoryAxisNumeric = rs.getNumericColumnsIndexes().contains(categoryRsColumnIndex);
+        if (chartDescriptor.isCalculatedXRange() && isCategoryAxisNumeric) {
+            defineMinMax(xMinMax, categoryRsColumnIndex, rs, xFromTo[0], xFromTo[1]);
             fixRange(xMinMax);
 
             // блок определения минимума/максимума оси
@@ -275,6 +382,9 @@ class ExcelChartsHelper {
             xctScaling.addNewMax().setVal(xMinMax[1]);
             // укажем, что ось значений должна пересечь ось категорий в минимуме
             ctValAx.addNewCrossesAt().setVal(xMinMax[0]);
+        } else if (isCategoryAxisNumeric) {
+            xctScaling.addNewMin().setVal(0);
+            ctValAx.addNewCrossesAt().setVal(0);
         }
 
         CTScaling yctScaling = ctValAx.addNewScaling();

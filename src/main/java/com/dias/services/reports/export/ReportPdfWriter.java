@@ -189,7 +189,12 @@ public class ReportPdfWriter {
                         // применяем аналогичный в конструкторе отчетов алгорит расчета отступа
                         // для минимального и максимального значений
                         chart.getXYPlot().getDomainAxis().setRange(xMinMax[0], xMinMax[1]);
+                    } else if (!isDateXAxis) {
+                        // для совместимости с UI делаем нижнюю границу оси в 0, если ось числовая
+                        chart.getXYPlot().getDomainAxis().setLowerBound(0);
                     }
+
+
                     if (chartDescriptor.isCalculatedYRange()) {
                         chart.getXYPlot().getRangeAxis().setRange(yMinMax[0], yMinMax[1]);
                     }
