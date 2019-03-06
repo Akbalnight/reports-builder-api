@@ -51,6 +51,9 @@ public class ReportService extends AbstractService<Report> {
     private static final String PROPERTY_GENERAL = "general";
     private static final String PROPERTY_SHOW_LEGEND = "showLegend";
     private static final String PROPERTY_DATA_AXIS = "dataAxis";
+    public static final String PROPERTY_CALCULATED_X_RANGE = "calculatedXRange";
+    public static final String PROPERTY_CALCULATED_Y_RANGE = "calculatedYRange";
+    public static final String PROPERTY_SHOW_DOT_VALUES = "showDotValues";
     private static Logger LOG = Logger.getLogger(ReportService.class.getName());
 
     private final ReportRepository reportRepository;
@@ -379,7 +382,13 @@ public class ReportService extends AbstractService<Report> {
             descriptor.setAxisYTitle(namesNode.get(PROPERTY_Y_AXIS).asText());
         }
         JsonNode generalNode = description.get(PROPERTY_GENERAL);
-        descriptor.setShowLegend(generalNode.get(PROPERTY_SHOW_LEGEND) != null && generalNode.get(PROPERTY_SHOW_LEGEND).asBoolean());
+        if (generalNode != null) {
+            descriptor.setShowLegend(generalNode.get(PROPERTY_SHOW_LEGEND) != null && generalNode.get(PROPERTY_SHOW_LEGEND).asBoolean());
+            descriptor.setCalculatedXRange(generalNode.get(PROPERTY_CALCULATED_X_RANGE) != null && generalNode.get(PROPERTY_CALCULATED_X_RANGE).asBoolean());
+            descriptor.setCalculatedYRange(generalNode.get(PROPERTY_CALCULATED_Y_RANGE) != null && generalNode.get(PROPERTY_CALCULATED_Y_RANGE).asBoolean());
+            descriptor.setShowDotValues(generalNode.get(PROPERTY_SHOW_DOT_VALUES) != null && generalNode.get(PROPERTY_SHOW_DOT_VALUES).asBoolean());
+        }
+        
 
         JsonNode categoriesNode = description.get(PROPERTY_DATA_AXIS);
         descriptor.setAxisXColumn(categoriesNode.get(PROPERTY_KEY).asText());

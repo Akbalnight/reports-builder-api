@@ -93,10 +93,12 @@ public class ReportPdfWriter {
             DefaultCategoryDataset defaultCategoryDataset = null;
             SimpleDateFormat[] dateFormat = {null};
             XYDataset xyDataSet = null;
+            double[] xMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
+            double[] yMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
             if (!isDateXAxis && !isNumericXAxis) {
-                defaultCategoryDataset = getDefaultCategoryDataset(rs, chartDescriptor, withSummary);
+                defaultCategoryDataset = getDefaultCategoryDataset(rs, chartDescriptor, withSummary, yMinMax);
             } else {
-                xyDataSet = getXYDataset(rs, columnMap, chartDescriptor, withSummary, dateFormat, isDateXAxis);
+                xyDataSet = getXYDataset(rs, columnMap, chartDescriptor, withSummary, dateFormat, isDateXAxis, xMinMax, yMinMax);
             }
 
             JFreeChart chart;
@@ -182,12 +184,28 @@ public class ReportPdfWriter {
                 if (xyDataSet != null) {
                     XYItemRenderer renderer = chart.getXYPlot().getRenderer();
                     renderer.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());
-                    renderer.setBaseItemLabelsVisible(true);
+                    renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
+                    if (chartDescriptor.isCalculatedXRange() && !isDateXAxis) {
+                        // применяем аналогичный в конструкторе отчетов алгорит расчета отступа
+                        // для минимального и максимального значений
+                        chart.getXYPlot().getDomainAxis().setRange(xMinMax[0], xMinMax[1]);
+                    } else if (!isDateXAxis) {
+                        // для совместимости с UI делаем нижнюю границу оси в 0, если ось числовая
+                        chart.getXYPlot().getDomainAxis().setLowerBound(0);
+                    }
+
+
+                    if (chartDescriptor.isCalculatedYRange()) {
+                        chart.getXYPlot().getRangeAxis().setRange(yMinMax[0], yMinMax[1]);
+                    }
 
                 } else {
                     CategoryItemRenderer renderer = chart.getCategoryPlot().getRenderer();
                     renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
-                    renderer.setBaseItemLabelsVisible(true);
+                    renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
+                    if (chartDescriptor.isCalculatedYRange()) {
+                        chart.getCategoryPlot().getRangeAxis().setRange(yMinMax[0], yMinMax[1]);
+                    }
                 }
 
                 ChartUtilities.writeChartAsPNG(os, chart, CHART_WIDTH, CHART_HEIGHT);
@@ -231,7 +249,15 @@ public class ReportPdfWriter {
     }
 
 
-    private XYDataset getXYDataset(ResultSetWithTotal rs, Map<String, Integer> columnMap, ChartDescriptor chartDescriptor, boolean withSummary, final SimpleDateFormat[] dateFormat, boolean categoryIsDate) {
+    private XYDataset getXYDataset(
+            ResultSetWithTotal rs,
+            Map<String, Integer> columnMap,
+            ChartDescriptor chartDescriptor,
+            boolean withSummary,
+            final SimpleDateFormat[] dateFormat,
+            boolean categoryIsDate,
+            double[] xMinMax,
+            double[] yMinMax) {
         XYSeriesCollection ds = new XYSeriesCollection();
         List<List<Object>> rows = rs.getRows();
         Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
@@ -265,14 +291,44 @@ public class ReportPdfWriter {
                     Object value = row.get(seriesVaueIndex);
                     Number seriesValueNumber = value != null && Number.class.isAssignableFrom(value.getClass()) ? (Number) value : 0;
                     xySeries.add(categoryNumber, seriesValueNumber);
+
+                    if (!categoryIsDate) {
+                        //только для числовой оси определяем минимальное и максимальное значения
+                        calculateMinMaxForValue(xMinMax, categoryNumber);
+                    }
+
+                    calculateMinMaxForValue(yMinMax, seriesValueNumber);
+
                 }
             }
         }
+        fixRange(xMinMax);
+        fixRange(yMinMax);
         return ds;
     }
 
+    private void fixRange(double[] minmax) {
+        if (minmax[0] > Double.MIN_NORMAL) {
+            double margin = Math.abs((minmax[1] - minmax[0]) / 15);
+            double lower = ((long) ((minmax[0] - margin) * 100)) / 100;
+            double upper = ((long) ((minmax[1] + margin) * 100)) / 100;
+            minmax[0] = lower;
+            minmax[1] = upper;
+        }
+    }
 
-    private DefaultCategoryDataset getDefaultCategoryDataset(ResultSetWithTotal rs, ChartDescriptor chartDescriptor, boolean withSummary) {
+    private void calculateMinMaxForValue(double[] range, Number number) {
+        double doubleValue = number.doubleValue();
+        if (doubleValue > range[1] || range[1] == Double.MIN_NORMAL) {
+            range[1] = doubleValue;
+        }
+        if (doubleValue < range[0] || range[0] == Double.MIN_NORMAL) {
+            range[0] = doubleValue;
+        }
+    }
+
+
+    private DefaultCategoryDataset getDefaultCategoryDataset(ResultSetWithTotal rs, ChartDescriptor chartDescriptor, boolean withSummary, double[] yMinMax) {
         DefaultCategoryDataset ds = new DefaultCategoryDataset();
         List<List<Object>> rows = rs.getRows();
         Map<String, Integer> columnMap = rs.getColumnsMap();
@@ -293,9 +349,11 @@ public class ReportPdfWriter {
                     Object value = row.get(seriesVaueIndex);
                     Number seriesValueNumber = value != null && Number.class.isAssignableFrom(value.getClass()) ? (Number) value : 0;
                     ds.addValue(seriesValueNumber, s.getTitle(), (Comparable) categoryValue);
+                    calculateMinMaxForValue(yMinMax, seriesValueNumber);
                 }
             }
         }
+        fixRange(yMinMax);
         return ds;
     }
 
