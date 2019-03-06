@@ -28,6 +28,8 @@ class ExcelChartsHelper {
     private static final int CHART_HEIGHT = 20;
     private static final int LABEL_POSITION_OUTSIDE_TOP = 7;
     private static final int LABEL_POSITION_TOP = 9;
+    private static final int AXIS_Y_ID = 2;
+    private static final int AXIS_X_ID = 1;
 
     /**
      * Интерфейс диаграммы с сериями. Служит для представления абстракции диаграммы
@@ -40,7 +42,7 @@ class ExcelChartsHelper {
         ISeries addNewSeries();
         CTUnsignedInt addNewAxId();
         CTShapeProperties addNewShapeProperties(int seriesIndex);
-        IAxisX addAxisX(CTPlotArea plotArea);
+        IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric);
     }
 
     /**
@@ -100,21 +102,39 @@ class ExcelChartsHelper {
         CTTickLblPos addNewTickLblPos();
         CTScaling addNewScaling();
         CTDouble addNewCrossesAt();
+        boolean supportsMinMax();
+        CTTitle addTitle();
     }
 
-    static class Category implements IAxisX {
+    static class CategoryAxis implements IAxisX {
         @Delegate
         private final CTCatAx ctCatAx;
-        Category(CTCatAx ctCatAx) {
+        CategoryAxis(CTCatAx ctCatAx) {
             this.ctCatAx = ctCatAx;
+        }
+        @Override
+        public boolean supportsMinMax() {
+            return false;
+        }
+        @Override
+        public CTTitle addTitle() {
+            return ctCatAx.addNewTitle();
         }
     }
 
-    static class Values implements IAxisX {
+    static class NumericAxis implements IAxisX {
         @Delegate
         private final CTValAx ctValAx;
-        Values(CTValAx ctValAx) {
+        NumericAxis(CTValAx ctValAx) {
             this.ctValAx = ctValAx;
+        }
+        @Override
+        public boolean supportsMinMax() {
+            return true;
+        }
+        @Override
+        public CTTitle addTitle() {
+            return ctValAx.addNewTitle();
         }
     }
 
@@ -157,8 +177,8 @@ class ExcelChartsHelper {
         }
 
         @Override
-        public IAxisX addAxisX(CTPlotArea plotArea) {
-            return new Category(plotArea.addNewCatAx());
+        public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
+            return new CategoryAxis(plotArea.addNewCatAx());
         }
     }
 
@@ -185,8 +205,8 @@ class ExcelChartsHelper {
         }
 
         @Override
-        public IAxisX addAxisX(CTPlotArea plotArea) {
-            return new Values(plotArea.addNewValAx());
+        public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
+            return new NumericAxis(plotArea.addNewValAx());
         }
     }
 
@@ -213,8 +233,11 @@ class ExcelChartsHelper {
         }
 
         @Override
-        public IAxisX addAxisX(CTPlotArea plotArea) {
-            return new Category(plotArea.addNewCatAx());
+        public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
+            /*if (isCategoryAxisNumeric) {
+                return new NumericAxis(plotArea.addNewValAx());
+            }*/
+            return new CategoryAxis(plotArea.addNewCatAx());
         }
     }
 
@@ -347,44 +370,55 @@ class ExcelChartsHelper {
             ctNumRef.setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
         }
 
-        //telling the BarChart that it has axes and giving them Ids
-        chart.addNewAxId().setVal(1);
-        chart.addNewAxId().setVal(2);
+        chart.addNewAxId().setVal(AXIS_X_ID);
+        chart.addNewAxId().setVal(AXIS_Y_ID);
 
         CTPlotArea plotArea = xssfChart.getCTChart().getPlotArea();
 
-        //cat axis
-        IAxisX ctCatAx = chart.addAxisX(plotArea);
-        ctCatAx.addNewAxId().setVal(1); //id of the cat axis
-        ctCatAx.addNewDelete().setVal(false);
-        ctCatAx.addNewAxPos().setVal(STAxPos.B);
-        ctCatAx.addNewCrossAx().setVal(2); //id of the val axis
-        ctCatAx.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
+        Integer categoryRsColumnIndex = rsColumnsMap.get(chartDescriptor.getAxisXColumn());
+        boolean isCategoryAxisNumeric = rs.getNumericColumnsIndexes().contains(categoryRsColumnIndex);
 
         //val axis
         CTValAx ctValAx = plotArea.addNewValAx();
-        ctValAx.addNewAxId().setVal(2); //id of the val axis
+        ctValAx.addNewAxId().setVal(AXIS_Y_ID); //id of the val axis
         ctValAx.addNewDelete().setVal(false);
         ctValAx.addNewAxPos().setVal(STAxPos.L);
-        ctValAx.addNewCrossAx().setVal(1); //id of the cat axis
+        ctValAx.addNewCrossAx().setVal(AXIS_X_ID); //id of the cat axis
         ctValAx.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
+        if (!StringUtils.isEmpty(chartDescriptor.getAxisYTitle())) {
+            setAxisTitle(ctValAx.addNewTitle(), chartDescriptor.getAxisYTitle());
+        }
+
+        //cat axis
+        IAxisX ctCatAx = chart.addAxisX(plotArea, isCategoryAxisNumeric);
+        ctCatAx.addNewAxId().setVal(AXIS_X_ID); //id of the cat axis
+        ctCatAx.addNewDelete().setVal(false);
+        ctCatAx.addNewAxPos().setVal(STAxPos.B);
+        ctCatAx.addNewCrossAx().setVal(AXIS_Y_ID); //id of the val axis
+        ctCatAx.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
+        if (!StringUtils.isEmpty(chartDescriptor.getAxisXTitle())) {
+            setAxisTitle(ctCatAx.addTitle(), chartDescriptor.getAxisXTitle());
+        }
 
         CTScaling xctScaling = ctCatAx.addNewScaling();
         xctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
-        Integer categoryRsColumnIndex = rsColumnsMap.get(chartDescriptor.getAxisXColumn());
-        boolean isCategoryAxisNumeric = rs.getNumericColumnsIndexes().contains(categoryRsColumnIndex);
-        if (chartDescriptor.isCalculatedXRange() && isCategoryAxisNumeric) {
-            defineMinMax(xMinMax, categoryRsColumnIndex, rs, xFromTo[0], xFromTo[1]);
-            fixRange(xMinMax);
 
-            // блок определения минимума/максимума оси
-            xctScaling.addNewMin().setVal(xMinMax[0]);
-            xctScaling.addNewMax().setVal(xMinMax[1]);
-            // укажем, что ось значений должна пересечь ось категорий в минимуме
-            ctValAx.addNewCrossesAt().setVal(xMinMax[0]);
-        } else if (isCategoryAxisNumeric) {
-            xctScaling.addNewMin().setVal(0);
-            ctValAx.addNewCrossesAt().setVal(0);
+
+        if (ctCatAx.supportsMinMax()) {
+            // гистограмма и колонки не поддерживают минимум/максимум
+            if (chartDescriptor.isCalculatedXRange() && isCategoryAxisNumeric) {
+                defineMinMax(xMinMax, categoryRsColumnIndex, rs, xFromTo[0], xFromTo[1]);
+                fixRange(xMinMax);
+
+                // блок определения минимума/максимума оси
+                xctScaling.addNewMin().setVal(xMinMax[0]);
+                xctScaling.addNewMax().setVal(xMinMax[1]);
+                // укажем, что ось значений должна пересечь ось категорий в минимуме
+                ctValAx.addNewCrossesAt().setVal(xMinMax[0]);
+            } else if (isCategoryAxisNumeric) {
+                xctScaling.addNewMin().setVal(0);
+                ctValAx.addNewCrossesAt().setVal(0);
+            }
         }
 
         CTScaling yctScaling = ctValAx.addNewScaling();
@@ -407,8 +441,6 @@ class ExcelChartsHelper {
             ctLegend.addNewLegendPos().setVal(STLegendPos.R);
             ctLegend.addNewOverlay().setVal(false);
         }
-
-        nameAxis(chartDescriptor, xssfChart);
 
         // line style of the series
         for (int i = 0; i < series.size(); i++) {
@@ -451,35 +483,7 @@ class ExcelChartsHelper {
         }
     }
 
-    private static void nameAxis(ChartDescriptor chartDescriptor, XSSFChart chart) {
-        if (!StringUtils.isEmpty(chartDescriptor.getAxisYTitle())) {
-            setValuesAxisTitle(chart, chartDescriptor.getAxisYTitle());
-        }
-
-        if (!StringUtils.isEmpty(chartDescriptor.getAxisXTitle())) {
-            setCatAxisTitle(chart, chartDescriptor.getAxisXTitle());
-        }
-    }
-
-    private static void setValuesAxisTitle(XSSFChart chart, String title) {
-
-        CTPlotArea plotArea = chart.getCTChart().getPlotArea();
-        CTValAx valAx = plotArea.getValAxArray(0);
-        CTTitle ctTitle = valAx.addNewTitle();
-        ctTitle.addNewLayout();
-        ctTitle.addNewOverlay().setVal(false);
-        CTTextBody rich = ctTitle.addNewTx().addNewRich();
-        rich.addNewBodyPr();
-        rich.addNewLstStyle();
-        CTTextParagraph p = rich.addNewP();
-        p.addNewPPr().addNewDefRPr();
-        p.addNewR().setT(title);
-        p.addNewEndParaRPr();
-    }
-
-    private static void setCatAxisTitle(XSSFChart chart, String title) {
-        CTCatAx valAx = chart.getCTChart().getPlotArea().getCatAxArray(0);
-        CTTitle ctTitle = valAx.addNewTitle();
+    private static void setAxisTitle(CTTitle ctTitle, String title) {
         ctTitle.addNewLayout();
         ctTitle.addNewOverlay().setVal(false);
         CTTextBody rich = ctTitle.addNewTx().addNewRich();
