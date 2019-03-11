@@ -47,6 +47,30 @@ import static com.dias.services.reports.utils.PdfExportUtils.*;
 
 public class ReportPdfWriter {
 
+    /**
+     * Ключ для категорий. Служит для различения категорий по индексу, а не по имени как по умолчанию
+     */
+    static class CategoryKey implements Comparable<CategoryKey> {
+        private String key;
+        private int index;
+
+        CategoryKey(String key, int index) {
+            this.key = key;
+            this.index = index;
+        }
+
+        @Override
+        public int compareTo(CategoryKey o) {
+            return Integer.compare(o.index, this.index);
+        }
+
+        @Override
+        public String toString() {
+            //переопределяем метод для вывода на графике имени
+            return key;
+        }
+    }
+
     private static final int CHART_WIDTH = (int) PageSize.A4.getHeight() - 40;
     private static final int CHART_HEIGHT = (int) PageSize.A4.getWidth() - 40;
     private static ChartTheme currentTheme = new StandardChartTheme("JFree");
@@ -197,6 +221,9 @@ public class ReportPdfWriter {
 
                     if (chartDescriptor.isCalculatedYRange()) {
                         chart.getXYPlot().getRangeAxis().setRange(yMinMax[0], yMinMax[1]);
+                    } else if (chartDescriptor.isShowDotValues() && ReportType.hbar == reportType) {
+                        Double max = calculateAxisUpperBoundToIncludeLabelsForColumnChart(yMinMax[1]);
+                        chart.getXYPlot().getRangeAxis().setUpperBound(max.intValue());
                     }
 
                 } else {
@@ -205,6 +232,9 @@ public class ReportPdfWriter {
                     renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
                     if (chartDescriptor.isCalculatedYRange()) {
                         chart.getCategoryPlot().getRangeAxis().setRange(yMinMax[0], yMinMax[1]);
+                    } else if (chartDescriptor.isShowDotValues() && ReportType.hbar == reportType) {
+                        Double max = calculateAxisUpperBoundToIncludeLabelsForColumnChart(yMinMax[1]);
+                        chart.getCategoryPlot().getRangeAxis().setUpperBound(max.intValue());
                     }
                 }
 
@@ -218,6 +248,13 @@ public class ReportPdfWriter {
             document.add(image);
             os.close();
         }
+    }
+
+    private Double calculateAxisUpperBoundToIncludeLabelsForColumnChart(double maxValue) {
+        // рассчитаем величину, на которую необходимо расширить график, чтобы уместились подписи к меткам
+        // добавляем 5 символов чтобы учесть надписи к категориям, наименование серий
+        // 5 выбрано эмпирически - пока не найден способ подсчитать точно
+        return maxValue + NORMAL_FONT.getSize() * (Double.toString(maxValue).length() + 5) / CHART_WIDTH * maxValue;
     }
 
     private void writeTableReport(ReportDTO report, ResultSetWithTotal rs, Document document, boolean withSummary) throws DocumentException {
@@ -282,7 +319,10 @@ public class ReportPdfWriter {
                         Date value = toDate(dateFormat, categoryValue);
                         if (value != null) {
                             categoryNumber = value.getTime();
+                        } else {
+                            categoryNumber = new Date(0).getTime();
                         }
+
                     } else if (Number.class.isAssignableFrom(categoryValue.getClass())) {
                         categoryNumber = (Number) categoryValue;
                     } else {
@@ -343,12 +383,14 @@ public class ReportPdfWriter {
             int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
             int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow() : sizeOfRows, sizeOfRows);
             if (from < sizeOfRows) {
+                int i = 0;
                 for (List<Object> row : rows.subList(from, to)) {
+                    i++;
                     Object categoryValue = row.get(categoryColumnIndex);
                     categoryValue = categoryValue == null ? "" : categoryValue;
                     Object value = row.get(seriesVaueIndex);
                     Number seriesValueNumber = value != null && Number.class.isAssignableFrom(value.getClass()) ? (Number) value : 0;
-                    ds.addValue(seriesValueNumber, s.getTitle(), (Comparable) categoryValue);
+                    ds.addValue(seriesValueNumber, s.getTitle(), new CategoryKey(categoryValue.toString(), i));
                     calculateMinMaxForValue(yMinMax, seriesValueNumber);
                 }
             }
