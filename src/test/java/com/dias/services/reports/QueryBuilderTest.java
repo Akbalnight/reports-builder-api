@@ -99,6 +99,16 @@ public class QueryBuilderTest {
     }
 
     @Test
+    public void buildSqlWithIsNullCondition() {
+        compareQueryResults(null, "QueryBuilder/queryDescriptorWithIsNullCondition.json", "QueryBuilder/queryDescriptorWithIsNullCondition_Expected.sql");
+    }
+
+    @Test
+    public void buildSqlWithIsNotNullCondition() {
+        compareQueryResults(null, "QueryBuilder/queryDescriptorWithIsNotNullCondition.json", "QueryBuilder/queryDescriptorWithIsNotNullCondition_Expected.sql");
+    }
+
+    @Test
     public void buildSqlWithNullValueWhere() {
 
         //определим типы колонок для теста
@@ -125,7 +135,7 @@ public class QueryBuilderTest {
                 .withColumns(columnsWithTypes)
                 .withRowLimit(limit)
                 .buildSelectQuery();
-        Assert.assertEquals(expectedQueryResult, query);
+        Assert.assertEquals(expectedQueryResult.replaceAll("(\\r\\n|\\r|\\n)$", ""), query.trim());
     }
 
 }
