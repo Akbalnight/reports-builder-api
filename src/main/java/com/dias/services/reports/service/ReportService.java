@@ -40,6 +40,7 @@ public class ReportService extends AbstractService<Report> {
 
     private static final String PROPERTY_VALUE_AXIS = "valueAxis";
     private static final String PROPERTY_KEY = "key";
+    private static final String PROPERTY_NAME = "name";
     private static final String PROPERTY_COLOR = "color";
     private static final String PROPERTY_ROWS = "rows";
     private static final String PROPERTY_FROM = "from";
@@ -54,6 +55,7 @@ public class ReportService extends AbstractService<Report> {
     public static final String PROPERTY_CALCULATED_X_RANGE = "calculatedXRange";
     public static final String PROPERTY_CALCULATED_Y_RANGE = "calculatedYRange";
     public static final String PROPERTY_SHOW_DOT_VALUES = "showDotValues";
+
     private static Logger LOG = Logger.getLogger(ReportService.class.getName());
 
     private final ReportRepository reportRepository;
@@ -355,7 +357,8 @@ public class ReportService extends AbstractService<Report> {
                 if (rowsRangeNode != null && rowsRangeNode.get(PROPERTY_TO) != null) {
                     series.setEndRow(rowsRangeNode.get(PROPERTY_TO).asInt());
                 }
-                series.setTitle(columnKeyNode.asText());
+                String title = sNode.get(PROPERTY_NAME) != null ? sNode.get(PROPERTY_NAME).asText() : columnKeyNode.asText();
+                series.setTitle(title);
                 seriesList.add(series);
             } else {
                 wrongSeriesCount++;
