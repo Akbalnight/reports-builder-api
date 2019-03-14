@@ -255,6 +255,9 @@ public class NoGroupByQueryBuilder {
             if ("[contains],[not contains]".contains("[" + operator.toLowerCase() + "]")) {
                 operator = operator.toLowerCase().replace("contains", "like");
                 value = "%" + value + "%";
+            } else if ("[is null],[is not null]".contains("[" + operator.toLowerCase() + "]")) {
+                value = "";
+                requiresQuoting = false;
             } else if ("[in],[not in]".contains("[" + operator.toLowerCase() + "]")) {
                 if (requiresQuoting) {
                     String[] values = value.toString().split(",");

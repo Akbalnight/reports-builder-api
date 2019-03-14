@@ -1,0 +1,10 @@
+{
+  "table": "databasechangelog",
+  "where": [
+    {
+      "column": "filename",
+      "operator": "is null",
+      "value": null
+    }
+  ]
+}
