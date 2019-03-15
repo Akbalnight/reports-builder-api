@@ -76,10 +76,12 @@ public class ReportPdfWriter {
     private static ChartTheme currentTheme = new StandardChartTheme("JFree");
     private final ReportService tablesService;
     private final Translator translator;
+    private final String nullSymbol;
 
-    public ReportPdfWriter(ReportService tablesService, Translator translator) {
+    public ReportPdfWriter(ReportService tablesService, Translator translator, String nullSymbol) {
         this.tablesService = tablesService;
         this.translator = translator;
+        this.nullSymbol = nullSymbol;
     }
 
     public void writePdf(ReportDTO report, ResultSetWithTotal rs, OutputStream out) throws DocumentException, IOException {
@@ -440,22 +442,7 @@ public class ReportPdfWriter {
     private void writeTableBody(ReportDTO report, ResultSetWithTotal rs, PdfPTable table, boolean withSummary) {
 
         List<List<Object>> rows = rs.getRows();
-        List<ColumnWithType> headers = rs.getHeaders();
-        int columns = headers.size();
-        Calculation[] aggregations = report.getQueryDescriptor().getAggregations();
-        List<Integer> calculatedColumnsIndicies = new ArrayList<>();
-        if (aggregations != null) {
-            for (Calculation aggregation : aggregations) {
-                for (int i = 0; i < columns; i++) {
-                    ColumnWithType column = headers.get(i);
-                    if (Objects.equals(column.getColumn(), aggregation.getColumn()) || Objects.equals(column.getTitle(), aggregation.getTitle())) {
-                        calculatedColumnsIndicies.add(i);
-                        break;
-                    }
-                }
-            }
-        }
-
+        List<Integer> numericIndexes = rs.getNumericColumnsIndexes();
         List<Integer> groupRowIndexes = rs.getGroupRowsIndexes();
         for (int i = 0; i < rows.size(); i++) {
             List<Object> row = rows.get(i);
@@ -488,11 +475,10 @@ public class ReportPdfWriter {
             } else {
                 for (int j = 0; j < row.size(); j++) {
                     Object cellValue = row.get(j);
-                    String value = cellValue != null ? cellValue.toString() : "";
-                    if (calculatedColumnsIndicies.contains(j) && !value.isEmpty()) {
-                        addBigDecimalCell(table, BigDecimal.valueOf(Double.valueOf(value)), font);
+                    if (numericIndexes.contains(j)) {
+                        addBigDecimalCell(table, cellValue, font, nullSymbol);
                     } else {
-                        addCell(table, value, font);
+                        addCell(table, cellValue != null ? cellValue.toString() : nullSymbol, font);
                     }
                 }
             }

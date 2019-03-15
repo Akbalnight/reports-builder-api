@@ -71,6 +71,9 @@ public class ReportService extends AbstractService<Report> {
     @Value("${com.dias.services.reports.preview.limit:100}")
     private Long previewRecordsLimit;
 
+    @Value("${com.dias.services.reports.null.symbol:-}")
+    private String nullSymbol;
+
     @Autowired
     public ReportService(ReportRepository reportRepository, ReportBuilderService reportBuilderService, Translator translator, TablesService tablesService, ObjectMapper objMapper) {
         this.reportRepository = reportRepository;
@@ -277,7 +280,7 @@ public class ReportService extends AbstractService<Report> {
     public void exportToExcel(Report report, ByteArrayOutputStream out) throws IOException {
         ReportDTO reportDTO = convertToDTO(report);
         ResultSetWithTotal rs = syncExecuteWithTotalReport(reportDTO.getQueryDescriptor(), null, null);
-        new ReportExcelWriter(this, translator).writeExcel(reportDTO, rs, out);
+        new ReportExcelWriter(this, translator, nullSymbol).writeExcel(reportDTO, rs, out);
     }
 
     public void exportToPdf(Report report, ByteArrayOutputStream out) throws DocumentException, IOException {
@@ -286,7 +289,7 @@ public class ReportService extends AbstractService<Report> {
         if (reportDTO.getQueryDescriptor().getGroupBy() != null) {
             rs = rs.convertToGroupped(reportDTO.getQueryDescriptor().getGroupBy(), reportDTO.getQueryDescriptor().getOrderBy());
         }
-        new ReportPdfWriter(this, translator).writePdf(reportDTO, rs, out);
+        new ReportPdfWriter(this, translator, nullSymbol).writePdf(reportDTO, rs, out);
     }
 
     public ResultSet executeReport(Report report, Long limit, Long offset) {

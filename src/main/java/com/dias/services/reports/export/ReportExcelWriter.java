@@ -58,6 +58,8 @@ public class ReportExcelWriter {
 
     private final ReportService tablesService;
     private final Translator translator;
+    private final String nullSymbol;
+
     private XSSFWorkbook workbook;
     private XSSFCellStyle defaultStyle;
     private XSSFCellStyle bigDecimalStyle;
@@ -75,10 +77,10 @@ public class ReportExcelWriter {
     private XSSFDataFormat dataFormat;
     private XSSFFont defaultFont;
 
-    public ReportExcelWriter(ReportService tablesService, Translator translator) {
-        super();
+    public ReportExcelWriter(ReportService tablesService, Translator translator, String nullSymbol) {
         this.tablesService = tablesService;
         this.translator = translator;
+        this.nullSymbol = nullSymbol;
     }
 
     protected XSSFWorkbook getWorkbook() {
@@ -297,16 +299,21 @@ public class ReportExcelWriter {
     }
 
     private void writeNumericOrStringCell(XSSFRow row, int cellNum, Object value, CellStyle cellStyle, boolean isNumeric) {
-        String cellValue = value != null ? value.toString() : "";
-        Cell cell = createCell(row, cellNum, cellStyle, cellValue);
+        String stringValue = value != null ? value.toString() : nullSymbol;
+        Cell cell = createCell(row, cellNum, cellStyle, stringValue);
         if (isNumeric) {
             cell.setCellType(CellType.NUMERIC);
-            if (cellValue.isEmpty()) {
-                cell.setCellValue(0);
-            } else if (value instanceof Integer) {
-                cell.setCellValue((Integer) value);
+            if (value != null) {
+                if (value instanceof Integer) {
+                    cell.setCellValue((Integer) value);
+                } else {
+                    cell.setCellValue(Double.valueOf(stringValue));
+                }
             } else {
-                cell.setCellValue(Double.valueOf(cellValue));
+                // необходимо явно задать значение, иначе не получим ожидаемого
+                cell.setCellValue(nullSymbol);
+                // также зададим стиль для выравнивания по правому краю
+                cell.setCellStyle(bigDecimalStyle);
             }
         }
     }

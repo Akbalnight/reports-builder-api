@@ -13,12 +13,12 @@ import java.text.DecimalFormat;
  * @author Kotelnikova Polina
  */
 public class PdfExportUtils {
-    public static final float PAGE_PADDING_LEFT = 20;
-    public static final float PAGE_PADDING_RIGHT = 20;
-    public static final Rectangle PAGE_FORMAT = PageSize.A4.rotate();
-    public static final float PAGE_WIDTH = PAGE_FORMAT.getWidth();
+    private static final float PAGE_PADDING_LEFT = 20;
+    private static final float PAGE_PADDING_RIGHT = 20;
+    private static final Rectangle PAGE_FORMAT = PageSize.A4.rotate();
+    private static final float PAGE_WIDTH = PAGE_FORMAT.getWidth();
     public static final float PAGE_VISIBLE_WIDTH = PAGE_WIDTH - PAGE_PADDING_LEFT - PAGE_PADDING_RIGHT;
-    private static final String EMPTY = "----";
+
     private static final FastDateFormat DAY_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy");
     private static final FastDateFormat DATE_TIME_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
@@ -30,7 +30,7 @@ public class PdfExportUtils {
         document.add(spacer);
     }
 
-    public static Font getFont(boolean bold, boolean italic, int size) {
+    private static Font getFont(boolean bold, boolean italic, int size) {
         String font;
         if (bold && italic) {
             font = "fonts/FreeSansBoldOblique.ttf";
@@ -69,7 +69,7 @@ public class PdfExportUtils {
         return cell;
     }
 
-    public static PdfPCell cell(String text, int padding, int colspan, int rowspan, boolean withoutBorder, Font font) {
+    private static PdfPCell cell(String text, int padding, int colspan, int rowspan, boolean withoutBorder, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
         if (withoutBorder) {
             cell.setBorder(0);
@@ -94,10 +94,6 @@ public class PdfExportUtils {
         document.add(table);
     }
 
-    public static void addCell(PdfPTable table, String text) {
-        addCell(table, text, NORMAL_FONT);
-    }
-
     public static void addCell(PdfPTable table, String text, Font font) {
         PdfPCell cell = cell(text, font);
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -113,8 +109,13 @@ public class PdfExportUtils {
     }
 
 
-    public static void addBigDecimalCell(PdfPTable table, BigDecimal bigDecimal, Font font) {
-        PdfPCell cell = cell(bigDecimalAsText(bigDecimal), font);
+    public static void addBigDecimalCell(PdfPTable table, Object cellValue, Font font, String nullSymbol) {
+        PdfPCell cell;
+        if (cellValue != null && !cellValue.toString().isEmpty()) {
+            cell = cell(bigDecimalAsText(BigDecimal.valueOf(Double.valueOf(cellValue.toString()))), font);
+        } else {
+            cell = cell(nullSymbol, font);
+        }
         cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         cell.setPaddingBottom(3);
@@ -129,11 +130,7 @@ public class PdfExportUtils {
         table.addCell(cell);
     }
 
-    public static String bigDecimalAsText(BigDecimal value) {
-        if (value == null) {
-            return EMPTY;
-        }
-
+    private static String bigDecimalAsText(BigDecimal value) {
         DecimalFormat decimalFormat = new DecimalFormat();
         decimalFormat.setMaximumFractionDigits(2);
         decimalFormat.setMinimumFractionDigits(2);
