@@ -195,7 +195,7 @@ public class ReportService extends AbstractService<Report> {
             for (int i = 0; i < select.length; i++) {
                 ColumnWithType nonTranslatedColumnWithType = columnWithTypeByColumn(select[i].getColumn(), columnTypesMap);
                 ColumnWithType columnWithType = ColumnWithType.builder()
-                        .column(tablesService.toRussianTableAndColumn(select[i].getColumn()))
+                        .column(select[i].getColumn())
                         .title(select[i].getTitle())
                         .type(nonTranslatedColumnWithType.getType())
                         .build();
@@ -257,7 +257,7 @@ public class ReportService extends AbstractService<Report> {
             List<TotalValue> totalRecord = new ArrayList<>();
             rs.next();
             for (int i = 1; i <= columnCount; i++) {
-                totalRecord.add(new TotalValue(tablesService.toRussianTableAndColumn(aggregations[i - 1].getColumn()), rs.getObject(i)));
+                totalRecord.add(new TotalValue(aggregations[i - 1].getColumn(), rs.getObject(i)));
             }
             return totalRecord;
         };
@@ -325,7 +325,7 @@ public class ReportService extends AbstractService<Report> {
         Map<String, List<ColumnWithType>> result = new HashMap<>();
         Set<String> tableNames = tablesService.extractTableNames(descriptor);
         for(String tableName: tableNames) {
-            result.put(tableName, reportBuilderService.getTableDescription(tableName));
+            result.put(tableName, reportBuilderService.getTableDescription(tableName, false));
         }
         return result;
     }
