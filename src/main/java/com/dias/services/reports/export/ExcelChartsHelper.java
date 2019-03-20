@@ -262,7 +262,7 @@ class ExcelChartsHelper {
             chart = addBarChart(xssfChart.getCTChart().getPlotArea(), STBarDir.COL);
         } else {
             Integer categoryRsColumnIndex = rs.getColumnsMap().get(chartDescriptor.getAxisXColumn());
-            if (rs.getNumericColumnsIndexes().contains(categoryRsColumnIndex)) {
+            if (rs.getNumericColumnsIndexes().contains(categoryRsColumnIndex) || rs.getDateColumnsIndexes().contains(categoryRsColumnIndex)) {
                 chart = addScatterChart(xssfChart.getCTChart().getPlotArea());
             } else {
                 chart = addLineChart(xssfChart.getCTChart().getPlotArea());
@@ -377,6 +377,7 @@ class ExcelChartsHelper {
 
         Integer categoryRsColumnIndex = rsColumnsMap.get(chartDescriptor.getAxisXColumn());
         boolean isCategoryAxisNumeric = rs.getNumericColumnsIndexes().contains(categoryRsColumnIndex);
+        boolean isCategoryAxisDate = rs.getDateColumnsIndexes().contains(categoryRsColumnIndex);
 
         //val axis
         CTValAx ctValAx = plotArea.addNewValAx();
@@ -390,7 +391,7 @@ class ExcelChartsHelper {
         }
 
         //cat axis
-        IAxisX ctCatAx = chart.addAxisX(plotArea, isCategoryAxisNumeric);
+        IAxisX ctCatAx = chart.addAxisX(plotArea, isCategoryAxisNumeric || isCategoryAxisDate);
         ctCatAx.addNewAxId().setVal(AXIS_X_ID); //id of the cat axis
         ctCatAx.addNewDelete().setVal(false);
         ctCatAx.addNewAxPos().setVal(STAxPos.B);
@@ -476,8 +477,8 @@ class ExcelChartsHelper {
         // подгон минимума и максимума значений - алогоритм аналогичен конструктору отчета (UI)
         if (minmax[0] > Double.MIN_NORMAL) {
             double margin = Math.abs((minmax[1] - minmax[0]) / 15);
-            double lower = ((long) ((minmax[0] - margin) * 100)) / 100;
-            double upper = ((long) ((minmax[1] + margin) * 100)) / 100;
+            double lower = Math.floor((minmax[0] - margin) * 100) / 100;
+            double upper = Math.floor((minmax[1] + margin) * 100) / 100;
             minmax[0] = lower;
             minmax[1] = upper;
         }
