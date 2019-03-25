@@ -154,7 +154,7 @@
       "step_save": "Час"
     }
   },
-  "history_day_data": {
+  "history_values_by_day": {
     "title": "Данные по дневным ведомостям",
     "ignoreFields": [
       "time_get_data",
@@ -240,7 +240,7 @@
       "weight_supply_all_time": "Масса теплоносителя подающего трубопровода, накопительное значение"
     }
   },
-  "history_hour_data": {
+  "history_values_by_hour": {
     "title": "Данные по часовым ведомостям",
     "ignoreFields": [
       "time_get_data",

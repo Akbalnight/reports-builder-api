@@ -8,12 +8,12 @@
     "rule":"protocol.id = data_protocol.protocol_id"
   },
   {
-    "tables":["day_statement","history_day_data"],
-    "rule":"day_statement.id = history_day_data.statement_id"
+    "tables":["day_statement","history_values_by_day"],
+    "rule":"day_statement.id = history_values_by_day.statement_id"
   },
   {
-    "tables":["hour_statement","history_hour_data"],
-    "rule":"hour_statement.id = history_hour_data.statement_id"
+    "tables":["hour_statement","history_values_by_hour"],
+    "rule":"hour_statement.id = history_values_by_hour.statement_id"
   },
   {
     "tables":["generation_object","generation_object_type"],
