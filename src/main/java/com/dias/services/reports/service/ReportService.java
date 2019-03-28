@@ -263,7 +263,7 @@ public class ReportService extends AbstractService<Report> {
             List<TotalValue> totalRecord = new ArrayList<>();
             rs.next();
             for (int i = 1; i <= columnCount; i++) {
-                totalRecord.add(new TotalValue(tablesService.toRussianTableAndColumn(aggregations[i - 1].getColumn()), rs.getObject(i)));
+                totalRecord.add(new TotalValue(aggregations[i - 1].getColumn(), rs.getObject(i)));
             }
             return totalRecord;
         };
@@ -317,23 +317,6 @@ public class ReportService extends AbstractService<Report> {
         Report report = convertToBO(reportDTO);
         create(report);
         reportDTO.setId(report.getId());
-    }
-
-    /**
-     *
-     * Получаем сопоставление имя таблицы -> список колонок с типами по
-     * описанию запроса
-     *
-     * @param descriptor Описание запроса
-     * @return Сопоставление имя таблицы -> список колонок с типами
-     */
-    public Map<String, List<ColumnWithType>> getColumnTypesMap(QueryDescriptor descriptor) {
-        Map<String, List<ColumnWithType>> result = new HashMap<>();
-        Set<String> tableNames = tablesService.extractTableNames(descriptor);
-        for(String tableName: tableNames) {
-            result.put(tableName, reportBuilderService.getTableDescription(tableName));
-        }
-        return result;
     }
 
     public ChartDescriptor extractChartDescriptor(ReportDTO reportDTO) throws IOException {

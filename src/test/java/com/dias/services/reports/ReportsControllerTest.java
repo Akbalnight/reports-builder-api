@@ -43,15 +43,13 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
 
     @Test
     public void order010createNewReport() throws Exception {
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/reports//analytics/reports")
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(Util.readResource("ReportsController/report.json")))
                 .andExpect(status().isCreated()).andReturn();
         Map resultMap = new JacksonJsonParser().parseMap(result.getResponse().getContentAsString());
         createdReportId = (Integer) resultMap.get("id");
         Assert.assertNotNull(createdReportId);
-        Map queryDescriptor = (Map) resultMap.get("queryDescriptor");
-        Assert.assertEquals("Данные по дневным ведомостям", queryDescriptor.get("table"));
     }
 
     @Test
@@ -102,9 +100,9 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
         ResultSet data = objectMapper.readerFor(ResultSet.class).readValue(previewResult.getResponse().getContentAsString());
         List<List<Object>> rows = data.getRows();
         List<ColumnWithType> headers = data.getHeaders();
-        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("ABNORMAL_WORKTIME")).count());
-        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("HEAT_PIPE")).count());
-        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("DATE_FROM")).count());
+        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("history_values_by_day.abnormal_worktime")).count());
+        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("history_values_by_day.heat_pipe")).count());
+        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("day_statement.date_from")).count());
 
         Assert.assertNotNull(rows);
         Assert.assertEquals(1, rows.size());
@@ -132,13 +130,13 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
         List<ColumnWithType> headers = data.getHeaders();
         List<TotalValue> totalRow = data.getTotal();
 
-        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("ABNORMAL_WORKTIME")).count());
-        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("HEAT_PIPE")).count());
-        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("DATE_FROM")).count());
+        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("history_values_by_day.abnormal_worktime")).count());
+        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("history_values_by_day.heat_pipe")).count());
+        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("day_statement.date_from")).count());
 
         TotalValue totalValue = totalRow.get(0);
         Assert.assertEquals(1794.94, totalValue.getValue());
-        Assert.assertEquals("heat_pipe", totalValue.getColumn());
+        Assert.assertEquals("history_values_by_day.heat_pipe", totalValue.getColumn());
 
     }
 
@@ -152,13 +150,13 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
         List<ColumnWithType> headers = data.getHeaders();
         List<TotalValue> totalRow = data.getTotal();
 
-        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("ABNORMAL_WORKTIME")).count());
-        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("HEAT_PIPE")).count());
-        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("DATE_FROM")).count());
+        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("history_values_by_day.abnormal_worktime")).count());
+        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("history_values_by_day.heat_pipe")).count());
+        Assert.assertEquals(1, headers.stream().filter(column -> column.getColumn().equalsIgnoreCase("day_statement.date_from")).count());
 
         TotalValue totalValue = totalRow.get(0);
         Assert.assertEquals(1794.94, totalValue.getValue());
-        Assert.assertEquals("heat_pipe", totalValue.getColumn());
+        Assert.assertEquals("history_values_by_day.heat_pipe", totalValue.getColumn());
 
     }
     @Test()
