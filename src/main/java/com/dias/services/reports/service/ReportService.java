@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.sql.ResultSetMetaData;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -192,11 +193,11 @@ public class ReportService extends AbstractService<Report> {
             List<ColumnWithType> headers = new ArrayList<>();
             Select[] select = queryDescriptor.getSelect();
 
-            for (int i = 0; i < select.length; i++) {
-                ColumnWithType nonTranslatedColumnWithType = columnWithTypeByColumn(select[i].getColumn(), columnTypesMap);
+            for (Select aSelect : select) {
+                ColumnWithType nonTranslatedColumnWithType = columnWithTypeByColumn(aSelect.getColumn(), columnTypesMap);
                 ColumnWithType columnWithType = ColumnWithType.builder()
-                        .column(tablesService.toRussianTableAndColumn(select[i].getColumn()))
-                        .title(select[i].getTitle())
+                        .column(tablesService.toRussianTableAndColumn(aSelect.getColumn()))
+                        .title(aSelect.getTitle())
                         .type(nonTranslatedColumnWithType.getType())
                         .build();
                 headers.add(columnWithType);
@@ -208,7 +209,12 @@ public class ReportService extends AbstractService<Report> {
             while (rs.next()) {
                 List<Object> listColumns = new ArrayList<>();
                 for (int i = 1; i <= columnCount; i++) {
-                    listColumns.add(rs.getObject(i));
+                    Object columnValue = rs.getObject(i);
+                    if (columnValue instanceof Timestamp) {
+                        listColumns.add(((Timestamp) columnValue).toLocalDateTime());
+                    } else {
+                        listColumns.add(columnValue);
+                    }
                 }
                 listRows.add(listColumns);
             }
