@@ -7,7 +7,6 @@ import com.dias.services.reports.report.query.Calculation;
 import com.dias.services.reports.report.query.Condition;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
 import com.dias.services.reports.service.ReportService;
-import com.dias.services.reports.subsystem.ColumnWithType;
 import com.dias.services.reports.translation.Translator;
 import com.itextpdf.text.*;
 import com.itextpdf.text.Font;
@@ -37,11 +36,11 @@ import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
 
@@ -117,7 +116,7 @@ public class ReportPdfWriter {
 
             //Определим, какого типа датасет нужно будет использовать
             DefaultCategoryDataset defaultCategoryDataset = null;
-            SimpleDateFormat[] dateFormat = {null};
+            DateFormatWithPattern[] dateFormat = {null};
             XYDataset xyDataSet = null;
             double[] xMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
             double[] yMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
@@ -293,7 +292,7 @@ public class ReportPdfWriter {
             Map<String, Integer> columnMap,
             ChartDescriptor chartDescriptor,
             boolean withSummary,
-            final SimpleDateFormat[] dateFormat,
+            final DateFormatWithPattern[] dateFormat,
             boolean categoryIsDate,
             double[] xMinMax,
             double[] yMinMax) {
@@ -318,9 +317,9 @@ public class ReportPdfWriter {
                     Object categoryValue = row.get(categoryColumnIndex);
                     Number categoryNumber = null;
                     if (categoryIsDate) {
-                        Date value = toDate(dateFormat, categoryValue);
-                        if (value != null) {
-                            categoryNumber = value.getTime();
+                        resolveDateFormat(dateFormat, categoryValue);
+                        if (categoryValue != null && categoryValue instanceof LocalDateTime) {
+                            categoryNumber = ((LocalDateTime) categoryValue).toInstant(ZoneOffset.UTC).toEpochMilli();
                         } else {
                             categoryNumber = new Date(0).getTime();
                         }
@@ -401,20 +400,13 @@ public class ReportPdfWriter {
         return ds;
     }
 
-    private static Date toDate(SimpleDateFormat[] dateFormat, Object value) {
+    private static void resolveDateFormat(DateFormatWithPattern[] dateFormat, Object value) {
         if (dateFormat[0] == null && value != null) {
             String pattern = ExportChartsHelper.calculateDateFormatPattern(value.toString());
             if (pattern != null) {
-                dateFormat[0] = new SimpleDateFormat(pattern);
+                dateFormat[0] = new DateFormatWithPattern(pattern);
             }
         }
-        if (dateFormat[0] != null && value != null) {
-            try {
-                return dateFormat[0].parse(value.toString());
-            } catch (ParseException ignore) {
-            }
-        }
-        return null;
     }
 
     private void colorize(JFreeChart chart, ChartDescriptor chartDescriptor, boolean isCategory) {
@@ -545,7 +537,7 @@ public class ReportPdfWriter {
             PlotOrientation orientation,
             boolean legend,
             boolean categoryIsDate,
-            SimpleDateFormat[] dateFormat) {
+            DateFormatWithPattern[] dateFormat) {
 
         if (orientation == null) {
             throw new IllegalArgumentException("Null 'orientation' argument.");
@@ -568,7 +560,7 @@ public class ReportPdfWriter {
                                                XYDataset dataset,
                                                PlotOrientation orientation,
                                                boolean legend,
-                                               SimpleDateFormat[] dateFormat) {
+                                               DateFormatWithPattern[] dateFormat) {
         if (orientation == null) {
             throw new IllegalArgumentException("Null 'orientation' argument.");
         } else {
@@ -583,11 +575,11 @@ public class ReportPdfWriter {
         }
     }
 
-    private static ValueAxis getValueAxisForXYChart(String xAxisLabel, boolean dateAxis, SimpleDateFormat[] dateFormat) {
+    private static ValueAxis getValueAxisForXYChart(String xAxisLabel, boolean dateAxis, DateFormatWithPattern[] dateFormat) {
         ValueAxis domainAxis;
         if (dateAxis) {
             domainAxis = new DateAxis(xAxisLabel);
-            ((DateAxis) domainAxis).setDateFormatOverride(dateFormat[0]);
+            ((DateAxis) domainAxis).setDateFormatOverride(dateFormat[0].toClassicFormat());
         } else {
             domainAxis = new NumberAxis(xAxisLabel);
             ((NumberAxis)domainAxis).setAutoRangeIncludesZero(false);

@@ -17,12 +17,9 @@ import org.apache.poi.xssf.usermodel.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static com.dias.services.reports.utils.ExcelExportUtils.createCell;
@@ -197,7 +194,6 @@ public class ReportExcelWriter {
         List<Integer> numericTypeColumnsIndexes = rs.getNumericColumnsIndexes();
         List<List<Object>> rows = rs.getRows();
         String dateFormatPattern = null;
-        SimpleDateFormat dateFormat = null;
         for (int i = 0; i < rows.size(); i++) {
             List<Object> r = rows.get(i);
             XSSFRow xlsRow = sheet.createRow(rowNum++);
@@ -231,12 +227,8 @@ public class ReportExcelWriter {
                         if (dateFormatPattern == null && data != null) {
                             dateFormatPattern = ExportChartsHelper.calculateDateFormatPattern(data.toString());
                         }
-                        if (dateFormat == null && dateFormatPattern != null) {
-                            dateFormat = new SimpleDateFormat(dateFormatPattern);
-                        }
-
-                        if (dateFormat != null) {
-                            writeDateValue(xlsRow, dataRowCellNum++, data, style, dateFormatPattern, dateFormat);
+                        if (dateFormatPattern != null) {
+                            writeDateValue(xlsRow, dataRowCellNum++, data, style, dateFormatPattern);
                         } else {
                             writeNumericOrStringCell(xlsRow, dataRowCellNum++, data, style, false);
                         }
@@ -318,26 +310,28 @@ public class ReportExcelWriter {
         }
     }
 
-    private void writeDateValue(XSSFRow row, int cellNum, Object value, CellStyle defaultStyle, String dateFormatPattern, SimpleDateFormat dateFormat) {
+    private void writeDateValue(XSSFRow row, int cellNum, Object value, CellStyle defaultStyle, String dateFormatPattern) {
         String cellValue = value != null ? value.toString() : "";
         Cell cell = createCell(row, cellNum, defaultStyle, cellValue);
+        if (value != null && value instanceof LocalDateTime) {
+            // данные из базы приходят в формате LocalDateTime
+            // POI же работает со строковыми типами, Календарем и с Date из util
+            // наша задача преобразовать в Календарь
+            long timemills = ((LocalDateTime) value).toInstant(ZoneOffset.UTC).toEpochMilli();
+            Calendar cal = new GregorianCalendar();
+            cal.setTimeInMillis(timemills);
+            cal.setTimeZone(TimeZone.getTimeZone("UTC"));
+            cell.setCellValue(cal);
+        }
+
+
         if (dateFormatPattern == null) {
             dateFormatPattern = ExportChartsHelper.calculateDateFormatPattern(cellValue);
         }
-        if (dateFormat == null && dateFormatPattern != null) {
-            dateFormat = new SimpleDateFormat(dateFormatPattern);
-        }
-        if (dateFormat != null) {
-            try {
-                Date dateValue = dateFormat.parse(cellValue);
-                cell.setCellValue(dateValue);
-                XSSFCellStyle style = createCellStyle(workbook, defaultFont, dataFormat.getFormat(dateFormatPattern));
-                addThinBordersToStyle(style);
-                cell.setCellStyle(style);
-            } catch (ParseException e) {
-                cell.setCellValue(cellValue);
-            }
-
+        if (dateFormatPattern != null) {
+            XSSFCellStyle style = createCellStyle(workbook, defaultFont, dataFormat.getFormat(dateFormatPattern));
+            addThinBordersToStyle(style);
+            cell.setCellStyle(style);
         }
     }
 
