@@ -16,22 +16,21 @@
   "isFavorite": true,
   "isPublic": true,
   "queryDescriptor": {
-    "table": "Данные по дневным ведомостям",
     "select": [
       {
-        "column": "abnormal_worktime",
+        "column": "history_values_by_day.abnormal_worktime",
         "title": "abnormalWorktime",
         "sortable": false,
         "filterable": false
       },
       {
-        "column": "heat_pipe",
+        "column": "history_values_by_day.heat_pipe",
         "title": "heatPipe",
         "sortable": false,
         "filterable": false
       },
       {
-        "column": "date_from",
+        "column": "day_statement.date_from",
         "title": "Дата с",
         "sortable": false,
         "filterable": false
@@ -39,12 +38,12 @@
     ],
     "orderBy": [
       {
-        "column": "abnormal_context",
+        "column": "history_values_by_day.abnormal_context",
         "title": null,
         "order": null
       },
       {
-        "column": "pipeline_id",
+        "column": "day_statement.pipeline_id",
         "title": null,
         "order": null
       }
@@ -57,7 +56,7 @@
         "value": null,
         "operand": "and",
         "left": {
-          "column": "abnormal_worktime",
+          "column": "history_values_by_day.abnormal_worktime",
           "title": null,
           "operator": ">",
           "value": 0,
@@ -66,7 +65,7 @@
           "right": null
         },
         "right": {
-          "column": "abnormal_worktime",
+          "column": "history_values_by_day.abnormal_worktime",
           "title": null,
           "operator": "<",
           "value": 99999,
@@ -78,12 +77,12 @@
     ],
     "aggregations": [
       {
-        "column": "heat_pipe",
+        "column": "history_values_by_day.heat_pipe",
         "title": "Сумма heat_pipe",
         "function": "sum"
       },
       {
-        "column": "abnormal_worktime",
+        "column": "history_values_by_day.abnormal_worktime",
         "title": "Сумма abnormal_worktime",
         "function": "sum"
       }

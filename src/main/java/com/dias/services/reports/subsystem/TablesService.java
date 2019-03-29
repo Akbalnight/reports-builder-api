@@ -199,9 +199,5 @@ public class TablesService {
         return rule;
     }
 
-    public String toRussianTableAndColumn(String column) {
-        String[] parts = column.split("\\.");
-        return parts.length == 2 ? getTableTitleByName(parts[0]) + "." + parts[1] : column;
-    }
 
 }

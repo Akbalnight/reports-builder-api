@@ -2,10 +2,10 @@
   "substitution_alg": {
     "title": "Алгоритмы расчёта замещающих значений",
     "ignoreFields": [
-      "key"
+      "key",
+      "id"
     ],
     "translations": {
-      "id": "Идентификатор",
       "module_version": "Версия модуля",
       "update_date": "Дата обновления",
       "alg_name": "Наименование алгоритма",
@@ -14,44 +14,47 @@
     }
   },
   "substitution_values": {
-    "title": "Значения расчёта замещающих значений",
+    "title": "Данные по расчетам замещающих значений",
     "ignoreFields": [
       "generation_object_id",
       "pipeline_id",
-      "statement_id"
+      "statement_id",
+      "id",
+      "highway_id",
+      "substitution_algorithm_id"
     ],
     "translations": {
-      "id": "Идентификатор",
-      "substitution_algorithm_id": "Идентификатор алгоритма",
       "create_date": "Дата создания",
       "update_date": "Дата обновления",
       "date_from": "Дата, с",
       "date_to": "Дата, по",
       "problem_duration": "Время нештатной ситуации",
-      "generation_object_full_name": "Имя объекта генерации",
+      "generation_object_full_name": "Объект генерации",
       "pipeline_full_name": "Имя трубопровода",
-      "description": "Описание",
+      "description": "Комментарий",
       "heat": "Тепло",
       "weight": "Масса",
       "volume": "Объем",
-      "status": "Статус"
+      "status": "Статус",
+      "highway_full_name": "Магистраль"
     }
   },
   "protocol": {
     "title": "Протоколы",
     "ignoreFields": [
-      "generation_object_id"
+      "generation_object_id",
+      "id"
     ],
     "translations": {
-      "id": "Идентификатор",
       "name": "Наименование протокола",
       "create_time": "Дата создания",
-      "generation_object_full_name": "Имя объекта генерации",
+      "generation_object_full_name": "Полное имя объекта генерации",
       "generation_object_address": "Адрес объекта генерации",
-      "step_save": "Шаг архива",
+      "step_save": "Сутки",
       "date_from": "Дата, с",
       "date_to": "Дата, по",
-      "formula": "Формула расчета"
+      "formula": "Формула расчета",
+      "generation_object_short_name": "Краткое имя объекта генерации"
     }
   },
   "data_protocol": {
@@ -63,26 +66,26 @@
       "weight_eon_receive",
       "enthalpy_eon_supply_midweight",
       "enthalpy_eon_receive_midweight",
-      "negative_eon_pipes"
+      "negative_eon_pipes",
+      "loss_percent"
     ],
     "translations": {
       "id": "Идентификатор",
       "protocol_id": "Ссылка на протокол",
-      "weight_main_pipes_supply": "Масса сетевой воды маг.",
-      "weight_main_pipes_receive": "Масса сетевой воды маг.",
-      "temp_main_pipes_supply_midweight": "Температура ср/вз маг.",
-      "temp_main_pipes_receive_midweight": "Температура ср/вз маг.",
+      "weight_main_pipes_supply": "Масса сетевой воды маг. (М2)",
+      "weight_main_pipes_receive": "Масса сетевой воды маг. (М1)",
+      "temp_main_pipes_supply_midweight": "Температура ср/вз маг. (t2)",
+      "temp_main_pipes_receive_midweight": "Температура ср/вз маг. (t1)",
       "heat_main_pipes": "Тепловая энергия маг.",
       "heat_feedline": "Тепловая энергия подп.",
       "heat_main_pipes_and_feeds": "Тепловая энергия отпущен.",
-      "heat_all_eon_pipes": "Тепловая энергия ХБН",
+      "heat_all_eon_pipes": "Тепловая энергия ХН и СН",
       "heat_all_pipes_supply": "Тепловая энергия выработан.",
       "weight_feed_main": "Масса осн. подпитки",
       "weight_feed_emergency": "Масса авар. подпитки",
       "weight_feed_main_incl_losses": "Масса подпитки т/с",
-      "weigh_feed_all_eon": "Масса подпитки ХБН",
-      "weight_thps_losses": "Масса потерей ТЭЦ",
-      "loss_percent": "Баланс",
+      "weigh_feed_all_eon": "Масса подпитки ХН и СН",
+      "weight_thps_losses": "Масса потерь ТЭЦ",
       "temp_coldwater_avg": "Темп. хол. воды",
       "date": "Дата / время"
     }
@@ -96,10 +99,12 @@
       "generation_object_id",
       "pipeline_id",
       "highway_id",
-      "type_pipeline_id"
+      "type_pipeline_id",
+      "protocol_id",
+      "type_highway_id",
+      "id"
     ],
     "translations": {
-      "id": "Идентификатор",
       "name_statement": "Наименование ведомости",
       "create_time": "Дата создания",
       "consumer": "Потребитель",
@@ -111,9 +116,11 @@
       "generation_object_address": "Адрес объекта генерации",
       "heat_system": "Тепловая система",
       "number_md": "Номер вычислителя",
-      "pipeline_name": "Наименование трубопровода",
-      "highway_name": "Наименование магистрали",
-      "step_save": "Шаг архива"
+      "pipeline_name": "Трубопровод/паропровод",
+      "highway_name": "Магистраль",
+      "step_save": "Сутки",
+      "fill_status": "Тип заполняемых данных",
+      "manual_fill_type": "Тип ручного заполнения"
     }
   },
   "hour_statement": {
@@ -125,10 +132,12 @@
       "generation_object_id",
       "pipeline_id",
       "highway_id",
-      "type_pipeline_id"
+      "type_pipeline_id",
+      "id",
+      "protocol_id",
+      "type_highway_id"
     ],
     "translations": {
-      "id": "Идентификатор",
       "name_statement": "Наименование ведомости",
       "create_time": "Дата создания",
       "consumer": "Потребитель",
@@ -140,12 +149,12 @@
       "generation_object_address": "Адрес объекта генерации",
       "heat_system": "Тепловая система",
       "number_md": "Номер вычислителя",
-      "pipeline_name": "Наименование трубопровода",
-      "highway_name": "Наименование магистрали",
-      "step_save": "Шаг архива"
+      "pipeline_name": "Трубопровод/паропровод",
+      "highway_name": "Магистраль",
+      "step_save": "Час"
     }
   },
-  "history_day_data": {
+  "history_values_by_day": {
     "title": "Данные по дневным ведомостям",
     "ignoreFields": [
       "time_get_data",
@@ -153,13 +162,15 @@
       "time_write_data",
       "metering_device_id",
       "pipeline_id",
-      "statement_id"
+      "statement_id",
+      "highway_id",
+      "id"
     ],
     "translations": {
-      "id": "Идентификатор",
+      "heat_energy_cold_water_all_time": "Тепловая энергия холодной воды, накопительное значение",
       "abnormal_context": "Нештатные ситуации (ошибки)",
       "abnormal_worktime": "Время нешт.сит.",
-      "abnormal_worktime_all_time": "Время нешт.сит.(интегральное)",
+      "abnormal_worktime_all_time": "Время нештатных ситуаций, накопительное значение",
       "baro_press": "Баром. давл. наруж. воздуха",
       "coldwater_temp": "Темп. хол. воды",
       "date_from": "Дата, с",
@@ -198,7 +209,7 @@
       "press_steam": "Давление в трубопроводе подачи пара",
       "press_supply": "Давление в подающем трубопровода",
       "regular_worktime": "Время штатной работы",
-      "regular_worktime_all_time": "Время штатной работы",
+      "regular_worktime_all_time": "Время штатной работы, накопительное значение",
       "return_rate": "Коэффициент возврата (от 0 до 1)",
       "temp_cond_return": "Температура теплоносителя трубопровода возврата конденсата",
       "temp_feed": "Температура теплоносителя трубопровода подпитки",
@@ -229,7 +240,7 @@
       "weight_supply_all_time": "Масса теплоносителя подающего трубопровода, накопительное значение"
     }
   },
-  "history_hour_data": {
+  "history_values_by_hour": {
     "title": "Данные по часовым ведомостям",
     "ignoreFields": [
       "time_get_data",
@@ -237,13 +248,15 @@
       "time_write_data",
       "metering_device_id",
       "pipeline_id",
-      "statement_id"
+      "statement_id",
+      "id",
+      "highway_id"
     ],
     "translations": {
-      "id": "Идентификатор",
+      "heat_energy_cold_water_all_time":"Тепловая энергия холодной воды, накопительное значение",
       "abnormal_context": "Нештатные ситуации (ошибки)",
       "abnormal_worktime": "Время нешт.сит.",
-      "abnormal_worktime_all_time": "Время нешт.сит.(интегральное)",
+      "abnormal_worktime_all_time": "Время нештатных ситуаций, накопительное значение",
       "baro_press": "Баром. давл. наруж. воздуха",
       "coldwater_temp": "Темп. хол. воды",
       "date_from": "Дата, с",
@@ -282,7 +295,7 @@
       "press_steam": "Давление в трубопроводе подачи пара",
       "press_supply": "Давление в подающем трубопровода",
       "regular_worktime": "Время штатной работы",
-      "regular_worktime_all_time": "Время штатной работы",
+      "regular_worktime_all_time": "Время штатной работы, накопительное значение",
       "return_rate": "Коэффициент возврата (от 0 до 1)",
       "temp_cond_return": "Температура теплоносителя трубопровода возврата конденсата",
       "temp_feed": "Температура теплоносителя трубопровода подпитки",
@@ -315,10 +328,13 @@
   },
   "consumer": {
     "title": "Потребители",
+    "ignoreFields": [
+      "id"
+    ],
     "translations": {
-      "id": "Идентификатор",
-      "full_name": "Полное наименование",
-      "short_name": "Краткое наименование"
+      "full_name": "Полное наименование потребителя",
+      "short_name": "Краткое наименование потребителя",
+      "consumer_group": "Группа потребителя"
     }
   },
   "generation_object": {
@@ -327,14 +343,15 @@
       "parent_generation_object_id",
       "generation_object_type_id",
       "photo",
-      "type_scheme_id"
+      "type_scheme_id",
+      "photo_id",
+      "id"
     ],
     "translations": {
-      "id": "Идентификатор",
       "tpp_representative_post": "Должность представителя ТЭЦ",
       "tpp_representative_fio": "ФИО представителя ТЭЦ",
-      "full_name": "Полное нименование",
-      "short_name": "Кратное наименование",
+      "full_name": "Полное наименование объекта генерации",
+      "short_name": "Краткое наименование объекта генерации",
       "address": "Адрес",
       "commissioning_date": "Дата ввода в эксплуатацию",
       "specified_electrical_power": "Установленная электрическая мощность",
@@ -353,10 +370,12 @@
   },
   "generation_object_type": {
     "title": "Тип объекта генерации",
+    "ignoreFields": [
+      "id"
+    ],
     "translations": {
-      "id": "Идентификатор",
-      "full_name": "Полное наименование",
-      "short_name": "Краткое наименование"
+      "full_name": "Полное наименование типа объекта генерации",
+      "short_name": "Краткое наименование типа объекта генерации"
     }
   },
   "pipeline": {
@@ -370,15 +389,19 @@
       "type_scheme_id",
       "assignment_highway_id",
       "direction_highway_id",
-      "measured_medium_id"
+      "measured_medium_id",
+      "id",
+      "highway_id",
+      "heat_carrier"
     ],
     "translations": {
-      "id": "Идентификатор",
       "heat_system": "Тепловая система",
-      "full_name": "Полное наименование",
-      "heat_carrier": "Теплоноситель",
+      "full_name": "Наименование трубопровода",
       "pipeline_calc_heat_formula": "Формула тепловой энергии трубопровода",
-      "highway_calc_heat_formula": "Формула тепловой энергии магистрали"
+      "highway_calc_heat_formula": "Формула тепловой энергии магистрали",
+      "g_min": "Расход минимальный",
+      "g_max": "Расход максимальный",
+      "type_fill_data": "Тип заполняемых данных"
     }
   }
 }

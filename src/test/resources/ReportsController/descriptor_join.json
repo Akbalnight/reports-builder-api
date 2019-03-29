@@ -1,11 +1,11 @@
 {
   "select": [
     {
-      "column":"Ведомости по дням.name_statement",
+      "column":"day_statement.name_statement",
       "title":"Наименование ведомости"
     },
     {
-      "column":"Данные по дневным ведомостям.abnormal_context",
+      "column":"history_values_by_day.abnormal_context",
       "title":"Нештатные ситуации (ошибки)"
     }
   ]

@@ -73,7 +73,7 @@ public class ReportBuilderService extends AbstractService<SubSystem> {
     }
 
 
-    public List<ColumnWithType> getTableDescription(String tableName) {
+    public List<ColumnWithType> getTableDescription(String tableName, boolean filterIgnorableFields) {
         List<ColumnWithType> columns = template.query(String.format(TABLE_STRUCTURE_QUERY, tableName), new RowMapper<ColumnWithType>() {
             @Nullable
             @Override
@@ -110,12 +110,16 @@ public class ReportBuilderService extends AbstractService<SubSystem> {
                         .build();
             }
         });
-        columns = columns.stream().filter(columnWithType -> !tablesService.isColumnIgnoredInTable(columnWithType, tableName)).collect(Collectors.toList());
+
+        if (filterIgnorableFields) {
+            columns = columns.stream().filter(columnWithType -> !tablesService.isColumnIgnoredInTable(columnWithType, tableName)).collect(Collectors.toList());
+        }
+
         return columns;
     }
 
     public Map<String, ColumnWithType> getTableColumnsDescription(String tableName) {
-        List<ColumnWithType> columns = getTableDescription(tableName);
+        List<ColumnWithType> columns = getTableDescription(tableName, false);
         return columns.stream().collect(Collectors.toMap(ColumnWithType::getColumn, Function.identity()));
     }
 
