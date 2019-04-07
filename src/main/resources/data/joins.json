@@ -4,8 +4,8 @@
     "rule":"substitution_alg.id = substitution_values.substitution_algorithm_id"
   },
   {
-    "tables":["protocol","data_protocol"],
-    "rule":"protocol.id = data_protocol.protocol_id"
+    "tables":["protocol","protocol_data"],
+    "rule":"protocol.id = protocol_data.protocol_id"
   },
   {
     "tables":["day_statement","history_values_by_day"],

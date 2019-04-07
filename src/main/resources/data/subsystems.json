@@ -37,14 +37,14 @@
         "name": "Протоколы",
         "displayName":"Протоколы",
         "join": [
-          ["protocol","data_protocol"]
+          ["protocol","protocol_data"]
         ],
         "children": [
           {
             "name":"protocol"
           },
           {
-            "name": "data_protocol"
+            "name": "protocol_data"
           }
         ]
       },
