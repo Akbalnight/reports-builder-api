@@ -57,7 +57,7 @@
       "generation_object_short_name": "Краткое имя объекта генерации"
     }
   },
-  "data_protocol": {
+  "protocol_data": {
     "title": "Данные по протоколам",
     "ignoreFields": [
       "heat_eon_line",
