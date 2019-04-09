@@ -1,0 +1,15 @@
+{
+  "select": [
+    {
+      "column":"public.databasechangelog.filename",
+      "title":"Имя файла"
+    }
+  ],
+  "where": [
+    {
+      "column": "public.databasechangelog.filename",
+      "operator": "not in",
+      "value": "1,2"
+    }
+  ]
+}

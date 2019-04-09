@@ -32,6 +32,7 @@ public class ReportBuilderService extends AbstractService<SubSystem> {
     public static final String JAVA_TYPE_STRING = "string";
     private static Logger LOG = Logger.getLogger(ReportBuilderService.class.getName());
 
+    private static final String TABLE_STRUCTURE_QUERY_WITH_SCHEME = "SELECT LOWER(column_name) as column_name, data_type FROM information_schema.columns WHERE LOWER(table_name) = '%s' AND table_schema = '%s'";
     private static final String TABLE_STRUCTURE_QUERY = "SELECT LOWER(column_name) as column_name, data_type FROM information_schema.columns WHERE LOWER(table_name) = '%s'";
 
     private final SubSystemRepository subSystemRepository;
@@ -74,7 +75,16 @@ public class ReportBuilderService extends AbstractService<SubSystem> {
 
 
     public List<ColumnWithType> getTableDescription(String tableName, boolean filterIgnorableFields) {
-        List<ColumnWithType> columns = template.query(String.format(TABLE_STRUCTURE_QUERY, tableName), new RowMapper<ColumnWithType>() {
+        int schemaDelimeterIndex = tableName.indexOf(".");
+        String queryExtractColumns;
+        if (schemaDelimeterIndex > 0) {
+            String schema = tableName.substring(0, schemaDelimeterIndex);
+            String tableNameNoScheme = tableName.substring(schemaDelimeterIndex + 1);
+            queryExtractColumns = String.format(TABLE_STRUCTURE_QUERY_WITH_SCHEME, tableNameNoScheme, schema);
+        } else {
+            queryExtractColumns = String.format(TABLE_STRUCTURE_QUERY, tableName);
+        }
+        List<ColumnWithType> columns = template.query(queryExtractColumns, new RowMapper<ColumnWithType>() {
             @Nullable
             @Override
             public ColumnWithType mapRow(ResultSet rs, int rowNum) throws SQLException {

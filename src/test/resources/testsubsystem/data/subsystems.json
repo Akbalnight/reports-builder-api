@@ -1,0 +1,95 @@
+[
+  {
+    "name": "Коммерческий учет",
+    "displayName":"Коммерческий учет",
+    "children": [
+      {
+        "name": "Суточные ведомости",
+        "displayName": "Суточные ведомости",
+        "join": [
+          ["day_statement","history_values_by_day"]
+        ],
+        "children": [
+          {
+            "name":"day_statement"
+          },
+          {
+            "name": "history_values_by_day"
+          }
+        ]
+      },
+      {
+        "name": "Часовые ведомости",
+        "displayName":"Часовые ведомости",
+        "join": [
+          ["hour_statement","history_values_by_hour"]
+        ],
+        "children": [
+          {
+            "name":"hour_statement"
+          },
+          {
+            "name": "history_values_by_hour"
+          }
+        ]
+      },
+      {
+        "name": "Протоколы",
+        "displayName":"Протоколы",
+        "join": [
+          ["protocol","protocol_data"]
+        ],
+        "children": [
+          {
+            "name":"protocol"
+          },
+          {
+            "name": "protocol_data"
+          }
+        ]
+      },
+      {
+        "name": "Расчет замещающих значений",
+        "displayName":"Расчет замещающих значений",
+        "join": [
+          ["substitution_alg","substitution_values"]
+        ],
+        "children": [
+          {
+            "name":"substitution_alg"
+          },
+          {
+            "name": "substitution_values"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "НСИ и паспортизация",
+    "displayName": "НСИ и паспортизация",
+    "children": [
+      {
+        "name": "Объекты генерации",
+        "displayName": "Объекты генерации",
+        "join": [
+          ["generation_object","generation_object_type"]
+        ],
+        "children": [
+          {
+            "name": "generation_object"
+          },
+          {
+            "name": "generation_object_type"
+          },
+          {
+            "name": "consumer"
+          },
+          {
+            "name": "pipeline"
+          }
+        ]
+      }
+    ]
+  }
+]

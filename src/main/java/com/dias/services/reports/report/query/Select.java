@@ -19,7 +19,7 @@ public class Select extends Column {
 
     @Override
     public String toSQL() {
-        return getColumn()
+        return super.toSQL()
                 + (getTitle() != null ? CLAUSE_AS + DOUBLE_QUOTES + getTitle() + DOUBLE_QUOTES : EMPTY_STRING);
     }
 }

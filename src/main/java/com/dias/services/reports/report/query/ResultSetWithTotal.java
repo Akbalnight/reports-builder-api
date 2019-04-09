@@ -76,13 +76,12 @@ public class ResultSetWithTotal {
         List<ColumnWithType> headers = getHeaders();
         for (int i = 0; i < headers.size(); i++) {
             ColumnWithType column = headers.get(i);
-            String columnName = column.getColumn();
+
+            Column column1 = new Column(column.getColumn());
+            String columnName = column1.getColumnName();
             result.put(columnName, i);
             result.put(column.getTitle(), i);
-            //продублируем колонку без имени таблицы
-            if (columnName.contains(".")) {
-                result.put(columnName.substring(columnName.indexOf(".") + 1), i);
-            }
+            result.put(column1.toSQL(), i);
         }
         return result;
     }

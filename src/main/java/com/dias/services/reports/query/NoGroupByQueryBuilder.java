@@ -41,7 +41,7 @@ public class NoGroupByQueryBuilder {
     private static final String ASTERISC = "*";
 
     private final QueryDescriptor descriptor;
-    private final Set<String> tableNames;
+    private final Set<TableName> tableNames;
     private String tablesJoin;
 
     private Long limit;
@@ -166,10 +166,10 @@ public class NoGroupByQueryBuilder {
 
     private String buildFromClause() {
         StringBuilder bld = new StringBuilder();
-        String[] tableNamesArray = tableNames.toArray(new String[0]);
+        TableName[] tableNamesArray = tableNames.toArray(new TableName[0]);
         for (int i = 0; i < tableNamesArray.length; i++) {
-            String tableName = tableNamesArray[i];
-            bld.append(tableName).append(SPACE).append(tableName);
+            TableName tableName = tableNamesArray[i];
+            bld.append(tableName.getTable()).append(SPACE).append(tableName.getTableName());
             if (i < tableNames.size() - 1) {
                 bld.append(COMMA_SEPARATOR);
             }
@@ -218,19 +218,11 @@ public class NoGroupByQueryBuilder {
         StringBuilder bld = new StringBuilder();
 
         if (part.getColumn() != null) {
-            String column = null;
-
-            if (beautify) {
-                column = part.toUser();
-            } else {
-                column = part.getColumn();
-            }
-
             Object value = part.getValue();
-            bld.append(column);
+            bld.append(beautify ? part.toUser() : part.toSQL());
             bld.append(SPACE);
             String operator = part.getOperator();
-            boolean requiresQuoting = value != null && requiresQuoting(column, value, columnWithTypes);
+            boolean requiresQuoting = value != null && requiresQuoting(part.getColumnName(), part.getFullTableName(), value, columnWithTypes);
 
             //специальная обработка для value = null значений
             //для = сравнения оставляем null как есть, а = меняем на is
@@ -240,7 +232,7 @@ public class NoGroupByQueryBuilder {
                 if ("=".equals(operator)) {
                     operator = " is ";
                 } else {
-                    ColumnWithType columnWithType = defineColumnWithType(column, columnWithTypes);
+                    ColumnWithType columnWithType = defineColumnWithType(part.getColumnName(), part.getFullTableName(), columnWithTypes);
                     if (columnWithType != null) {
                         if (ReportBuilderService.JAVA_TYPE_NUMERIC.equals(columnWithType.getType())) {
                             value = "0";
@@ -310,27 +302,21 @@ public class NoGroupByQueryBuilder {
         return columns == null || columns.length == 0;
     }
 
-    private static boolean requiresQuoting(String column, Object value, Map<String, Map<String, ColumnWithType>> columnWithTypes) {
+    private static boolean requiresQuoting(String columnName, String fullTableName, Object value, Map<String, Map<String, ColumnWithType>> columnWithTypes) {
 
         boolean requires = value != null && !Number.class.isAssignableFrom(value.getClass());
         //Если значение явно передано как число, тогда сразу возвращаем ответ
         //в противном случае пытаемся определить по типам
         if (requires && columnWithTypes != null) {
-            ColumnWithType columnWithType = defineColumnWithType(column, columnWithTypes);
+            ColumnWithType columnWithType = defineColumnWithType(columnName, fullTableName, columnWithTypes);
             requires = columnWithType == null || columnWithType.isRequiresQuoting();
         }
         return requires;
     }
 
-    private static ColumnWithType defineColumnWithType(String column, Map<String, Map<String, ColumnWithType>> columnWithTypes) {
+    private static ColumnWithType defineColumnWithType(String column, String table, Map<String, Map<String, ColumnWithType>> columnWithTypes) {
 
         if (columnWithTypes != null) {
-            String table = null;
-            if (column.contains(".")) {
-                String[] parts = column.split("\\.");
-                table = parts[0];
-                column = parts[1];
-            }
             Map<String, ColumnWithType> columnsToSearchIn;
             if (table != null) {
                 columnsToSearchIn = columnWithTypes.get(table);
