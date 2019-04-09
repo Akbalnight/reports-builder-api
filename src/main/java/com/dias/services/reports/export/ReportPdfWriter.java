@@ -4,6 +4,7 @@ import com.dias.services.reports.dto.reports.ReportDTO;
 import com.dias.services.reports.query.NoGroupByQueryBuilder;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.Calculation;
+import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.Condition;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
 import com.dias.services.reports.service.ReportService;
@@ -43,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
+
+import java.util.List;
 
 public class ReportPdfWriter {
 
@@ -373,13 +376,13 @@ public class ReportPdfWriter {
         DefaultCategoryDataset ds = new DefaultCategoryDataset();
         List<List<Object>> rows = rs.getRows();
         Map<String, Integer> columnMap = rs.getColumnsMap();
-        Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
+        Integer categoryColumnIndex = columnMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
         //последняя строка - итоговая в случае withSummary = true
         int sizeOfRows = withSummary ? rows.size() - 1 : rows.size();
 
         for (ChartDescriptor.Series s : series) {
-            String valueColumn = s.getValueColumn();
+            String valueColumn = new Column(s.getValueColumn()).getColumnName();
             Integer seriesVaueIndex = columnMap.get(valueColumn);
             int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
             int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow() : sizeOfRows, sizeOfRows);
@@ -414,12 +417,14 @@ public class ReportPdfWriter {
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
         for (int i = 0; i < series.size(); i++) {
             ChartDescriptor.Series s = series.get(i);
-            if (isCategory) {
-                chart.getCategoryPlot().getRenderer().setSeriesPaint(i, new Color(Integer.parseInt(s.getColor().substring(1), 16)));
-            } else {
-                chart.getXYPlot().getRenderer().setSeriesPaint(i, new Color(Integer.parseInt(s.getColor().substring(1), 16)));
+            String color = s.getColor();
+            if (color != null) {
+                if (isCategory) {
+                    chart.getCategoryPlot().getRenderer().setSeriesPaint(i, new Color(Integer.parseInt(color.substring(1), 16)));
+                } else {
+                    chart.getXYPlot().getRenderer().setSeriesPaint(i, new Color(Integer.parseInt(color.substring(1), 16)));
+                }
             }
-
         }
 
     }

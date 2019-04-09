@@ -3,6 +3,7 @@ package com.dias.services.reports.controller;
 import com.dias.services.reports.service.ReportBuilderService;
 import com.dias.services.reports.subsystem.ColumnWithType;
 import com.dias.services.reports.subsystem.TablesService;
+import com.dias.services.reports.utils.SubsystemUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -10,7 +11,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -30,15 +30,17 @@ public class ReportBuilderController {
     private final ReportBuilderService reportBuilderService;
     private final ObjectMapper objectMapper;
     private final TablesService tablesService;
+    private final SubsystemUtils subsystemUtils;
 
     @Value("${com.dias.services.reports.service.name:Reports}")
     private String serviceName;
 
     @Autowired
-    public ReportBuilderController(ReportBuilderService reportBuilderService, ObjectMapper objectMapper, TablesService tablesService) {
+    public ReportBuilderController(ReportBuilderService reportBuilderService, ObjectMapper objectMapper, TablesService tablesService, SubsystemUtils subsystemUtils) {
         this.reportBuilderService = reportBuilderService;
         this.objectMapper = objectMapper;
         this.tablesService = tablesService;
+        this.subsystemUtils = subsystemUtils;
     }
 
     @ApiOperation(value = "Получение списка подсистем с полным составом колонок для каждой таблицы")
@@ -46,7 +48,7 @@ public class ReportBuilderController {
     public ResponseEntity<JsonNode> getSubSystems(@RequestHeader(name = "userRoles", required = false) String userRoles) throws IOException {
 
         try {
-            byte[] bytes = IOUtils.toByteArray(getClass().getResourceAsStream("/data/subsystems.json"));
+            byte[] bytes = subsystemUtils.loadResource("/data/subsystems.json");
             String content = new String(bytes, StandardCharsets.UTF_8);
             JsonNode subsystems = objectMapper.readTree(content);
             enrichWithColumns(subsystems);

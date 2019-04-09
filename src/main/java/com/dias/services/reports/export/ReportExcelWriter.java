@@ -4,6 +4,7 @@ import com.dias.services.reports.dto.reports.ReportDTO;
 import com.dias.services.reports.query.NoGroupByQueryBuilder;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.Calculation;
+import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.Condition;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
 import com.dias.services.reports.service.ReportService;
@@ -137,12 +138,11 @@ public class ReportExcelWriter {
         List<ColumnWithType> headers = rs.getHeaders();
         for (int i = 0; i < headers.size(); i++) {
             ColumnWithType columnWithType = headers.get(i);
-            String column = columnWithType.getColumn();
+            Column column1 = new Column(columnWithType.getColumn());
+            String column = column1.getColumnName();
             result.put(column, startColumn + i);
             result.put(columnWithType.getTitle(), startColumn + i);
-            if (column.contains(".")) {
-                result.put(column.substring(column.indexOf(".") + 1), startColumn + i);
-            }
+            result.put(column1.toSQL(), startColumn + i);
         }
         return result;
     }

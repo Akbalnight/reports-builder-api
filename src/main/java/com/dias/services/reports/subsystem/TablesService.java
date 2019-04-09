@@ -1,10 +1,11 @@
 package com.dias.services.reports.subsystem;
 
+import com.dias.services.reports.query.TableName;
 import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.QueryDescriptor;
+import com.dias.services.reports.utils.SubsystemUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,14 +23,17 @@ import java.util.*;
 public class TablesService {
 
     private final ObjectMapper objectMapper;
+    private final SubsystemUtils subsystemUtils;
+
     private Map<String, Table> tables;
     private Map<String, String> tableNamesRussianToEnglish;
     private Map<String, String> tableNamesEnglishToRussian;
     private Map<List<String>, String>  tablesJoinRules;
 
     @Autowired
-    public TablesService(ObjectMapper objectMapper) {
+    public TablesService(ObjectMapper objectMapper, SubsystemUtils subsystemUtils) {
         this.objectMapper = objectMapper;
+        this.subsystemUtils = subsystemUtils;
     }
 
     @PostConstruct
@@ -39,7 +43,7 @@ public class TablesService {
         tableNamesRussianToEnglish = new HashMap<>();
         tableNamesEnglishToRussian = new HashMap<>();
 
-        byte[] data = IOUtils.toByteArray(getClass().getResourceAsStream("/data/tables.json"));
+        byte[] data = subsystemUtils.loadResource("/data/tables.json");
         String strData = new String(data, "UTF-8");
         map = objectMapper.readerFor(Map.class).readValue(strData);
         map.forEach((s, stringObjectMap) -> {
@@ -53,7 +57,7 @@ public class TablesService {
         });
 
         tablesJoinRules = new HashMap<>();
-        data = IOUtils.toByteArray(getClass().getResourceAsStream("/data/joins.json"));
+        data = subsystemUtils.loadResource("/data/joins.json");
         strData = new String(data, "UTF-8");
         JsonNode joins = objectMapper.readTree(strData);
         for (int i = 0; i < joins.size(); i++) {
@@ -137,17 +141,13 @@ public class TablesService {
         }
     }
 
-    private Set<String> uniqueTableNamesFromColumns(Column[] columns) {
-        Set<String> tableNames = new HashSet<>();
+    private Set<TableName> uniqueTableNamesFromColumns(Column[] columns) {
+        Set<TableName> tableNames = new HashSet<>();
         if (columns != null) {
             for (Column column : columns) {
-                String col = column.getColumn();
-                if (col != null) {
-                    int index = col.indexOf(".");
-                    if (index > 0) {
-                        String tableTitle = col.substring(0, index);
-                        tableNames.add(getTableNameByTitle(tableTitle));
-                    }
+                String tableName = column.getTableName();
+                if (tableName != null) {
+                    tableNames.add(new TableName(column.getSchemeName(), getTableNameByTitle(tableName)));
                 }
             }
         }
@@ -161,10 +161,10 @@ public class TablesService {
      * @param descriptor
      * @return
      */
-    public Set<String> extractTableNames(QueryDescriptor descriptor) {
-        Set<String> tableNames = new HashSet<>();
+    public Set<TableName> extractTableNames(QueryDescriptor descriptor) {
+        Set<TableName> tableNames = new HashSet<>();
         if (descriptor.getTable() != null) {
-            tableNames.add(getTableNameByTitle(descriptor.getTable()));
+            tableNames.add(new TableName(getTableNameByTitle(descriptor.getTable())));
         }
         tableNames.addAll(uniqueTableNamesFromColumns(descriptor.getSelect()));
         tableNames.addAll(uniqueTableNamesFromColumns(descriptor.getGroupBy()));
@@ -181,12 +181,12 @@ public class TablesService {
      * @param tableNames
      * @return
      */
-    public String getTablesJoin(Set<String> tableNames) {
+    public String getTablesJoin(Set<TableName> tableNames) {
         String rule = null;
         for (List<String> tables: tablesJoinRules.keySet()){
             boolean found = true;
             for (String t: tables) {
-                if (!tableNames.contains(t)) {
+                if (tableNames.stream().filter(tableName -> tableName.getTable().equals(t)).count() == 0) {
                     found = false;
                     break;
                 }

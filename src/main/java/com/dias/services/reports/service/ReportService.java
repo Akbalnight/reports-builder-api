@@ -7,6 +7,7 @@ import com.dias.services.reports.export.ReportExcelWriter;
 import com.dias.services.reports.export.ReportPdfWriter;
 import com.dias.services.reports.model.Report;
 import com.dias.services.reports.query.NoGroupByQueryBuilder;
+import com.dias.services.reports.query.TableName;
 import com.dias.services.reports.query.TotalValue;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.*;
@@ -194,7 +195,7 @@ public class ReportService extends AbstractService<Report> {
             Select[] select = queryDescriptor.getSelect();
 
             for (Select aSelect : select) {
-                ColumnWithType nonTranslatedColumnWithType = columnWithTypeByColumn(aSelect.getColumn(), columnTypesMap);
+                ColumnWithType nonTranslatedColumnWithType = columnWithTypeByColumn(aSelect.getColumnName(), aSelect.getFullTableName(), columnTypesMap);
                 ColumnWithType columnWithType = ColumnWithType.builder()
                         .column(aSelect.getColumn())
                         .title(aSelect.getTitle())
@@ -401,24 +402,18 @@ public class ReportService extends AbstractService<Report> {
      */
     public Map<String, Map<String, ColumnWithType>> getTablesColumnTypesMap(QueryDescriptor descriptor) {
         Map<String, Map<String, ColumnWithType>> result = new HashMap<>();
-        Set<String> tableNames = tablesService.extractTableNames(descriptor);
-        for(String tableName: tableNames) {
-            result.put(tableName, reportBuilderService.getTableColumnsDescription(tableName));
+        Set<TableName> tableNames = tablesService.extractTableNames(descriptor);
+        for(TableName tableName: tableNames) {
+            result.put(tableName.getTable(), reportBuilderService.getTableColumnsDescription(tableName.getTable()));
         }
         return result;
     }
 
-    private ColumnWithType columnWithTypeByColumn(String column, Map<String, Map<String, ColumnWithType>> columnWithTypes) {
+    private ColumnWithType columnWithTypeByColumn(String column, String fullTableName, Map<String, Map<String, ColumnWithType>> columnWithTypes) {
 
-        String table = null;
-        if (column.contains(".")) {
-            String[] parts = column.split("\\.");
-            table = parts[0];
-            column = parts[1];
-        }
         Map<String, ColumnWithType> columnsToSearchIn;
-        if (table != null) {
-            columnsToSearchIn = columnWithTypes.get(table);
+        if (fullTableName != null) {
+            columnsToSearchIn = columnWithTypes.get(fullTableName);
         } else {
             columnsToSearchIn = new HashMap<>();
             Map<String, ColumnWithType> finalColumnsToSearchIn = columnsToSearchIn;

@@ -1,0 +1,22 @@
+[
+  {
+    "tables":["substitution_alg","substitution_values"],
+    "rule":"substitution_alg.id = substitution_values.substitution_algorithm_id"
+  },
+  {
+    "tables":["protocol","protocol_data"],
+    "rule":"protocol.id = protocol_data.protocol_id"
+  },
+  {
+    "tables":["day_statement","history_values_by_day"],
+    "rule":"day_statement.id = history_values_by_day.statement_id"
+  },
+  {
+    "tables":["hour_statement","history_values_by_hour"],
+    "rule":"hour_statement.id = history_values_by_hour.statement_id"
+  },
+  {
+    "tables":["generation_object","generation_object_type"],
+    "rule":"generation_object.generation_object_type_id = generation_object_type.id"
+  }
+]

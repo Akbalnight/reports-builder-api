@@ -2,6 +2,7 @@ package com.dias.services.reports.export;
 
 import com.dias.services.reports.dto.reports.ReportDTO;
 import com.dias.services.reports.report.chart.ChartDescriptor;
+import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
 import lombok.experimental.Delegate;
 import org.apache.commons.lang3.StringUtils;
@@ -313,7 +314,7 @@ class ExcelChartsHelper {
         Integer rowsNumber = rs.getRows().size();
         xssfChart.setTitleText(chartDescriptor.getTitle());
         chart.addNewVaryColors().setVal(false);
-        int xColumn = excelColumnsMap.get(chartDescriptor.getAxisXColumn());
+        int xColumn = excelColumnsMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
         String xColumnName = CellReference.convertNumToColString(xColumn);
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
 
@@ -333,7 +334,7 @@ class ExcelChartsHelper {
             ctBarSer.setFforX(sheet.getSheetName() + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
             CTNumDataSource ctNumDataSource = ctBarSer.addNewVal();
             CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
-            int valueColumnIndex = excelColumnsMap.get(s.getValueColumn());
+            int valueColumnIndex = excelColumnsMap.get(new Column(s.getValueColumn()).getColumnName());
             if (chartDescriptor.isCalculatedXRange()) {
                 if (xFromTo[0] > fromRowIndex || xFromTo[0] == -1){
                     xFromTo[0] = fromRowIndex;

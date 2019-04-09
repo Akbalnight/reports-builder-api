@@ -18,6 +18,6 @@ public class OrderBy extends Column {
     @Override
     public String toSQL() {
         //Возвращаем имя колонки с порядком сортировки, если таковой присутствует
-        return getColumn() + (order != null ? " " + order : "");
+        return super.toSQL() + (order != null ? " " + order : "");
     }
 }

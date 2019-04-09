@@ -5,6 +5,7 @@ import com.dias.services.reports.report.query.QueryDescriptor;
 import com.dias.services.reports.service.ReportBuilderService;
 import com.dias.services.reports.subsystem.ColumnWithType;
 import com.dias.services.reports.subsystem.TablesService;
+import com.dias.services.reports.utils.SubsystemUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,7 +30,7 @@ public class QueryBuilderTest {
 
     @Before
     public void setup() throws IOException {
-        tablesService = new TablesService(new ObjectMapper());
+        tablesService = new TablesService(new ObjectMapper(), new SubsystemUtils());
         tablesService.init();
     }
 
@@ -106,6 +107,11 @@ public class QueryBuilderTest {
     @Test
     public void buildSqlWithIsNotNullCondition() {
         compareQueryResults(null, "QueryBuilder/queryDescriptorWithIsNotNullCondition.json", "QueryBuilder/queryDescriptorWithIsNotNullCondition_Expected.sql");
+    }
+
+    @Test
+    public void buildSqlWithScheme() {
+        compareQueryResults(null, "QueryBuilder/queryWithScheme.json", "QueryBuilder/queryWithScheme_Expected.sql");
     }
 
     @Test
