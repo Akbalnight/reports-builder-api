@@ -64,6 +64,12 @@ public class Column {
         return title != null ? title : columnName;
     }
 
+
+    /**
+     * Полное имя таблицы со схемой, если она задана
+     * @return Полное имя таблицы со схемой, если задана
+     */
+    @JsonIgnore
     public String getFullTableName() {
         if (tableName == null) {
             return null;

@@ -28,7 +28,7 @@ public class TableName {
             if (value.contains(".")) {
                 String[] parts = value.split("\\.");
                 scheme = parts[0];
-                table = parts[1];
+                tableName = parts[1];
             } else {
                 tableName = value;
             }
