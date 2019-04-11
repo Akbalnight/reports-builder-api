@@ -44,6 +44,7 @@ class ExcelChartsHelper {
         CTUnsignedInt addNewAxId();
         CTShapeProperties addNewShapeProperties(int seriesIndex);
         IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric);
+        CTValAx addNewValAx();
     }
 
     /**
@@ -156,6 +157,22 @@ class ExcelChartsHelper {
     }
 
     /**
+     * Серия для круговой диаграммы
+     */
+    static class PieSer implements ISeries {
+        @Delegate
+        private final CTPieSer series;
+        PieSer(CTPieSer ctPieSer) {
+            this.series = ctPieSer;
+        }
+
+        @Override
+        public void setFforX(String formula) {
+            // series.addNewCat().addNewStrRef().setF(formula);
+        }
+    }
+
+    /**
      * График с категориями по оси X
      */
     static class LineChart implements IChartWithSeries {
@@ -180,6 +197,11 @@ class ExcelChartsHelper {
         @Override
         public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
             return new CategoryAxis(plotArea.addNewCatAx());
+        }
+
+        @Override
+        public CTValAx addNewValAx() {
+            return plot.addNewValAx();
         }
     }
 
@@ -208,6 +230,11 @@ class ExcelChartsHelper {
         @Override
         public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
             return new NumericAxis(plotArea.addNewValAx());
+        }
+
+        @Override
+        public CTValAx addNewValAx() {
+            return plot.addNewValAx();
         }
     }
 
@@ -240,6 +267,50 @@ class ExcelChartsHelper {
             }*/
             return new CategoryAxis(plotArea.addNewCatAx());
         }
+
+        @Override
+        public CTValAx addNewValAx() {
+            return plot.addNewValAx();
+        }
+    }
+
+    /**
+     * Круговая диаграмма
+     */
+    static class PieChart implements IChartWithSeries {
+
+        @Delegate
+        private final CTPieChart pieChart;
+        private final CTPlotArea plot;
+        PieChart(CTPieChart ctPieChart, CTPlotArea plot) {
+            this.pieChart = ctPieChart;
+            this.plot = plot;
+        }
+
+        @Override
+        public ISeries addNewSeries() {
+            return new PieSer(pieChart.addNewSer());
+        }
+
+        @Override
+        public CTUnsignedInt addNewAxId() {
+            return null;
+        }
+
+        @Override
+        public CTShapeProperties addNewShapeProperties(int seriesIndex) {
+            return plot.getPieChartArray(0).getSerArray(seriesIndex).addNewSpPr();
+        }
+
+        @Override
+        public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
+            return null;
+        }
+
+        @Override
+        public CTValAx addNewValAx() {
+            return null;
+        }
     }
 
     /**
@@ -261,6 +332,8 @@ class ExcelChartsHelper {
             chart = addBarChart(xssfChart.getCTChart().getPlotArea(), STBarDir.BAR);
         } else if (ReportType.bar == repType) {
             chart = addBarChart(xssfChart.getCTChart().getPlotArea(), STBarDir.COL);
+        } else if (ReportType.Wpie == repType) {
+            chart = addPieChart(xssfChart.getCTChart().getPlotArea());
         } else {
             Integer categoryRsColumnIndex = rs.getColumnsMap().get(chartDescriptor.getAxisXColumn());
             if (rs.getNumericColumnsIndexes().contains(categoryRsColumnIndex) || rs.getDateColumnsIndexes().contains(categoryRsColumnIndex)) {
@@ -300,6 +373,11 @@ class ExcelChartsHelper {
 
     }
 
+    private static PieChart addPieChart(CTPlotArea plot) {
+        CTPieChart ctPieChart = plot.addNewPieChart();
+        return new PieChart(ctPieChart, plot);
+
+    }
 
     private static void fillChart(
             XSSFSheet sheet,
@@ -371,8 +449,15 @@ class ExcelChartsHelper {
             ctNumRef.setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
         }
 
-        chart.addNewAxId().setVal(AXIS_X_ID);
-        chart.addNewAxId().setVal(AXIS_Y_ID);
+
+        CTUnsignedInt axId = chart.addNewAxId();
+        if (axId != null) {
+            axId.setVal(AXIS_X_ID);
+        }
+        axId = chart.addNewAxId();
+        if (axId != null) {
+            axId.setVal(AXIS_Y_ID);
+        }
 
         CTPlotArea plotArea = xssfChart.getCTChart().getPlotArea();
 
@@ -381,59 +466,73 @@ class ExcelChartsHelper {
         boolean isCategoryAxisDate = rs.getDateColumnsIndexes().contains(categoryRsColumnIndex);
 
         //val axis
-        CTValAx ctValAx = plotArea.addNewValAx();
-        ctValAx.addNewAxId().setVal(AXIS_Y_ID); //id of the val axis
-        ctValAx.addNewDelete().setVal(false);
-        ctValAx.addNewAxPos().setVal(STAxPos.L);
-        ctValAx.addNewCrossAx().setVal(AXIS_X_ID); //id of the cat axis
-        ctValAx.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
-        if (!StringUtils.isEmpty(chartDescriptor.getAxisYTitle())) {
-            setAxisTitle(ctValAx.addNewTitle(), chartDescriptor.getAxisYTitle());
-        }
-
-        //cat axis
-        IAxisX ctCatAx = chart.addAxisX(plotArea, isCategoryAxisNumeric || isCategoryAxisDate);
-        ctCatAx.addNewAxId().setVal(AXIS_X_ID); //id of the cat axis
-        ctCatAx.addNewDelete().setVal(false);
-        ctCatAx.addNewAxPos().setVal(STAxPos.B);
-        ctCatAx.addNewCrossAx().setVal(AXIS_Y_ID); //id of the val axis
-        ctCatAx.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
-        if (!StringUtils.isEmpty(chartDescriptor.getAxisXTitle())) {
-            setAxisTitle(ctCatAx.addTitle(), chartDescriptor.getAxisXTitle());
-        }
-
-        CTScaling xctScaling = ctCatAx.addNewScaling();
-        xctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
-
-
-        if (ctCatAx.supportsMinMax()) {
-            // гистограмма и колонки не поддерживают минимум/максимум
-            if (chartDescriptor.isCalculatedXRange() && isCategoryAxisNumeric) {
-                defineMinMax(xMinMax, categoryRsColumnIndex, rs, xFromTo[0], xFromTo[1]);
-                fixRange(xMinMax);
-
-                // блок определения минимума/максимума оси
-                xctScaling.addNewMin().setVal(xMinMax[0]);
-                xctScaling.addNewMax().setVal(xMinMax[1]);
-                // укажем, что ось значений должна пересечь ось категорий в минимуме
-                ctValAx.addNewCrossesAt().setVal(xMinMax[0]);
-            } else if (isCategoryAxisNumeric) {
-                xctScaling.addNewMin().setVal(0);
-                ctValAx.addNewCrossesAt().setVal(0);
+        CTValAx ctValAx = chart.addNewValAx();
+        if (ctValAx != null) {
+            // не все диаграммы поддерживают ось Y
+            ctValAx.addNewAxId().setVal(AXIS_Y_ID); //id of the val axis
+            ctValAx.addNewDelete().setVal(false);
+            ctValAx.addNewAxPos().setVal(STAxPos.L);
+            ctValAx.addNewCrossAx().setVal(AXIS_X_ID); //id of the cat axis
+            ctValAx.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
+            if (!StringUtils.isEmpty(chartDescriptor.getAxisYTitle())) {
+                setAxisTitle(ctValAx.addNewTitle(), chartDescriptor.getAxisYTitle());
             }
         }
 
-        CTScaling yctScaling = ctValAx.addNewScaling();
-        yctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
-        if (chartDescriptor.isCalculatedYRange()) {
+        //cat axis
+        IAxisX axisX = chart.addAxisX(plotArea, isCategoryAxisNumeric || isCategoryAxisDate);
+        if (axisX != null) {
+            // не все диаграммы поддерживают ось X
+            axisX.addNewAxId().setVal(AXIS_X_ID); //id of the cat axis
+            axisX.addNewDelete().setVal(false);
+            axisX.addNewAxPos().setVal(STAxPos.B);
+            axisX.addNewCrossAx().setVal(AXIS_Y_ID); //id of the val axis
+            axisX.addNewTickLblPos().setVal(STTickLblPos.NEXT_TO);
+            if (!StringUtils.isEmpty(chartDescriptor.getAxisXTitle())) {
+                setAxisTitle(axisX.addTitle(), chartDescriptor.getAxisXTitle());
+            }
 
-            fixRange(yMinMax);
+            CTScaling xctScaling = axisX.addNewScaling();
+            xctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
 
-            // блок определения минимума/максимума оси
-            yctScaling.addNewMin().setVal(yMinMax[0]);
-            yctScaling.addNewMax().setVal(yMinMax[1]);
-            // укажем, что ось значений должна пересечь ось значений в минимуме
-            ctCatAx.addNewCrossesAt().setVal(yMinMax[0]);
+
+            if (axisX.supportsMinMax()) {
+                // гистограмма и колонки не поддерживают минимум/максимум
+                if (chartDescriptor.isCalculatedXRange() && isCategoryAxisNumeric) {
+                    defineMinMax(xMinMax, categoryRsColumnIndex, rs, xFromTo[0], xFromTo[1]);
+                    fixRange(xMinMax);
+
+                    // блок определения минимума/максимума оси
+                    xctScaling.addNewMin().setVal(xMinMax[0]);
+                    xctScaling.addNewMax().setVal(xMinMax[1]);
+
+                    if (ctValAx != null) {
+                        // укажем, что ось значений должна пересечь ось категорий в минимуме
+                        ctValAx.addNewCrossesAt().setVal(xMinMax[0]);
+                    }
+                } else if (isCategoryAxisNumeric) {
+                    xctScaling.addNewMin().setVal(0);
+                    if (ctValAx != null) {
+                        ctValAx.addNewCrossesAt().setVal(0);
+                    }
+                }
+            }
+        }
+
+
+        if (ctValAx != null) {
+            CTScaling yctScaling = ctValAx.addNewScaling();
+            yctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
+            if (chartDescriptor.isCalculatedYRange()) {
+
+                fixRange(yMinMax);
+
+                // блок определения минимума/максимума оси
+                yctScaling.addNewMin().setVal(yMinMax[0]);
+                yctScaling.addNewMax().setVal(yMinMax[1]);
+                // укажем, что ось значений должна пересечь ось значений в минимуме
+                axisX.addNewCrossesAt().setVal(yMinMax[0]);
+            }
         }
 
 
