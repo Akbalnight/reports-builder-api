@@ -1,10 +1,10 @@
 package com.dias.services.reports.export;
 
 import com.dias.services.reports.dto.reports.ReportDTO;
+import com.dias.services.reports.export.charts.*;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
-import lombok.experimental.Delegate;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.util.CellReference;
@@ -31,287 +31,6 @@ class ExcelChartsHelper {
     private static final int LABEL_POSITION_TOP = 9;
     private static final int AXIS_Y_ID = 2;
     private static final int AXIS_X_ID = 1;
-
-    /**
-     * Интерфейс диаграммы с сериями. Служит для представления абстракции диаграммы
-     * для Apache POI, в которой отсутствует общий интерфейс для диаграмм не смотря на обилие
-     * одинаковой логики. Введение данного интерфейса позволяет избавится от многочисленного
-     * дублирования кода. Внутри реализации интерфейса происходит делегирование к Apache POI диаграмме
-     */
-    interface IChartWithSeries {
-        CTBoolean addNewVaryColors();
-        ISeries addNewSeries();
-        CTUnsignedInt addNewAxId();
-        CTShapeProperties addNewShapeProperties(int seriesIndex);
-        IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric);
-        CTValAx addNewValAx();
-    }
-
-    /**
-     * Интерфейс серии. Как и <code>IChartWithSeries</code> служит абстракцией для серий из
-     * Apache POI. Внутри реализации серии происходит делегирование к Apache POI серии
-     */
-    interface ISeries {
-
-        CTUnsignedInt addNewIdx();
-        CTNumDataSource addNewVal();
-        void setFforX(String formula);
-        CTSerTx addNewTx();
-        CTDLbls addNewDLbls();
-    }
-
-    /**
-     * Серия линейной диаграммы
-     */
-    static class LineSer implements ISeries {
-        @Delegate
-        private final CTLineSer series;
-        LineSer(CTLineSer ctLineSer) {
-            this.series = ctLineSer;
-        }
-        @Override
-        public void setFforX(String formula) {
-            series.addNewCat().addNewStrRef().setF(formula);
-        }
-    }
-
-    /**
-     * Серия графика с числовой осью X
-     */
-    static class ScatterSer implements ISeries {
-        @Delegate
-        private final CTScatterSer series;
-        ScatterSer(CTScatterSer ctScatterSer) {
-            this.series = ctScatterSer;
-        }
-
-        @Override
-        public CTNumDataSource addNewVal() {
-            return series.addNewYVal();
-        }
-
-        @Override
-        public void setFforX(String formula) {
-            series.addNewXVal().addNewNumRef().setF(formula);
-        }
-    }
-
-    interface IAxisX {
-        CTUnsignedInt addNewAxId();
-        CTBoolean addNewDelete();
-        CTAxPos addNewAxPos();
-        CTUnsignedInt addNewCrossAx();
-        CTTickLblPos addNewTickLblPos();
-        CTScaling addNewScaling();
-        CTDouble addNewCrossesAt();
-        boolean supportsMinMax();
-        CTTitle addTitle();
-    }
-
-    static class CategoryAxis implements IAxisX {
-        @Delegate
-        private final CTCatAx ctCatAx;
-        CategoryAxis(CTCatAx ctCatAx) {
-            this.ctCatAx = ctCatAx;
-        }
-        @Override
-        public boolean supportsMinMax() {
-            return false;
-        }
-        @Override
-        public CTTitle addTitle() {
-            return ctCatAx.addNewTitle();
-        }
-    }
-
-    static class NumericAxis implements IAxisX {
-        @Delegate
-        private final CTValAx ctValAx;
-        NumericAxis(CTValAx ctValAx) {
-            this.ctValAx = ctValAx;
-        }
-        @Override
-        public boolean supportsMinMax() {
-            return true;
-        }
-        @Override
-        public CTTitle addTitle() {
-            return ctValAx.addNewTitle();
-        }
-    }
-
-    /**
-     * Серия для гистограммы
-     */
-    static class BarSer implements ISeries {
-        @Delegate
-        private final CTBarSer series;
-        BarSer(CTBarSer ctBarSer) {
-            this.series = ctBarSer;
-        }
-
-        @Override
-        public void setFforX(String formula) {
-            series.addNewCat().addNewStrRef().setF(formula);
-        }
-    }
-
-    /**
-     * Серия для круговой диаграммы
-     */
-    static class PieSer implements ISeries {
-        @Delegate
-        private final CTPieSer series;
-        PieSer(CTPieSer ctPieSer) {
-            this.series = ctPieSer;
-        }
-
-        @Override
-        public void setFforX(String formula) {
-            // series.addNewCat().addNewStrRef().setF(formula);
-        }
-    }
-
-    /**
-     * График с категориями по оси X
-     */
-    static class LineChart implements IChartWithSeries {
-        @Delegate
-        private final CTLineChart lineChart;
-        private final CTPlotArea plot;
-        LineChart(CTLineChart ctLineChart, CTPlotArea plot) {
-            this.lineChart = ctLineChart;
-            this.plot = plot;
-        }
-
-        @Override
-        public ISeries addNewSeries() {
-            return new LineSer(lineChart.addNewSer());
-        }
-
-        @Override
-        public CTShapeProperties addNewShapeProperties(int seriesIndex) {
-            return plot.getLineChartList().get(0).getSerArray(seriesIndex).addNewSpPr();
-        }
-
-        @Override
-        public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
-            return new CategoryAxis(plotArea.addNewCatAx());
-        }
-
-        @Override
-        public CTValAx addNewValAx() {
-            return plot.addNewValAx();
-        }
-    }
-
-    /**
-     * График c числами по оси X
-     */
-    static class ScatterChart implements IChartWithSeries {
-        @Delegate
-        private final CTScatterChart ctScatterChart;
-        private final CTPlotArea plot;
-        ScatterChart(CTScatterChart ctScatterChart, CTPlotArea plot) {
-            this.ctScatterChart = ctScatterChart;
-            this.plot = plot;
-        }
-
-        @Override
-        public ISeries addNewSeries() {
-            return new ScatterSer(ctScatterChart.addNewSer());
-        }
-
-        @Override
-        public CTShapeProperties addNewShapeProperties(int seriesIndex) {
-            return plot.getScatterChartList().get(0).getSerArray(seriesIndex).addNewSpPr();
-        }
-
-        @Override
-        public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
-            return new NumericAxis(plotArea.addNewValAx());
-        }
-
-        @Override
-        public CTValAx addNewValAx() {
-            return plot.addNewValAx();
-        }
-    }
-
-    /**
-     * Гистограмма
-     */
-    static class BarChart implements IChartWithSeries {
-        @Delegate
-        private final CTBarChart barChart;
-        private final CTPlotArea plot;
-        BarChart(CTBarChart ctBarChart, CTPlotArea plot) {
-            this.barChart = ctBarChart;
-            this.plot = plot;
-        }
-
-        @Override
-        public ISeries addNewSeries() {
-            return new BarSer(barChart.addNewSer());
-        }
-
-        @Override
-        public CTShapeProperties addNewShapeProperties(int seriesIndex) {
-            return plot.getBarChartArray(0).getSerArray(seriesIndex).addNewSpPr();
-        }
-
-        @Override
-        public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
-            /*if (isCategoryAxisNumeric) {
-                return new NumericAxis(plotArea.addNewValAx());
-            }*/
-            return new CategoryAxis(plotArea.addNewCatAx());
-        }
-
-        @Override
-        public CTValAx addNewValAx() {
-            return plot.addNewValAx();
-        }
-    }
-
-    /**
-     * Круговая диаграмма
-     */
-    static class PieChart implements IChartWithSeries {
-
-        @Delegate
-        private final CTPieChart pieChart;
-        private final CTPlotArea plot;
-        PieChart(CTPieChart ctPieChart, CTPlotArea plot) {
-            this.pieChart = ctPieChart;
-            this.plot = plot;
-        }
-
-        @Override
-        public ISeries addNewSeries() {
-            return new PieSer(pieChart.addNewSer());
-        }
-
-        @Override
-        public CTUnsignedInt addNewAxId() {
-            return null;
-        }
-
-        @Override
-        public CTShapeProperties addNewShapeProperties(int seriesIndex) {
-            return plot.getPieChartArray(0).getSerArray(seriesIndex).addNewSpPr();
-        }
-
-        @Override
-        public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
-            return null;
-        }
-
-        @Override
-        public CTValAx addNewValAx() {
-            return null;
-        }
-    }
 
     /**
      * Добавление диаграммы в рабочую книгу excel
@@ -361,21 +80,24 @@ class ExcelChartsHelper {
     }
 
     private static IChartWithSeries addScatterChart(CTPlotArea plot) {
-        CTScatterChart ctScatterChart = plot.addNewScatterChart();
-        ctScatterChart.addNewScatterStyle().setVal(STScatterStyle.Enum.forString("smoothMarker"));
-        return new ScatterChart(ctScatterChart, plot);
+        CTScatterChart chart = plot.addNewScatterChart();
+        chart.addNewScatterStyle().setVal(STScatterStyle.Enum.forString("smoothMarker"));
+        chart.addNewVaryColors().setVal(false);
+        return new ScatterChart(chart, plot);
     }
 
     private static BarChart addBarChart(CTPlotArea plot, STBarDir.Enum barChartType) {
-        CTBarChart ctBarChart = plot.addNewBarChart();
-        ctBarChart.addNewBarDir().setVal(barChartType);
-        return new BarChart(ctBarChart, plot);
+        CTBarChart chart = plot.addNewBarChart();
+        chart.addNewBarDir().setVal(barChartType);
+        chart.addNewVaryColors().setVal(false);
+        return new BarChart(chart, plot);
 
     }
 
     private static PieChart addPieChart(CTPlotArea plot) {
-        CTPieChart ctPieChart = plot.addNewPieChart();
-        return new PieChart(ctPieChart, plot);
+        CTPieChart chart = plot.addNewPieChart();
+        chart.addNewVaryColors().setVal(true);
+        return new PieChart(chart, plot);
 
     }
 
@@ -391,7 +113,6 @@ class ExcelChartsHelper {
 
         Integer rowsNumber = rs.getRows().size();
         xssfChart.setTitleText(chartDescriptor.getTitle());
-        chart.addNewVaryColors().setVal(false);
         int xColumn = excelColumnsMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
         String xColumnName = CellReference.convertNumToColString(xColumn);
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
@@ -403,14 +124,15 @@ class ExcelChartsHelper {
 
         for (int i = 0; i < series.size(); i++) {
             ChartDescriptor.Series s = series.get(i);
-            ISeries ctBarSer = chart.addNewSeries();
-            ctBarSer.addNewIdx().setVal(i);
+            ISeries chartSeries = chart.addNewSeries();
+            chartSeries.addNewIdx().setVal(i);
             int fromRowIndex = (s.getStartRow() != null && s.getStartRow() > 0) ? s.getStartRow() - 1 : 0;
             int toRowIndex = (s.getEndRow() != null && s.getEndRow() < rowsNumber) ? s.getEndRow(): rowsNumber;
             int from = firstDataRow + fromRowIndex + 1;
             int to = firstDataRow + toRowIndex;
-            ctBarSer.setFforX(sheet.getSheetName() + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
-            CTNumDataSource ctNumDataSource = ctBarSer.addNewVal();
+            chartSeries.doWithRange(from, to);
+            chartSeries.setFforX(sheet.getSheetName() + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
+            CTNumDataSource ctNumDataSource = chartSeries.addNewVal();
             CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
             int valueColumnIndex = excelColumnsMap.get(new Column(s.getValueColumn()).getColumnName());
             if (chartDescriptor.isCalculatedXRange()) {
@@ -428,12 +150,12 @@ class ExcelChartsHelper {
             String valueColumnName = CellReference.convertNumToColString(valueColumnIndex);
             if (chartDescriptor.getShowLegend()) {
                 //если необходимо показывать легенду, указываем ячейку с наименованием колонки
-                ctBarSer.addNewTx().addNewStrRef().setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + firstDataRow);
+                chartSeries.addNewTx().addNewStrRef().setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + firstDataRow);
             }
 
             if (chartDescriptor.isShowDotValues()) {
                 //добавляем метки к столбцам
-                CTDLbls dLbls = ctBarSer.addNewDLbls();
+                CTDLbls dLbls = chartSeries.addNewDLbls();
                 //укажем положение - OUT_END (соответствует 7)
                 CTDLblPos ctdLblPos = dLbls.addNewDLblPos();
                 ctdLblPos.setVal(org.openxmlformats.schemas.drawingml.x2006.chart.STDLblPos.Enum.forInt(dataLabelPos));
