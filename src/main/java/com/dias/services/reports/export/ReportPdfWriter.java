@@ -20,6 +20,8 @@ import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.chart.labels.StandardXYItemLabelGenerator;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.category.CategoryItemRenderer;
@@ -28,6 +30,8 @@ import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.title.LegendTitle;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.general.DefaultPieDataset;
+import org.jfree.data.general.PieDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -170,6 +174,13 @@ public class ReportPdfWriter {
                     }
                 }
 
+            } else if (ReportType.Wpie == reportType) {
+                PieDataset dataset = getPieDataset(rs, columnMap, chartDescriptor);
+                chart = ChartFactory.createPieChart(chartDescriptor.getTitle(),
+                        dataset,
+                        chartDescriptor.getShowLegend(),
+                        false,
+                        false);
             } else {
 
                 if (xyDataSet != null) {
@@ -209,7 +220,9 @@ public class ReportPdfWriter {
                 colorize(chart, chartDescriptor, defaultCategoryDataset != null);
                 setPositionToLegend(chart);
 
-                if (xyDataSet != null) {
+                Plot plot = chart.getPlot();
+
+                if (xyDataSet != null && plot instanceof XYPlot) {
                     XYItemRenderer renderer = chart.getXYPlot().getRenderer();
                     renderer.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());
                     renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
@@ -230,7 +243,7 @@ public class ReportPdfWriter {
                         chart.getXYPlot().getRangeAxis().setUpperBound(max.intValue());
                     }
 
-                } else {
+                } else if (plot instanceof CategoryPlot) {
                     CategoryItemRenderer renderer = chart.getCategoryPlot().getRenderer();
                     renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
                     renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
@@ -252,6 +265,30 @@ public class ReportPdfWriter {
             document.add(image);
             os.close();
         }
+    }
+
+    private PieDataset getPieDataset(ResultSetWithTotal rs, Map<String, Integer> columnMap, ChartDescriptor chartDescriptor) {
+        DefaultPieDataset ds = new DefaultPieDataset();
+        List<List<Object>> rows = rs.getRows();
+        List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
+        int sizeOfRows = rows.size();
+
+        for (ChartDescriptor.Series s : series) {
+            String valueColumn = new Column(s.getValueColumn()).getColumnName();
+            Integer seriesVaueIndex = columnMap.get(valueColumn);
+            int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
+            int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow() : sizeOfRows, sizeOfRows);
+            if (from < sizeOfRows) {
+                int i = 0;
+                for (List<Object> row : rows.subList(from, to)) {
+                    i++;
+                    Object value = row.get(seriesVaueIndex);
+                    Number seriesValueNumber = value != null && Number.class.isAssignableFrom(value.getClass()) ? (Number) value : 0;
+                    ds.setValue(Integer.toString(i), seriesValueNumber);
+                }
+            }
+        }
+        return ds;
     }
 
     private Double calculateAxisUpperBoundToIncludeLabelsForColumnChart(double maxValue) {
@@ -419,10 +456,11 @@ public class ReportPdfWriter {
             ChartDescriptor.Series s = series.get(i);
             String color = s.getColor();
             if (color != null) {
-                if (isCategory) {
-                    chart.getCategoryPlot().getRenderer().setSeriesPaint(i, new Color(Integer.parseInt(color.substring(1), 16)));
-                } else {
-                    chart.getXYPlot().getRenderer().setSeriesPaint(i, new Color(Integer.parseInt(color.substring(1), 16)));
+                Plot plot = chart.getPlot();
+                if (plot instanceof CategoryPlot) {
+                    ((CategoryPlot) plot).getRenderer().setSeriesPaint(i, new Color(Integer.parseInt(color.substring(1), 16)));
+                } else if (plot instanceof XYPlot) {
+                    ((XYPlot) plot).getRenderer().setSeriesPaint(i, new Color(Integer.parseInt(color.substring(1), 16)));
                 }
             }
         }
