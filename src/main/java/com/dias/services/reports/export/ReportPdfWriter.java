@@ -190,6 +190,15 @@ public class ReportPdfWriter {
                         chartDescriptor.getShowLegend(),
                         false,
                         false);
+            } else if (ReportType.Wscatter == reportType && xyDataSet != null) {
+                chart = ChartFactory.createScatterPlot(chartDescriptor.getTitle(),
+                        chartDescriptor.getAxisXTitle(),
+                        chartDescriptor.getAxisYTitle(),
+                        xyDataSet,
+                        PlotOrientation.VERTICAL,
+                        chartDescriptor.getShowLegend(),
+                        false,
+                        false);
             } else {
 
                 if (xyDataSet != null) {
