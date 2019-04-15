@@ -186,7 +186,7 @@ public class ReportPdfWriter {
                         chartDescriptor.getAxisXTitle(),
                         chartDescriptor.getAxisYTitle(),
                         defaultCategoryDataset,
-                        PlotOrientation.HORIZONTAL,
+                        PlotOrientation.VERTICAL,
                         chartDescriptor.getShowLegend(),
                         false,
                         false);
