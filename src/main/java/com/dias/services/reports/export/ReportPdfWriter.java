@@ -127,7 +127,7 @@ public class ReportPdfWriter {
             XYDataset xyDataSet = null;
             double[] xMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
             double[] yMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
-            if (!isDateXAxis && !isNumericXAxis) {
+            if ((!isDateXAxis && !isNumericXAxis) || (reportType == ReportType.Wcascade)) {
                 defaultCategoryDataset = getDefaultCategoryDataset(rs, chartDescriptor, withSummary, yMinMax);
             } else {
                 xyDataSet = getXYDataset(rs, columnMap, chartDescriptor, withSummary, dateFormat, isDateXAxis, xMinMax, yMinMax);
@@ -178,6 +178,15 @@ public class ReportPdfWriter {
                 PieDataset dataset = getPieDataset(rs, columnMap, chartDescriptor);
                 chart = ChartFactory.createPieChart(chartDescriptor.getTitle(),
                         dataset,
+                        chartDescriptor.getShowLegend(),
+                        false,
+                        false);
+            } else if (ReportType.Wcascade == reportType) {
+                chart = ChartFactory.createWaterfallChart(chartDescriptor.getTitle(),
+                        chartDescriptor.getAxisXTitle(),
+                        chartDescriptor.getAxisYTitle(),
+                        defaultCategoryDataset,
+                        PlotOrientation.HORIZONTAL,
                         chartDescriptor.getShowLegend(),
                         false,
                         false);

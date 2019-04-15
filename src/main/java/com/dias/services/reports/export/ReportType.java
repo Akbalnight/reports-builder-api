@@ -16,7 +16,7 @@ public enum ReportType {
     Wpie, // круговая
     Wscatter,
     Wcombo,
-    Wcascade;
+    Wcascade; // каскад (водопад)
 
     private static Logger LOG = Logger.getLogger(ReportType.class.getName());
 
