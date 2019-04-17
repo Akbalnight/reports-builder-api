@@ -24,11 +24,16 @@ import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.category.AreaRenderer;
+import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.category.CategoryItemRenderer;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.title.LegendTitle;
+import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.data.general.PieDataset;
@@ -168,11 +173,23 @@ public class ReportPdfWriter {
                         //В случае XY оси подписи (их периодичность) устанавливаются автоматически
                         //Для дат поворот делаем безусловно, поскольку метки длинные
                         rotateXAxisLabels(chart);
-                    } else if (!isNumericXAxis){
+                    } else if (!isNumericXAxis) {
                         //Для оси категорий делаем поворот условный, в зависимости от общей длины меток
                         rotateCategoryLabelsIfNeeded(defaultCategoryDataset, chart);
                     }
                 }
+            } else if (ReportType.Wcombo == reportType) {
+
+                chart = createComboChart(
+                        rs,
+                        columnMap,
+                        chartDescriptor,
+                        isDateXAxis,
+                        isNumericXAxis,
+                        withSummary,
+                        xMinMax,
+                        yMinMax,
+                        dateFormat);
 
             } else if (ReportType.Wpie == reportType) {
                 PieDataset dataset = getPieDataset(rs, columnMap, chartDescriptor);
@@ -458,6 +475,97 @@ public class ReportPdfWriter {
         return ds;
     }
 
+    private CategoryDataset buildSeriesCategoryDataset(
+            ResultSetWithTotal rs,
+            ChartDescriptor chartDescriptor,
+            ChartDescriptor.Series s,
+            boolean withSummary,
+            double[] yMinMax) {
+        DefaultCategoryDataset ds = new DefaultCategoryDataset();
+        List<List<Object>> rows = rs.getRows();
+        Map<String, Integer> columnMap = rs.getColumnsMap();
+        Integer categoryColumnIndex = columnMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
+        //последняя строка - итоговая в случае withSummary = true
+        int sizeOfRows = withSummary ? rows.size() - 1 : rows.size();
+        String valueColumn = new Column(s.getValueColumn()).getColumnName();
+        Integer seriesVaueIndex = columnMap.get(valueColumn);
+        int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
+        int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow() : sizeOfRows, sizeOfRows);
+        if (from < sizeOfRows) {
+            int i = 0;
+            for (List<Object> row : rows.subList(from, to)) {
+                i++;
+                Object categoryValue = row.get(categoryColumnIndex);
+                categoryValue = categoryValue == null ? "" : categoryValue;
+                Object value = row.get(seriesVaueIndex);
+                Number seriesValueNumber = value != null && Number.class.isAssignableFrom(value.getClass()) ? (Number) value : 0;
+                ds.addValue(seriesValueNumber, s.getTitle(), new CategoryKey(categoryValue.toString(), i));
+                calculateMinMaxForValue(yMinMax, seriesValueNumber);
+            }
+        }
+        fixRange(yMinMax);
+        return ds;
+    }
+
+    private XYDataset buildSeriesXYDataset(
+            ResultSetWithTotal rs,
+            Map<String, Integer> columnMap,
+            ChartDescriptor chartDescriptor,
+            boolean withSummary,
+            final DateFormatWithPattern[] dateFormat,
+            boolean categoryIsDate,
+            double[] xMinMax,
+            double[] yMinMax, ChartDescriptor.Series s) {
+        XYSeriesCollection ds = new XYSeriesCollection();
+        List<List<Object>> rows = rs.getRows();
+        Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
+        List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
+
+        //последняя строка - итоговая в случае withSummary = true
+        int sizeOfRows = withSummary ? rows.size() - 1 : rows.size();
+
+        XYSeries xySeries = new XYSeries(s.getTitle());
+        ds.addSeries(xySeries);
+        String valueColumn = s.getValueColumn();
+        Integer seriesVaueIndex = columnMap.get(valueColumn);
+        int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
+        int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow() : sizeOfRows, sizeOfRows);
+        if (from < sizeOfRows) {
+            for (List<Object> row : rows.subList(from, to)) {
+                Object categoryValue = row.get(categoryColumnIndex);
+                Number categoryNumber = null;
+                if (categoryIsDate) {
+                    resolveDateFormat(dateFormat, categoryValue);
+                    if (categoryValue != null && categoryValue instanceof LocalDateTime) {
+                        categoryNumber = ((LocalDateTime) categoryValue).toInstant(ZoneOffset.UTC).toEpochMilli();
+                    } else {
+                        categoryNumber = new Date(0).getTime();
+                    }
+
+                } else if (Number.class.isAssignableFrom(categoryValue.getClass())) {
+                    categoryNumber = (Number) categoryValue;
+                } else {
+                    continue;
+                }
+                Object value = row.get(seriesVaueIndex);
+                Number seriesValueNumber = value != null && Number.class.isAssignableFrom(value.getClass()) ? (Number) value : 0;
+                xySeries.add(categoryNumber, seriesValueNumber);
+
+                if (!categoryIsDate) {
+                    //только для числовой оси определяем минимальное и максимальное значения
+                    calculateMinMaxForValue(xMinMax, categoryNumber);
+                }
+
+                calculateMinMaxForValue(yMinMax, seriesValueNumber);
+
+            }
+        }
+        fixRange(xMinMax);
+        fixRange(yMinMax);
+        return ds;
+    }
+
+
     private static void resolveDateFormat(DateFormatWithPattern[] dateFormat, Object value) {
         if (dateFormat[0] == null && value != null) {
             String pattern = ExportChartsHelper.calculateDateFormatPattern(value.toString());
@@ -635,6 +743,88 @@ public class ReportPdfWriter {
             return chart;
         }
     }
+
+    private JFreeChart createComboChart(
+            ResultSetWithTotal rs,
+            Map<String, Integer> columnMap,
+            ChartDescriptor chartDescriptor,
+            boolean isDateAxis,
+            boolean isNumericXAxis,
+            boolean withSummary,
+            double[] xMinMax,
+            double[] yMinMax, DateFormatWithPattern[] dateFormat) {
+
+        JFreeChart chart = null;
+        if ((!isDateAxis && !isNumericXAxis)) {
+            CategoryPlot categoryPlot = new CategoryPlot();
+            List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
+            int index = 0;
+            for (ChartDescriptor.Series s : series) {
+                CategoryDataset dataset = buildSeriesCategoryDataset(rs, chartDescriptor, s, withSummary, yMinMax);
+                CategoryItemRenderer renderer = null;
+
+                if ("linear".equals(s.getType())) {
+                    // Add the first dataset and render as bar
+                    renderer = new LineAndShapeRenderer();
+                } else if ("bar".equals(s.getType())) {
+                    // Add the second dataset and render as lines
+                    renderer = new BarRenderer();
+                } else if ("area".equals(s.getType())) {
+                    renderer = new AreaRenderer();
+                }
+
+                if (renderer != null) {
+                    categoryPlot.setDataset(index, dataset);
+                    categoryPlot.setRenderer(index, renderer);
+                    index++;
+                }
+            }
+            // Set Axis
+            categoryPlot.setDomainAxis(new CategoryAxis(chartDescriptor.getAxisXTitle()));
+            categoryPlot.setRangeAxis(new NumberAxis(chartDescriptor.getAxisYTitle()));
+
+            chart = new JFreeChart(categoryPlot);
+            chart.setTitle(chartDescriptor.getTitle());
+
+        } else {
+            XYPlot xyPlot = new XYPlot();
+            List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
+            int index = 0;
+            for (ChartDescriptor.Series s : series) {
+                XYDataset xyDataSet = buildSeriesXYDataset(rs, columnMap, chartDescriptor, withSummary, dateFormat, isDateAxis, xMinMax, yMinMax, s);
+                XYItemRenderer renderer = null;
+                if ("linear".equals(s.getType())) {
+                    // Add the first dataset and render as bar
+                    renderer = new XYLineAndShapeRenderer();
+                } else if ("bar".equals(s.getType())) {
+                    // Add the second dataset and render as lines
+                    renderer = new XYBarRenderer();
+                } else if ("area".equals(s.getType())) {
+                    renderer = new XYAreaRenderer();
+                }
+
+                if (renderer != null) {
+                    xyPlot.setDataset(index, xyDataSet);
+                    xyPlot.setRenderer(index, renderer);
+                    index++;
+                }
+
+            }
+            // Set Axis
+            if (isDateAxis) {
+                xyPlot.setDomainAxis(new DateAxis(chartDescriptor.getAxisXTitle()));
+            } else {
+                xyPlot.setDomainAxis(new NumberAxis(chartDescriptor.getAxisXTitle()));
+            }
+            xyPlot.setRangeAxis(new NumberAxis(chartDescriptor.getAxisYTitle()));
+            chart = new JFreeChart(xyPlot);
+            chart.setTitle(chartDescriptor.getTitle());
+        }
+
+        return chart;
+    }
+
+
 
     private static ValueAxis getValueAxisForXYChart(String xAxisLabel, boolean dateAxis, DateFormatWithPattern[] dateFormat) {
         ValueAxis domainAxis;

@@ -26,6 +26,7 @@ public class ChartDescriptor {
     @Getter
     @Setter
     public static class Series {
+        private String type; // для комбинированной диаграммы. каждая серия имеет свой тип
         private String valueColumn;
         private String color;
         private String title;
