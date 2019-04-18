@@ -58,6 +58,8 @@ import java.util.List;
 
 public class ReportPdfWriter {
 
+    public static final String SUMMARY_CATEGORY_KEY = "Итого";
+
     /**
      * Ключ для категорий. Служит для различения категорий по индексу, а не по имени как по умолчанию
      */
@@ -199,10 +201,11 @@ public class ReportPdfWriter {
                         false,
                         false);
             } else if (ReportType.Wcascade == reportType) {
+                CategoryDataset dataset = buildWaterfallCategoryDataset(rs, columnMap, chartDescriptor, withSummary);
                 chart = ChartFactory.createWaterfallChart(chartDescriptor.getTitle(),
                         chartDescriptor.getAxisXTitle(),
                         chartDescriptor.getAxisYTitle(),
-                        defaultCategoryDataset,
+                        dataset,
                         PlotOrientation.VERTICAL,
                         chartDescriptor.getShowLegend(),
                         false,
@@ -282,7 +285,7 @@ public class ReportPdfWriter {
                     CategoryItemRenderer renderer = chart.getCategoryPlot().getRenderer();
                     renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
                     renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
-                    if (chartDescriptor.isCalculatedYRange()) {
+                    if (chartDescriptor.isCalculatedYRange() && ReportType.Wcascade != reportType) { // для каскадной диаграммы расчитываются неверно
                         chart.getCategoryPlot().getRangeAxis().setRange(yMinMax[0], yMinMax[1]);
                     } else if (chartDescriptor.isShowDotValues() && ReportType.hbar == reportType) {
                         Double max = calculateAxisUpperBoundToIncludeLabelsForColumnChart(yMinMax[1]);
@@ -300,6 +303,37 @@ public class ReportPdfWriter {
             document.add(image);
             os.close();
         }
+    }
+
+    private CategoryDataset buildWaterfallCategoryDataset(ResultSetWithTotal rs, Map<String, Integer> columnMap, ChartDescriptor chartDescriptor, boolean withSummary) {
+        DefaultCategoryDataset ds = new DefaultCategoryDataset();
+        List<List<Object>> rows = rs.getRows();
+        Integer categoryColumnIndex = columnMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
+        List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
+        //последняя строка - итоговая в случае withSummary = true
+        int sizeOfRows = withSummary ? rows.size() - 1 : rows.size();
+
+        for (ChartDescriptor.Series s : series) {
+            Double summary = 0D;
+            String valueColumn = new Column(s.getValueColumn()).getColumnName();
+            Integer seriesVaueIndex = columnMap.get(valueColumn);
+            int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
+            int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow() : sizeOfRows, sizeOfRows);
+            if (from < sizeOfRows) {
+                int i = 0;
+                for (List<Object> row : rows.subList(from, to)) {
+                    i++;
+                    Object categoryValue = row.get(categoryColumnIndex);
+                    categoryValue = categoryValue == null ? "" : categoryValue;
+                    Object value = row.get(seriesVaueIndex);
+                    Number seriesValueNumber = value != null && Number.class.isAssignableFrom(value.getClass()) ? (Number) value : 0;
+                    ds.addValue(seriesValueNumber, s.getTitle(), new CategoryKey(categoryValue.toString(), i));
+                    summary += seriesValueNumber.doubleValue();
+                }
+                ds.addValue(summary, s.getTitle(), new CategoryKey(SUMMARY_CATEGORY_KEY, i + 1));
+            }
+        }
+        return ds;
     }
 
     private PieDataset getPieDataset(ResultSetWithTotal rs, Map<String, Integer> columnMap, ChartDescriptor chartDescriptor) {
