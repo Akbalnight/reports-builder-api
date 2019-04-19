@@ -1,5 +1,6 @@
 package com.dias.services.reports.export.charts;
 
+import com.dias.services.reports.report.chart.ChartDescriptor;
 import lombok.experimental.Delegate;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieChart;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
@@ -21,7 +22,7 @@ public class PieChart implements IChartWithSeries {
     }
 
     @Override
-    public ISeries addNewSeries() {
+    public ISeries addNewSeries(ChartDescriptor.Series s) {
         return new PieSer(pieChart.addNewSer());
     }
 

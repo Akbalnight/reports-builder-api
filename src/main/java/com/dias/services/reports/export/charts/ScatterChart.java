@@ -1,5 +1,6 @@
 package com.dias.services.reports.export.charts;
 
+import com.dias.services.reports.report.chart.ChartDescriptor;
 import lombok.experimental.Delegate;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTScatterChart;
@@ -19,7 +20,7 @@ public class ScatterChart implements IChartWithSeries {
     }
 
     @Override
-    public ISeries addNewSeries() {
+    public ISeries addNewSeries(ChartDescriptor.Series s) {
         return new ScatterSer(ctScatterChart.addNewSer());
     }
 

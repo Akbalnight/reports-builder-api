@@ -13,7 +13,6 @@ import org.apache.poi.xssf.usermodel.XSSFDrawing;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openxmlformats.schemas.drawingml.x2006.chart.*;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTTextBody;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTTextParagraph;
 
@@ -53,10 +52,12 @@ class ExcelChartsHelper {
             chart = addBarChart(xssfChart.getCTChart().getPlotArea(), STBarDir.COL);
         } else if (ReportType.Wpie == repType) {
             chart = addPieChart(xssfChart.getCTChart().getPlotArea());
+        } else if (ReportType.Wscatter == repType) {
+            chart = new ScatterMarkerChart(xssfChart.getCTChart().getPlotArea());
         } else {
             Integer categoryRsColumnIndex = rs.getColumnsMap().get(chartDescriptor.getAxisXColumn());
             if (rs.getNumericColumnsIndexes().contains(categoryRsColumnIndex) || rs.getDateColumnsIndexes().contains(categoryRsColumnIndex)) {
-                chart = addScatterChart(xssfChart.getCTChart().getPlotArea());
+                chart = addScatterChart(xssfChart.getCTChart().getPlotArea(), STScatterStyle.SMOOTH_MARKER);
             } else {
                 chart = addLineChart(xssfChart.getCTChart().getPlotArea());
             }
@@ -79,9 +80,9 @@ class ExcelChartsHelper {
         return new LineChart(plot.addNewLineChart(), plot);
     }
 
-    private static IChartWithSeries addScatterChart(CTPlotArea plot) {
+    private static IChartWithSeries addScatterChart(CTPlotArea plot, STScatterStyle.Enum style) {
         CTScatterChart chart = plot.addNewScatterChart();
-        chart.addNewScatterStyle().setVal(STScatterStyle.Enum.forString("smoothMarker"));
+        chart.addNewScatterStyle().setVal(style);
         chart.addNewVaryColors().setVal(false);
         return new ScatterChart(chart, plot);
     }
@@ -124,7 +125,8 @@ class ExcelChartsHelper {
 
         for (int i = 0; i < series.size(); i++) {
             ChartDescriptor.Series s = series.get(i);
-            ISeries chartSeries = chart.addNewSeries();
+            ISeries chartSeries = chart.addNewSeries(s);
+            chartSeries.colorize(s.getAwtColor());
             chartSeries.addNewIdx().setVal(i);
             int fromRowIndex = (s.getStartRow() != null && s.getStartRow() > 0) ? s.getStartRow() - 1 : 0;
             int toRowIndex = (s.getEndRow() != null && s.getEndRow() < rowsNumber) ? s.getEndRow(): rowsNumber;
@@ -150,23 +152,15 @@ class ExcelChartsHelper {
             String valueColumnName = CellReference.convertNumToColString(valueColumnIndex);
             if (chartDescriptor.getShowLegend()) {
                 //если необходимо показывать легенду, указываем ячейку с наименованием колонки
-                chartSeries.addNewTx().addNewStrRef().setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + firstDataRow);
+                if (s.getTitle() != null) {
+                    chartSeries.addNewTx().setV(s.getTitle());
+                } else {
+                    chartSeries.addNewTx().addNewStrRef().setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + firstDataRow);
+                }
+
             }
 
-            if (chartDescriptor.isShowDotValues()) {
-                //добавляем метки к столбцам
-                CTDLbls dLbls = chartSeries.addNewDLbls();
-                //укажем положение - OUT_END (соответствует 7)
-                CTDLblPos ctdLblPos = dLbls.addNewDLblPos();
-                ctdLblPos.setVal(org.openxmlformats.schemas.drawingml.x2006.chart.STDLblPos.Enum.forInt(dataLabelPos));
-                dLbls.addNewShowVal().setVal(true);
-                //отключим отображение всего лишнего
-                dLbls.addNewShowSerName().setVal(false);
-                dLbls.addNewShowCatName().setVal(false);
-                dLbls.addNewShowBubbleSize().setVal(false);
-                dLbls.addNewShowLeaderLines().setVal(false);
-                dLbls.addNewShowLegendKey().setVal(false);
-            }
+            chartSeries.addDotValues(chartDescriptor, dataLabelPos);
 
             ctNumRef.setF(sheet.getSheetName() + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
         }
@@ -263,15 +257,6 @@ class ExcelChartsHelper {
             CTLegend ctLegend = xssfChart.getCTChart().addNewLegend();
             ctLegend.addNewLegendPos().setVal(STLegendPos.R);
             ctLegend.addNewOverlay().setVal(false);
-        }
-
-        // line style of the series
-        for (int i = 0; i < series.size(); i++) {
-            java.awt.Color color = series.get(i).getAwtColor();
-            if (color != null) {
-                CTShapeProperties seriesShapeProperties = chart.addNewShapeProperties(i);
-                seriesShapeProperties.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
-            }
         }
     }
 

@@ -5,6 +5,8 @@ import org.openxmlformats.schemas.drawingml.x2006.chart.CTDPt;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieSer;
 import org.openxmlformats.schemas.drawingml.x2006.main.*;
 
+import java.awt.*;
+
 /**
  * Серия для круговой диаграммы
  */
@@ -40,4 +42,14 @@ public class PieSer implements ISeries {
             lineProperties.addNewSolidFill().addNewSchemeClr().setVal(STSchemeColorVal.Enum.forString("lt1"));
         }
     }
+
+    @Override
+    public void colorize(Color color) {
+        if (color != null) {
+            CTShapeProperties seriesShapeProperties = series.addNewSpPr();
+            seriesShapeProperties.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
+        }
+    }
+
+
 }

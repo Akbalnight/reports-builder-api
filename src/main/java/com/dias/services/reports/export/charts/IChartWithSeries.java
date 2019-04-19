@@ -1,5 +1,6 @@
 package com.dias.services.reports.export.charts;
 
+import com.dias.services.reports.report.chart.ChartDescriptor;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTUnsignedInt;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTValAx;
@@ -12,7 +13,7 @@ import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
  * дублирования кода. Внутри реализации интерфейса происходит делегирование к Apache POI диаграмме
  */
 public interface IChartWithSeries {
-    ISeries addNewSeries();
+    ISeries addNewSeries(ChartDescriptor.Series s);
     CTUnsignedInt addNewAxId();
     CTShapeProperties addNewShapeProperties(int seriesIndex);
     IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric);
