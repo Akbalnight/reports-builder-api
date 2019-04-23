@@ -9,7 +9,10 @@ import com.dias.services.reports.subsystem.ColumnWithType;
 import lombok.experimental.Delegate;
 import org.apache.poi.ss.util.CellReference;
 import org.openxmlformats.schemas.drawingml.x2006.chart.*;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTLineProperties;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTSchemeColor;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
+import org.openxmlformats.schemas.drawingml.x2006.main.STSchemeColorVal;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +34,11 @@ public class CascadeChart extends BaseChart {
     private final int toRowIndex;
     private final int from;
     private final int to;
+    private final String xColumnName;
+    private CTLineChart lineChartWithCurrentValues;
+    private CTLineChart lineChartWithPreviousValues;
 
-    public CascadeChart(int firstDataRow, ReportExcelWriter reportExcelWriter, ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor) {
+    public CascadeChart(Map<String, Integer> excelColumnsMap, int firstDataRow, ReportExcelWriter reportExcelWriter, ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor) {
         super(rs, ctChart, chartDescriptor);
         this.plot = ctChart.getPlotArea();
         CTBarChart barChart = plot.addNewBarChart();
@@ -49,6 +55,8 @@ public class CascadeChart extends BaseChart {
         toRowIndex = (diagramSeries.getEndRow() != null && diagramSeries.getEndRow() < rowsNumber) ? diagramSeries.getEndRow(): rowsNumber;
         from = firstDataRow + fromRowIndex + 1;
         to = firstDataRow + toRowIndex;
+        int xColumn = excelColumnsMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
+        xColumnName = CellReference.convertNumToColString(xColumn);
 
     }
 
@@ -59,24 +67,65 @@ public class CascadeChart extends BaseChart {
         Integer lastColumn = excelColumnsMap.values().stream().max(Integer::compareTo).get();
         int startColumnIndex = lastColumn + 1; // берем данные из первой добавочной колонки, содержащей начальное значение
         int endColumnIndex = lastColumn + 4; // берем данные из последней добавочной колонки, содержащей конечное значение
-        addTotalBar(excelColumnsMap, dataSheetName, 0, startColumnIndex);
-        addTotalBar(excelColumnsMap, dataSheetName, 1, endColumnIndex);
-        addLineSeries(excelColumnsMap, dataSheetName, 2, excelColumnsMap.get(diagramSeries.getValueColumn()));
+        addTotalBar(dataSheetName, 0, startColumnIndex, 1);
+        addTotalBar(dataSheetName, 1, endColumnIndex, 2);
+
+        CTLineChart lineChart = plot.addNewLineChart();
+
+        addLineSeries(lineChart, dataSheetName, 2, excelColumnsMap.get(diagramSeries.getValueColumn()), 0);
+        addLineSeries(lineChart, dataSheetName, 3, lastColumn + 2, 3); // предыдущие значения
+
+        CTUpDownBars updowns = lineChart.addNewUpDownBars();
+        updowns.addNewGapWidth().setVal(150);
+        CTUpDownBar upBars = updowns.addNewUpBars();
+
+        CTShapeProperties sp = upBars.addNewSpPr();
+        sp.addNewSolidFill().addNewSchemeClr().setVal(STSchemeColorVal.ACCENT_1);
+        CTLineProperties ln = sp.addNewLn();
+        ln.setW(9525);
+        CTSchemeColor scheme = ln.addNewSolidFill().addNewSchemeClr();
+        scheme.setVal(STSchemeColorVal.TX_1);
+        scheme.addNewLumMod().setVal(15000);
+        scheme.addNewLumOff().setVal(85000);
+
+
+        CTUpDownBar downBars = updowns.addNewDownBars();
+        sp = downBars.addNewSpPr();
+        sp.addNewSolidFill().addNewSchemeClr().setVal(STSchemeColorVal.ACCENT_1);
+        ln = sp.addNewLn();
+        ln.setW(9525);
+        scheme.setVal(STSchemeColorVal.TX_1);
+        scheme.addNewLumMod().setVal(15000);
+        scheme.addNewLumOff().setVal(85000);
 
     }
 
-    private void addLineSeries(Map<String, Integer> excelColumnsMap, String dataSheetName, int seriesIndex, Integer valueColumnIndex) {
+    private void addLineSeries(CTLineChart lineChart, String dataSheetName, int seriesIndex, Integer valueColumnIndex, long order) {
+
+        lineChart.addNewAxId().setVal(AXIS_X_ID);
+        lineChart.addNewAxId().setVal(AXIS_Y_ID);
+
+        CTLineSer lineSeries = lineChart.addNewSer();
+        lineSeries.addNewOrder().setVal(order);
+        lineSeries.addNewIdx().setVal(seriesIndex);
+
+
+        lineSeries.addNewCat().addNewStrRef().setF(dataSheetName + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
+        CTNumDataSource ctNumDataSource = lineSeries.addNewVal();
+        CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
+        String valueColumnName = CellReference.convertNumToColString(valueColumnIndex);
+        ctNumRef.setF(dataSheetName + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
+
 
     }
 
-    private void addTotalBar(Map<String, Integer> excelColumnsMap, String dataSheetName, int seriesIndex, int columnIndex) {
-        ISeries chartSeries = addNewSeries(diagramSeries);
-
-        int xColumn = excelColumnsMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
-        String xColumnName = CellReference.convertNumToColString(xColumn);
+    private void addTotalBar(String dataSheetName, int seriesIndex, int columnIndex, long order) {
+        //ISeries chartSeries = addNewSeries(diagramSeries);
+        CTBarSer chartSeries = totalBarChart.addNewSer();
+        chartSeries.addNewOrder().setVal(order);
         chartSeries.addNewIdx().setVal(seriesIndex);
 
-        chartSeries.setFforX(dataSheetName + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
+        chartSeries.addNewCat().addNewStrRef().setF(dataSheetName + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
         CTNumDataSource ctNumDataSource = chartSeries.addNewVal();
         CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
         String valueColumnName = CellReference.convertNumToColString(columnIndex);

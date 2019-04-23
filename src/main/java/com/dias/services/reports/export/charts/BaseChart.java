@@ -16,8 +16,8 @@ public abstract class BaseChart implements IChartWithSeries {
 
     private static final int LABEL_POSITION_OUTSIDE_TOP = 7;
     static final int LABEL_POSITION_TOP = 9;
-    private static final int AXIS_Y_ID = 2;
-    private static final int AXIS_X_ID = 1;
+    protected static final int AXIS_Y_ID = 2;
+    protected static final int AXIS_X_ID = 1;
 
     private final CTChart ctChart;
     protected final ChartDescriptor chartDescriptor;
