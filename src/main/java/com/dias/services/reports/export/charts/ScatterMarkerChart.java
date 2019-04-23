@@ -1,6 +1,7 @@
 package com.dias.services.reports.export.charts;
 
 import com.dias.services.reports.report.chart.ChartDescriptor;
+import com.dias.services.reports.report.query.ResultSetWithTotal;
 import lombok.experimental.Delegate;
 import org.openxmlformats.schemas.drawingml.x2006.chart.*;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTLineProperties;
@@ -12,17 +13,17 @@ import java.awt.*;
 /**
  * График c числами по оси X
  */
-public class ScatterMarkerChart implements IChartWithSeries {
+public class ScatterMarkerChart extends BaseChart {
     @Delegate
     private final CTScatterChart ctScatterChart;
     private final CTPlotArea plot;
 
-    public ScatterMarkerChart(CTPlotArea plot) {
-        CTScatterChart chart = plot.addNewScatterChart();
-        chart.addNewScatterStyle().setVal(STScatterStyle.LINE_MARKER);
-        chart.addNewVaryColors().setVal(false);
-        this.ctScatterChart = chart;
-        this.plot = plot;
+    public ScatterMarkerChart(ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor) {
+        super(rs, ctChart, chartDescriptor);
+        this.plot = ctChart.getPlotArea();
+        this.ctScatterChart = plot.addNewScatterChart();
+        this.ctScatterChart.addNewScatterStyle().setVal(STScatterStyle.LINE_MARKER);
+        this.ctScatterChart.addNewVaryColors().setVal(false);
     }
 
     @Override

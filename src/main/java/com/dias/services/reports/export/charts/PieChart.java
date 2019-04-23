@@ -1,24 +1,25 @@
 package com.dias.services.reports.export.charts;
 
 import com.dias.services.reports.report.chart.ChartDescriptor;
+import com.dias.services.reports.report.query.ResultSetWithTotal;
 import lombok.experimental.Delegate;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieChart;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTUnsignedInt;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTValAx;
+import org.openxmlformats.schemas.drawingml.x2006.chart.*;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
 
 /**
  * Круговая диаграмма
  */
-public class PieChart implements IChartWithSeries {
+public class PieChart extends BaseChart {
 
     @Delegate
     private final CTPieChart pieChart;
     private final CTPlotArea plot;
-    public PieChart(CTPieChart ctPieChart, CTPlotArea plot) {
-        this.pieChart = ctPieChart;
-        this.plot = plot;
+
+    public PieChart(ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor) {
+        super(rs, ctChart, chartDescriptor);
+        this.plot = ctChart.getPlotArea();
+        this.pieChart = ctChart.getPlotArea().addNewPieChart();
+        this.pieChart.addNewVaryColors().setVal(true);
     }
 
     @Override

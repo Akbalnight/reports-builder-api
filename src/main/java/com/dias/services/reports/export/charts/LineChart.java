@@ -1,7 +1,9 @@
 package com.dias.services.reports.export.charts;
 
 import com.dias.services.reports.report.chart.ChartDescriptor;
+import com.dias.services.reports.report.query.ResultSetWithTotal;
 import lombok.experimental.Delegate;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTChart;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTLineChart;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTValAx;
@@ -10,13 +12,15 @@ import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
 /**
  * График с категориями по оси X
  */
-public class LineChart implements IChartWithSeries {
+public class LineChart extends BaseChart {
     @Delegate
     private final CTLineChart lineChart;
     private final CTPlotArea plot;
-    public LineChart(CTLineChart ctLineChart, CTPlotArea plot) {
-        this.lineChart = ctLineChart;
-        this.plot = plot;
+
+    public LineChart(ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor) {
+        super(rs, ctChart, chartDescriptor);
+        this.plot = ctChart.getPlotArea();
+        this.lineChart = plot.addNewLineChart();
     }
 
     @Override
@@ -37,6 +41,11 @@ public class LineChart implements IChartWithSeries {
     @Override
     public CTValAx addNewValAx() {
         return plot.addNewValAx();
+    }
+
+    @Override
+    protected int getValueLabelsLocation() {
+        return LABEL_POSITION_TOP;
     }
 }
 

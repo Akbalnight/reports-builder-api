@@ -1,22 +1,25 @@
 package com.dias.services.reports.export.charts;
 
 import com.dias.services.reports.report.chart.ChartDescriptor;
+import com.dias.services.reports.report.query.ResultSetWithTotal;
 import lombok.experimental.Delegate;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTScatterChart;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTValAx;
+import org.openxmlformats.schemas.drawingml.x2006.chart.*;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
 
 /**
  * График c числами по оси X
  */
-public class ScatterChart implements IChartWithSeries {
+public class ScatterChart extends BaseChart {
     @Delegate
     private final CTScatterChart ctScatterChart;
     private final CTPlotArea plot;
-    public ScatterChart(CTScatterChart ctScatterChart, CTPlotArea plot) {
-        this.ctScatterChart = ctScatterChart;
-        this.plot = plot;
+
+    public ScatterChart(ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor, STScatterStyle.Enum style) {
+        super(rs, ctChart, chartDescriptor);
+        this.plot = ctChart.getPlotArea();
+        this.ctScatterChart = plot.addNewScatterChart();
+        this.ctScatterChart.addNewScatterStyle().setVal(style);
+        this.ctScatterChart.addNewVaryColors().setVal(false);
     }
 
     @Override
@@ -37,6 +40,11 @@ public class ScatterChart implements IChartWithSeries {
     @Override
     public CTValAx addNewValAx() {
         return plot.addNewValAx();
+    }
+
+    @Override
+    protected int getValueLabelsLocation() {
+        return LABEL_POSITION_TOP;
     }
 }
 

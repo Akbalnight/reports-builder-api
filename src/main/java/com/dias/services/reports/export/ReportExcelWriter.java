@@ -74,6 +74,11 @@ public class ReportExcelWriter {
 
     private XSSFDataFormat dataFormat;
     private XSSFFont defaultFont;
+    private XSSFSheet sheet;
+    private int titleEndRowIndex;
+    private int parametersEndRowIndex;
+    private int headersEndRowIndex;
+    private int rowsEndRowIndex;
 
     public ReportExcelWriter(ReportService tablesService, Translator translator, String nullSymbol) {
         this.tablesService = tablesService;
@@ -88,7 +93,7 @@ public class ReportExcelWriter {
     public void writeExcel(ReportDTO report, ResultSetWithTotal rs, OutputStream out) throws IOException {
         init();
         ReportType repType = ReportType.byNameOrDefaultForUnknown(report.getType());
-        XSSFSheet sheet = workbook.createSheet(ReportType.table == repType ? report.getName() : DATA_SHEET_DEFAULT_NAME);
+        sheet = workbook.createSheet(ReportType.table == repType ? report.getName() : DATA_SHEET_DEFAULT_NAME);
         boolean isChart = ReportType.table != repType;
         if (!isChart) {
             //преобразуем резалтсет в резалтсет с группировками только
@@ -110,7 +115,7 @@ public class ReportExcelWriter {
         if (chartDescriptor != null) {
             int excelStartColumn = START_COLUMN_INDEX + 1 + (rs.containsTotal() ? 1 : 0);
             Map<String, Integer> excelColumnsMap = getColumnMap(excelStartColumn, rs);
-            ExcelChartsHelper.addChartToWorkbook(workbook, chartDescriptor, report, repType, firstRowWithData, rs, sheet, excelColumnsMap);
+            ExcelChartsFactory.addChartToWorkbook(workbook, chartDescriptor, report, repType, firstRowWithData, rs, sheet, excelColumnsMap, this);
         }
     }
 
@@ -124,12 +129,29 @@ public class ReportExcelWriter {
         //первая колонка будет содержать номер строки
         sheet.setColumnWidth(START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0), N_COLUMN);
 
-        int rowNum = writeTitle(report, sheet, 0);
-        rowNum = writeParameters(report, sheet, rowNum);
-        rowNum = writeHeaders(rs, sheet, rowNum);
-        firstDataRowIndex = rowNum;
-        rowNum = writeRows(rs, sheet, rowNum);
-        writeTotal(report, rs, sheet, numberOfColumns, rowNum, firstDataRowIndex);
+        titleEndRowIndex = writeTitle(report, sheet, 0);
+        parametersEndRowIndex = writeParameters(report, sheet, titleEndRowIndex);
+        headersEndRowIndex = writeHeaders(rs, sheet, parametersEndRowIndex, 0, false);
+        firstDataRowIndex = headersEndRowIndex;
+        rowsEndRowIndex = writeRows(rs, sheet, headersEndRowIndex, 0, false);
+        writeTotal(report, rs, sheet, numberOfColumns, rowsEndRowIndex, firstDataRowIndex);
+        return firstDataRowIndex;
+    }
+
+    public int joinTable(ResultSetWithTotal initialResultSet, ResultSetWithTotal rs) {
+
+        int firstDataRowIndex;
+        int numberOfInitialColumns = initialResultSet.getHeaders().size();
+        int numberOfNewColumns = rs.getHeaders().size();
+        int firstColumnOfNewData = START_COLUMN_INDEX + 1 + numberOfInitialColumns + (initialResultSet.containsTotal() ? 1 : 0);
+
+        IntStream.range(firstColumnOfNewData, firstColumnOfNewData + numberOfNewColumns).forEach(i -> {
+            sheet.setColumnWidth(i, COLUMN_WIDTH);
+        });
+
+        //первая колонка будет содержать номер строки
+        firstDataRowIndex = writeHeaders(rs, sheet, parametersEndRowIndex, START_COLUMN_INDEX + numberOfInitialColumns + 1, true);
+        writeRows(rs, sheet, firstDataRowIndex, START_COLUMN_INDEX + numberOfInitialColumns + 1, true);
         return firstDataRowIndex;
     }
 
@@ -174,21 +196,25 @@ public class ReportExcelWriter {
         }
     }
 
-    private int writeHeaders(ResultSetWithTotal rs, XSSFSheet sheet, int rowNum) {
-        XSSFRow row = sheet.createRow(rowNum++);
+    private int writeHeaders(ResultSetWithTotal rs, XSSFSheet sheet, int rowNum, int shift, boolean rowsCreated) {
+        XSSFRow row = rowsCreated ? sheet.getRow(rowNum++) : sheet.createRow(rowNum++);
         row.setHeight(HEADER_HEIGHT);
         List<ColumnWithType> headers = rs.getHeaders();
-        int cellNum = START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0);
-        Cell cell = createCell(row, cellNum++, headerStyle, ROW_NUMBER_TITLE);
-        addMediumBordersToStyle(cell.getCellStyle());
+        int cellNum = START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0) + shift;
+
+        if (!rowsCreated) {
+            Cell cell = createCell(row, cellNum++, headerStyle, ROW_NUMBER_TITLE);
+            addMediumBordersToStyle(cell.getCellStyle());
+        }
+
         for(ColumnWithType header : headers) {
-            cell = createCell(row, cellNum++, headerStyle, StringUtils.isEmpty(header.getTitle()) ? header.getColumn() : header.getTitle());
+            Cell cell = createCell(row, cellNum++, headerStyle, StringUtils.isEmpty(header.getTitle()) ? header.getColumn() : header.getTitle());
             addMediumBordersToStyle(cell.getCellStyle());
         }
         return rowNum;
     }
 
-    private int writeRows(ResultSetWithTotal rs, XSSFSheet sheet, int rowNum) {
+    private int writeRows(ResultSetWithTotal rs, XSSFSheet sheet, int rowNum, int shift, boolean rowsCreated) {
         List<Integer> groupRowsIndexes = rs.getGroupRowsIndexes();
         List<Integer> dateTypeColumnsIndexes = rs.getDateColumnsIndexes();
         List<Integer> numericTypeColumnsIndexes = rs.getNumericColumnsIndexes();
@@ -196,10 +222,13 @@ public class ReportExcelWriter {
         String dateFormatPattern = null;
         for (int i = 0; i < rows.size(); i++) {
             List<Object> r = rows.get(i);
-            XSSFRow xlsRow = sheet.createRow(rowNum++);
-            int dataRowCellNum = START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0);
-            //выводим номер строки
-            writeNumericOrStringCell(xlsRow, dataRowCellNum++, i + 1, defaultStyle, true);
+            XSSFRow xlsRow = rowsCreated ? sheet.getRow(rowNum++) : sheet.createRow(rowNum++);
+            int dataRowCellNum = START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0) + shift;
+
+            if (!rowsCreated) {
+                //выводим номер строки
+                writeNumericOrStringCell(xlsRow, dataRowCellNum++, i + 1, defaultStyle, true);
+            }
 
             //определим стиль вывода данных
             //в случае выводы группы - используем специальный стиль

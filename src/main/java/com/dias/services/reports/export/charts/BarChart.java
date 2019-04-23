@@ -1,22 +1,25 @@
 package com.dias.services.reports.export.charts;
 
 import com.dias.services.reports.report.chart.ChartDescriptor;
+import com.dias.services.reports.report.query.ResultSetWithTotal;
 import lombok.experimental.Delegate;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTBarChart;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTValAx;
+import org.openxmlformats.schemas.drawingml.x2006.chart.*;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
 
 /**
  * Гистограмма
  */
-public class BarChart implements IChartWithSeries {
+public class BarChart extends BaseChart {
     @Delegate
     private final CTBarChart barChart;
     private final CTPlotArea plot;
-    public BarChart(CTBarChart ctBarChart, CTPlotArea plot) {
-        this.barChart = ctBarChart;
-        this.plot = plot;
+
+    public BarChart(ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor, STBarDir.Enum barChartType) {
+        super(rs, ctChart, chartDescriptor);
+        this.plot = ctChart.getPlotArea();
+        this.barChart = plot.addNewBarChart();
+        barChart.addNewBarDir().setVal(barChartType);
+        barChart.addNewVaryColors().setVal(false);
     }
 
     @Override
@@ -31,9 +34,6 @@ public class BarChart implements IChartWithSeries {
 
     @Override
     public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
-            /*if (isCategoryAxisNumeric) {
-                return new NumericAxis(plotArea.addNewValAx());
-            }*/
         return new CategoryAxis(plotArea.addNewCatAx());
     }
 
