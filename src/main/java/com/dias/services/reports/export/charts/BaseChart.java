@@ -190,6 +190,24 @@ public abstract class BaseChart implements IChartWithSeries {
                 }
             }
         }
+
+        if (ctValAx != null) {
+            CTScaling yctScaling = ctValAx.addNewScaling();
+            yctScaling.addNewOrientation().setVal(STOrientation.MIN_MAX);
+            if (chartDescriptor.isCalculatedYRange()) {
+
+                fixRange(yMinMax);
+
+                // блок определения минимума/максимума оси
+                yctScaling.addNewMin().setVal(yMinMax[0]);
+                yctScaling.addNewMax().setVal(yMinMax[1]);
+                if (axisX != null) {
+                    // укажем, что ось значений должна пересечь ось значений в минимуме
+                    axisX.addNewCrossesAt().setVal(yMinMax[0]);
+                }
+            }
+        }
+
     }
 
     private static void setAxisTitle(CTTitle ctTitle, String title) {

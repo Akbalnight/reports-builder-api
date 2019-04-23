@@ -41,6 +41,7 @@ class ExcelChartsFactory {
         XSSFDrawing drawing = dataSheet.createDrawingPatriarch();
         ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 0, 0, CHART_WIDTH, CHART_HEIGHT);
         XSSFChart xssfChart = drawing.createChart(anchor);
+        xssfChart.setTitleText(chartDescriptor.getTitle());
         createByType(reportExcelWriter, repType, xssfChart.getCTChart(), chartDescriptor, rs, firstRowWithData, excelColumnsMap, sheet.getSheetName());
     }
 
@@ -85,8 +86,8 @@ class ExcelChartsFactory {
 
         if (chart != null) {
             chart.addSeries(firstDataRow, excelColumnsMap, dataSheetName);
-            //chart.addXY();
-            //chart.addLegend(chartDescriptor);
+            chart.addXY();
+            chart.addLegend(chartDescriptor);
         }
     }
 
