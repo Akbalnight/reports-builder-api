@@ -54,7 +54,7 @@ class ExcelChartsFactory {
 
         } else if (repType == ReportType.Wcascade) {
 
-            chart = new CascadeChart(reportExcelWriter, rs, ctChart, chartDescriptor);
+            chart = new CascadeChart(firstDataRow, reportExcelWriter, rs, ctChart, chartDescriptor);
 
         } else if (repType == ReportType.hbar) {
 

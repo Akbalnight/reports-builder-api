@@ -4,6 +4,7 @@ import com.dias.services.reports.export.ReportExcelWriter;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
+import com.dias.services.reports.service.ReportBuilderService;
 import com.dias.services.reports.subsystem.ColumnWithType;
 import lombok.experimental.Delegate;
 import org.apache.poi.ss.util.CellReference;
@@ -25,8 +26,13 @@ public class CascadeChart extends BaseChart {
     private final CTBarChart totalBarChart;
     private final ReportExcelWriter reportExcelWriter;
     private final ResultSetWithTotal rs;
+    private final ChartDescriptor.Series diagramSeries;
+    private final int fromRowIndex;
+    private final int toRowIndex;
+    private final int from;
+    private final int to;
 
-    public CascadeChart(ReportExcelWriter reportExcelWriter, ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor) {
+    public CascadeChart(int firstDataRow, ReportExcelWriter reportExcelWriter, ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor) {
         super(rs, ctChart, chartDescriptor);
         this.plot = ctChart.getPlotArea();
         CTBarChart barChart = plot.addNewBarChart();
@@ -36,32 +42,45 @@ public class CascadeChart extends BaseChart {
         this.totalBarChart = barChart;
         this.reportExcelWriter = reportExcelWriter;
         this.rs = rs;
+
+        diagramSeries = chartDescriptor.getSeries().get(0);
+        fromRowIndex = (diagramSeries.getStartRow() != null && diagramSeries.getStartRow() > 0) ? diagramSeries.getStartRow() - 1 : 0;
+        int rowsNumber = rs.getRows().size();
+        toRowIndex = (diagramSeries.getEndRow() != null && diagramSeries.getEndRow() < rowsNumber) ? diagramSeries.getEndRow(): rowsNumber;
+        from = firstDataRow + fromRowIndex + 1;
+        to = firstDataRow + toRowIndex;
+
     }
 
     @Override
     public void addSeries(int firstDataRow, Map<String, Integer> excelColumnsMap, String dataSheetName) {
-        updateDataSheet();
 
-        ChartDescriptor.Series s = chartDescriptor.getSeries().get(0);
-        ISeries chartSeries = addNewSeries(s);
+        updateDataSheet();
+        Integer lastColumn = excelColumnsMap.values().stream().max(Integer::compareTo).get();
+        int startColumnIndex = lastColumn + 1; // берем данные из первой добавочной колонки, содержащей начальное значение
+        int endColumnIndex = lastColumn + 4; // берем данные из последней добавочной колонки, содержащей конечное значение
+        addTotalBar(excelColumnsMap, dataSheetName, 0, startColumnIndex);
+        addTotalBar(excelColumnsMap, dataSheetName, 1, endColumnIndex);
+        addLineSeries(excelColumnsMap, dataSheetName, 2, excelColumnsMap.get(diagramSeries.getValueColumn()));
+
+    }
+
+    private void addLineSeries(Map<String, Integer> excelColumnsMap, String dataSheetName, int seriesIndex, Integer valueColumnIndex) {
+
+    }
+
+    private void addTotalBar(Map<String, Integer> excelColumnsMap, String dataSheetName, int seriesIndex, int columnIndex) {
+        ISeries chartSeries = addNewSeries(diagramSeries);
 
         int xColumn = excelColumnsMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
         String xColumnName = CellReference.convertNumToColString(xColumn);
-        chartSeries.addNewIdx().setVal(0);
-
-        int fromRowIndex = (s.getStartRow() != null && s.getStartRow() > 0) ? s.getStartRow() - 1 : 0;
-        int rowsNumber = rs.getRows().size();
-        int toRowIndex = (s.getEndRow() != null && s.getEndRow() < rowsNumber) ? s.getEndRow(): rowsNumber;
-        int from = firstDataRow + fromRowIndex + 1;
-        int to = firstDataRow + toRowIndex;
+        chartSeries.addNewIdx().setVal(seriesIndex);
 
         chartSeries.setFforX(dataSheetName + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
         CTNumDataSource ctNumDataSource = chartSeries.addNewVal();
         CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
-        int valueColumnIndex = excelColumnsMap.get(new Column(s.getValueColumn()).getColumnName());
-
-        String valueColumnName = CellReference.convertNumToColString(valueColumnIndex);
-        ctNumRef.setF(dataSheetName + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + from);
+        String valueColumnName = CellReference.convertNumToColString(columnIndex);
+        ctNumRef.setF(dataSheetName + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
     }
 
     private void updateDataSheet() {
@@ -72,24 +91,41 @@ public class CascadeChart extends BaseChart {
         ResultSetWithTotal calculatedData = new ResultSetWithTotal();
         List<List<Object>> newRows = new ArrayList<>();
         List<ColumnWithType> newHeaders = new ArrayList<>();
-        newHeaders.add(ColumnWithType.builder().title("Предыдущее значение").build());
-        newHeaders.add(ColumnWithType.builder().title("Разница").build());
+        newHeaders.add(ColumnWithType.builder().title("Начальное значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
+        newHeaders.add(ColumnWithType.builder().title("Предыдущее значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
+        newHeaders.add(ColumnWithType.builder().title("Разница").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
+        newHeaders.add(ColumnWithType.builder().title("Конечное значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
         calculatedData.setHeaders(newHeaders);
         calculatedData.setRows(newRows);
         Double previous = 0D;
-        for (int i = 0; i < rs.getRows().size(); i++) {
+        for (int i = fromRowIndex; i < toRowIndex; i++) {
             List<Object> row = rs.getRows().get(i);
             Double value = (Double) row.get(valueColumnIndex);
             value = value == null ? 0D : value;
             List<Object> newRow = new ArrayList<>();
-            if (i == 0) {
+            if (i == fromRowIndex) {
                 previous = value;
+                newRow.add(value);
+            } else {
+                newRow.add(null);
             }
             newRow.add(previous);
             newRow.add(value - previous);
 
+            if (i == toRowIndex - 1) {
+                newRow.add(value);
+            } else {
+                newRow.add(null);
+            }
+
             previous = value;
             newRows.add(newRow);
+            if (value > yMinMax[1]) {
+                yMinMax[1] = value;
+            }
+            if (value < yMinMax[0]) {
+                yMinMax[0] = value;
+            }
         }
 
         reportExcelWriter.joinTable(rs, calculatedData);

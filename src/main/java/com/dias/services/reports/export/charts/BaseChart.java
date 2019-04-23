@@ -25,8 +25,8 @@ public abstract class BaseChart implements IChartWithSeries {
     private final boolean isCategoryAxisDate;
     private final ResultSetWithTotal rs;
     private final Integer categoryRsColumnIndex;
-    private double[] xMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
-    private double[] yMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
+    private double[] xMinMax = new double[]{Double.MAX_VALUE, Double.MIN_NORMAL};
+    double[] yMinMax = new double[]{Double.MAX_VALUE, Double.MIN_NORMAL};
     private int[] xFromTo = new int[]{-1, 0};
 
 
