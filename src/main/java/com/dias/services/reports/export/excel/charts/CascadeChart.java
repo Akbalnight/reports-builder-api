@@ -22,6 +22,8 @@ import java.util.Map;
  */
 public class CascadeChart extends BaseChart {
 
+    public static final String START_VALUE_TITLE = "Начальное значение";
+    public static final String END_VALUE_TITLE = "Итог";
     private final CTPlotArea plot;
 
     @Delegate
@@ -73,13 +75,13 @@ public class CascadeChart extends BaseChart {
         updateDataSheet();
         Integer lastColumn = excelColumnsMap.values().stream().max(Integer::compareTo).get();
 
-        addTotalBar(dataSheetName, 0, lastColumn + START_VALUE_INDEX + 1, 1, diagramSeries.toAwtColor(diagramSeries.getColorInitial()), from, to); // начальное значение
-        addTotalBar(dataSheetName, 1, lastColumn + END_VALUE_INDEX + 1, 2, diagramSeries.toAwtColor(diagramSeries.getColorTotal()), from, to + 1); // конечное значение
+        addTotalBar(dataSheetName, 0, lastColumn + START_VALUE_INDEX + 1, 1, diagramSeries.toAwtColor(diagramSeries.getColorInitial()), from, to, START_VALUE_TITLE); // начальное значение
+        addTotalBar(dataSheetName, 1, lastColumn + END_VALUE_INDEX + 1, 2, diagramSeries.toAwtColor(diagramSeries.getColorTotal()), from, to + 1, END_VALUE_TITLE); // конечное значение
 
         CTLineChart lineChart = plot.addNewLineChart();
 
-        addLineSeries(lineChart, dataSheetName, 2, lastColumn + CURRENT_VALUE_INDEX + 1, 0); // текущие значения
-        addLineSeries(lineChart, dataSheetName, 3, lastColumn + PREVIOUS_VALUE_INDEX + 1, 3); // предыдущие значения
+        addLineSeries(lineChart, dataSheetName, 2, lastColumn + CURRENT_VALUE_INDEX + 1, 0, ""); // текущие значения
+        addLineSeries(lineChart, dataSheetName, 3, lastColumn + PREVIOUS_VALUE_INDEX + 1, 3, ""); // предыдущие значения
 
         CTUpDownBars updowns = lineChart.addNewUpDownBars();
         updowns.addNewGapWidth().setVal(0);
@@ -102,7 +104,7 @@ public class CascadeChart extends BaseChart {
         }
     }
 
-    private void addLineSeries(CTLineChart lineChart, String dataSheetName, int seriesIndex, Integer valueColumnIndex, long order) {
+    private void addLineSeries(CTLineChart lineChart, String dataSheetName, int seriesIndex, Integer valueColumnIndex, long order, String title) {
 
         lineChart.addNewAxId().setVal(AXIS_X_ID);
         lineChart.addNewAxId().setVal(AXIS_Y_ID);
@@ -110,9 +112,9 @@ public class CascadeChart extends BaseChart {
         CTLineSer lineSeries = lineChart.addNewSer();
 
         // спрячем маркеры и линии, поскольку нам нужны только up/down бары
-        lineSeries.addNewMarker().addNewSymbol().setVal(STMarkerStyle.NONE);
-        CTShapeProperties sp = lineSeries.addNewSpPr();
-        sp.addNewLn().addNewNoFill();
+        //lineSeries.addNewMarker().addNewSymbol().setVal(STMarkerStyle.NONE);
+        //CTShapeProperties sp = lineSeries.addNewSpPr();
+        //sp.addNewLn().addNewNoFill();
 
         lineSeries.addNewOrder().setVal(order);
         lineSeries.addNewIdx().setVal(seriesIndex);
@@ -124,10 +126,26 @@ public class CascadeChart extends BaseChart {
         String valueColumnName = CellReference.convertNumToColString(valueColumnIndex);
         ctNumRef.setF(dataSheetName + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
 
+        lineSeries.addNewTx().setV(title);
+
+        if (chartDescriptor.isShowDotValues()) {
+            CTDLbls dLbls = lineSeries.addNewDLbls();
+            //CTNumFmt ctNumFmt = dLbls.addNewNumFmt();
+            //ctNumFmt.setFormatCode("#.##\"\"");
+            //ctNumFmt.setSourceLinked(false);
+            dLbls.addNewDLblPos().setVal(STDLblPos.T);
+            dLbls.addNewShowVal().setVal(true);
+            //отключим отображение всего лишнего
+            dLbls.addNewShowSerName().setVal(false);
+            dLbls.addNewShowCatName().setVal(false);
+            dLbls.addNewShowBubbleSize().setVal(false);
+            dLbls.addNewShowLeaderLines().setVal(false);
+            dLbls.addNewShowLegendKey().setVal(false);
+        }
 
     }
 
-    private void addTotalBar(String dataSheetName, int seriesIndex, int columnIndex, long order, Color color, int from, int to) {
+    private void addTotalBar(String dataSheetName, int seriesIndex, int columnIndex, long order, Color color, int from, int to, String title) {
         //ISeries chartSeries = addNewSeries(diagramSeries);
         CTBarSer chartSeries = totalBarChart.addNewSer();
         chartSeries.addNewOrder().setVal(order);
@@ -143,6 +161,25 @@ public class CascadeChart extends BaseChart {
         CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
         String valueColumnName = CellReference.convertNumToColString(columnIndex);
         ctNumRef.setF(dataSheetName + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
+
+        //если необходимо показывать легенду, указываем ячейку с наименованием колонки
+        chartSeries.addNewTx().setV(title);
+
+        if (chartDescriptor.isShowDotValues()) {
+            CTDLbls dLbls = chartSeries.addNewDLbls();
+            CTNumFmt ctNumFmt = dLbls.addNewNumFmt();
+            ctNumFmt.setFormatCode("#.##\"\"");
+            ctNumFmt.setSourceLinked(false);
+            dLbls.addNewDLblPos().setVal(STDLblPos.OUT_END);
+            dLbls.addNewShowVal().setVal(true);
+            //отключим отображение всего лишнего
+            dLbls.addNewShowSerName().setVal(false);
+            dLbls.addNewShowCatName().setVal(false);
+            dLbls.addNewShowBubbleSize().setVal(false);
+            dLbls.addNewShowLeaderLines().setVal(false);
+            dLbls.addNewShowLegendKey().setVal(false);
+        }
+
     }
 
     private void updateDataSheet() {
@@ -153,11 +190,11 @@ public class CascadeChart extends BaseChart {
         ResultSetWithTotal calculatedData = new ResultSetWithTotal();
         List<List<Object>> newRows = new ArrayList<>();
         List<ColumnWithType> newHeaders = new ArrayList<>();
-        newHeaders.add(ColumnWithType.builder().title("Начальное значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
+        newHeaders.add(ColumnWithType.builder().title(START_VALUE_TITLE).type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
         newHeaders.add(ColumnWithType.builder().title("Текущее значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
         newHeaders.add(ColumnWithType.builder().title("Предыдущее значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
         newHeaders.add(ColumnWithType.builder().title("Разница").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
-        newHeaders.add(ColumnWithType.builder().title("Конечное значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
+        newHeaders.add(ColumnWithType.builder().title(END_VALUE_TITLE).type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
         calculatedData.setHeaders(newHeaders);
         calculatedData.setRows(newRows);
         Double previous = 0D;
