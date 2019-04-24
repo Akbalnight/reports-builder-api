@@ -1,17 +1,21 @@
-package com.dias.services.reports.export.charts;
+package com.dias.services.reports.export.excel.charts;
 
 import lombok.experimental.Delegate;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTLineSer;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTBarSer;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
 
 import java.awt.*;
 
-public class LineSer implements ISeries {
+/**
+ * Серия для гистограммы
+ */
+public class BarSer implements ISeries {
     @Delegate
-    private final CTLineSer series;
-    LineSer(CTLineSer ctLineSer) {
-        this.series = ctLineSer;
+    private final CTBarSer series;
+    BarSer(CTBarSer ctBarSer) {
+        this.series = ctBarSer;
     }
+
     @Override
     public void setFforX(String formula) {
         series.addNewCat().addNewStrRef().setF(formula);

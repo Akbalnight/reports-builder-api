@@ -1,4 +1,4 @@
-package com.dias.services.reports.export.charts;
+package com.dias.services.reports.export.excel.charts;
 
 import org.openxmlformats.schemas.drawingml.x2006.chart.*;
 

@@ -3,7 +3,7 @@ package com.dias.services.reports.export;
 import java.util.HashMap;
 import java.util.Map;
 
-class ExportChartsHelper {
+public class ExportChartsHelper {
 
     //Регулярные выражения для определения формата даты в базе данных
     //Необходимо для записи стиля ячеек в excel,
@@ -37,7 +37,7 @@ class ExportChartsHelper {
         put("^\\d{1,2}\\s[a-z]{4,}\\s\\d{4}\\s\\d{1,2}:\\d{2}:\\d{2}$", "dd MMMM yyyy HH:mm:ss");
     }};
 
-    static String calculateDateFormatPattern(String value) {
+    public static String calculateDateFormatPattern(String value) {
         for (Map.Entry<String, String> dateFormat : DATE_FORMAT_REGEXPS.entrySet()) {
             String regexp = dateFormat.getKey();
             if (value.matches(regexp)) {

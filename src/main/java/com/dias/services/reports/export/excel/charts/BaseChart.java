@@ -1,4 +1,4 @@
-package com.dias.services.reports.export.charts;
+package com.dias.services.reports.export.excel.charts;
 
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.Column;

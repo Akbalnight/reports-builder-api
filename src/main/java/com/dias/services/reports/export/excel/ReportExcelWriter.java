@@ -1,6 +1,8 @@
-package com.dias.services.reports.export;
+package com.dias.services.reports.export.excel;
 
 import com.dias.services.reports.dto.reports.ReportDTO;
+import com.dias.services.reports.export.ExportChartsHelper;
+import com.dias.services.reports.export.ReportType;
 import com.dias.services.reports.query.NoGroupByQueryBuilder;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.Calculation;
@@ -138,7 +140,7 @@ public class ReportExcelWriter {
         return firstDataRowIndex;
     }
 
-    public int joinTable(ResultSetWithTotal initialResultSet, ResultSetWithTotal rs) {
+    public void joinTable(int fromRowIndex, ResultSetWithTotal initialResultSet, ResultSetWithTotal rs) {
 
         int firstDataRowIndex;
         int numberOfInitialColumns = initialResultSet.getHeaders().size();
@@ -151,8 +153,7 @@ public class ReportExcelWriter {
 
         //первая колонка будет содержать номер строки
         firstDataRowIndex = writeHeaders(rs, sheet, parametersEndRowIndex, START_COLUMN_INDEX + numberOfInitialColumns + 1, true);
-        writeRows(rs, sheet, firstDataRowIndex, START_COLUMN_INDEX + numberOfInitialColumns + 1, true);
-        return firstDataRowIndex;
+        writeRows(rs, sheet, firstDataRowIndex + fromRowIndex, START_COLUMN_INDEX + numberOfInitialColumns + 1, true);
     }
 
     private static Map<String, Integer> getColumnMap(int startColumn, ResultSetWithTotal rs) {

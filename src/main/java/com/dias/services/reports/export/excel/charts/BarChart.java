@@ -1,4 +1,4 @@
-package com.dias.services.reports.export.charts;
+package com.dias.services.reports.export.excel.charts;
 
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
@@ -7,44 +7,39 @@ import org.openxmlformats.schemas.drawingml.x2006.chart.*;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
 
 /**
- * Круговая диаграмма
+ * Гистограмма
  */
-public class PieChart extends BaseChart {
-
+public class BarChart extends BaseChart {
     @Delegate
-    private final CTPieChart pieChart;
+    private final CTBarChart barChart;
     private final CTPlotArea plot;
 
-    public PieChart(ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor) {
+    public BarChart(ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor, STBarDir.Enum barChartType) {
         super(rs, ctChart, chartDescriptor);
         this.plot = ctChart.getPlotArea();
-        this.pieChart = ctChart.getPlotArea().addNewPieChart();
-        this.pieChart.addNewVaryColors().setVal(true);
+        this.barChart = plot.addNewBarChart();
+        barChart.addNewBarDir().setVal(barChartType);
+        barChart.addNewVaryColors().setVal(false);
     }
 
     @Override
     public ISeries addNewSeries(ChartDescriptor.Series s) {
-        return new PieSer(pieChart.addNewSer());
-    }
-
-    @Override
-    public CTUnsignedInt addNewAxId() {
-        return null;
+        return new BarSer(barChart.addNewSer());
     }
 
     @Override
     public CTShapeProperties addNewShapeProperties(int seriesIndex) {
-        return plot.getPieChartArray(0).getSerArray(seriesIndex).addNewSpPr();
+        return plot.getBarChartArray(0).getSerArray(seriesIndex).addNewSpPr();
     }
 
     @Override
     public IAxisX addAxisX(CTPlotArea plotArea, boolean isCategoryAxisNumeric) {
-        return null;
+        return new CategoryAxis(plotArea.addNewCatAx());
     }
 
     @Override
     public CTValAx addNewValAx() {
-        return null;
+        return plot.addNewValAx();
     }
-
 }
+

@@ -29,12 +29,21 @@ public class ChartDescriptor {
         private String type; // для комбинированной диаграммы. каждая серия имеет свой тип
         private String valueColumn;
         private String color;
+        private String colorPositive;
+        private String colorNegative;
+        private String colorInitial;
+        private String colorTotal;
         private String title;
         private Integer startRow;
         private Integer endRow;
+
         public Color getAwtColor() {
-            if (color != null && color.startsWith("#")) {
-                return new java.awt.Color(Integer.parseInt(color.substring(1), 16));
+            return toAwtColor(color);
+        }
+
+        public Color toAwtColor(String colorString) {
+            if (colorString != null && colorString.startsWith("#")) {
+                return new java.awt.Color(Integer.parseInt(colorString.substring(1), 16));
             }
             return null;
         }

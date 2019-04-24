@@ -1,6 +1,6 @@
-package com.dias.services.reports.export.charts;
+package com.dias.services.reports.export.excel.charts;
 
-import com.dias.services.reports.export.ReportExcelWriter;
+import com.dias.services.reports.export.excel.ReportExcelWriter;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
@@ -9,12 +9,11 @@ import com.dias.services.reports.subsystem.ColumnWithType;
 import lombok.experimental.Delegate;
 import org.apache.poi.ss.util.CellReference;
 import org.openxmlformats.schemas.drawingml.x2006.chart.*;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTLineProperties;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTSchemeColor;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
-import org.openxmlformats.schemas.drawingml.x2006.main.STSchemeColorVal;
 
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -35,16 +34,24 @@ public class CascadeChart extends BaseChart {
     private final int from;
     private final int to;
     private final String xColumnName;
-    private CTLineChart lineChartWithCurrentValues;
-    private CTLineChart lineChartWithPreviousValues;
+
+    private final static int START_VALUE_INDEX = 0;
+    private final static int CURRENT_VALUE_INDEX = 1;
+    private final static int PREVIOUS_VALUE_INDEX = 2;
+    private final static int DELTA_VALUE_INDEX = 3;
+    private final static int END_VALUE_INDEX = 4;
 
     public CascadeChart(Map<String, Integer> excelColumnsMap, int firstDataRow, ReportExcelWriter reportExcelWriter, ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor) {
         super(rs, ctChart, chartDescriptor);
         this.plot = ctChart.getPlotArea();
+
         CTBarChart barChart = plot.addNewBarChart();
         barChart.addNewBarDir().setVal(STBarDir.COL);
         barChart.addNewGrouping().setVal(STBarGrouping.CLUSTERED);
         barChart.addNewVaryColors().setVal(false);
+        barChart.addNewOverlap().setVal((byte) 100);
+        barChart.addNewGapWidth().setVal(0);
+
         this.totalBarChart = barChart;
         this.reportExcelWriter = reportExcelWriter;
         this.rs = rs;
@@ -65,39 +72,34 @@ public class CascadeChart extends BaseChart {
 
         updateDataSheet();
         Integer lastColumn = excelColumnsMap.values().stream().max(Integer::compareTo).get();
-        int startColumnIndex = lastColumn + 1; // берем данные из первой добавочной колонки, содержащей начальное значение
-        int endColumnIndex = lastColumn + 4; // берем данные из последней добавочной колонки, содержащей конечное значение
-        addTotalBar(dataSheetName, 0, startColumnIndex, 1);
-        addTotalBar(dataSheetName, 1, endColumnIndex, 2);
+
+        addTotalBar(dataSheetName, 0, lastColumn + START_VALUE_INDEX + 1, 1, diagramSeries.toAwtColor(diagramSeries.getColorInitial()), from, to); // начальное значение
+        addTotalBar(dataSheetName, 1, lastColumn + END_VALUE_INDEX + 1, 2, diagramSeries.toAwtColor(diagramSeries.getColorTotal()), from, to + 1); // конечное значение
 
         CTLineChart lineChart = plot.addNewLineChart();
 
-        addLineSeries(lineChart, dataSheetName, 2, excelColumnsMap.get(diagramSeries.getValueColumn()), 0);
-        addLineSeries(lineChart, dataSheetName, 3, lastColumn + 2, 3); // предыдущие значения
+        addLineSeries(lineChart, dataSheetName, 2, lastColumn + CURRENT_VALUE_INDEX + 1, 0); // текущие значения
+        addLineSeries(lineChart, dataSheetName, 3, lastColumn + PREVIOUS_VALUE_INDEX + 1, 3); // предыдущие значения
 
         CTUpDownBars updowns = lineChart.addNewUpDownBars();
-        updowns.addNewGapWidth().setVal(150);
+        updowns.addNewGapWidth().setVal(0);
         CTUpDownBar upBars = updowns.addNewUpBars();
 
-        CTShapeProperties sp = upBars.addNewSpPr();
-        sp.addNewSolidFill().addNewSchemeClr().setVal(STSchemeColorVal.ACCENT_1);
-        CTLineProperties ln = sp.addNewLn();
-        ln.setW(9525);
-        CTSchemeColor scheme = ln.addNewSolidFill().addNewSchemeClr();
-        scheme.setVal(STSchemeColorVal.TX_1);
-        scheme.addNewLumMod().setVal(15000);
-        scheme.addNewLumOff().setVal(85000);
 
+        if (diagramSeries.getColorPositive() != null) {
+            CTShapeProperties sp = upBars.addNewSpPr();
+            Color color = diagramSeries.toAwtColor(diagramSeries.getColorPositive());
+            sp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
+            sp.addNewLn().addNewNoFill();
+        }
 
         CTUpDownBar downBars = updowns.addNewDownBars();
-        sp = downBars.addNewSpPr();
-        sp.addNewSolidFill().addNewSchemeClr().setVal(STSchemeColorVal.ACCENT_1);
-        ln = sp.addNewLn();
-        ln.setW(9525);
-        scheme.setVal(STSchemeColorVal.TX_1);
-        scheme.addNewLumMod().setVal(15000);
-        scheme.addNewLumOff().setVal(85000);
-
+        if (diagramSeries.getColorNegative() != null) {
+            CTShapeProperties sp = downBars.addNewSpPr();
+            Color color = diagramSeries.toAwtColor(diagramSeries.getColorNegative());
+            sp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
+            sp.addNewLn().addNewNoFill();
+        }
     }
 
     private void addLineSeries(CTLineChart lineChart, String dataSheetName, int seriesIndex, Integer valueColumnIndex, long order) {
@@ -106,6 +108,12 @@ public class CascadeChart extends BaseChart {
         lineChart.addNewAxId().setVal(AXIS_Y_ID);
 
         CTLineSer lineSeries = lineChart.addNewSer();
+
+        // спрячем маркеры и линии, поскольку нам нужны только up/down бары
+        lineSeries.addNewMarker().addNewSymbol().setVal(STMarkerStyle.NONE);
+        CTShapeProperties sp = lineSeries.addNewSpPr();
+        sp.addNewLn().addNewNoFill();
+
         lineSeries.addNewOrder().setVal(order);
         lineSeries.addNewIdx().setVal(seriesIndex);
 
@@ -119,11 +127,16 @@ public class CascadeChart extends BaseChart {
 
     }
 
-    private void addTotalBar(String dataSheetName, int seriesIndex, int columnIndex, long order) {
+    private void addTotalBar(String dataSheetName, int seriesIndex, int columnIndex, long order, Color color, int from, int to) {
         //ISeries chartSeries = addNewSeries(diagramSeries);
         CTBarSer chartSeries = totalBarChart.addNewSer();
         chartSeries.addNewOrder().setVal(order);
         chartSeries.addNewIdx().setVal(seriesIndex);
+
+        if (color != null) {
+            CTShapeProperties sp = chartSeries.addNewSpPr();
+            sp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
+        }
 
         chartSeries.addNewCat().addNewStrRef().setF(dataSheetName + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
         CTNumDataSource ctNumDataSource = chartSeries.addNewVal();
@@ -141,6 +154,7 @@ public class CascadeChart extends BaseChart {
         List<List<Object>> newRows = new ArrayList<>();
         List<ColumnWithType> newHeaders = new ArrayList<>();
         newHeaders.add(ColumnWithType.builder().title("Начальное значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
+        newHeaders.add(ColumnWithType.builder().title("Текущее значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
         newHeaders.add(ColumnWithType.builder().title("Предыдущее значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
         newHeaders.add(ColumnWithType.builder().title("Разница").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
         newHeaders.add(ColumnWithType.builder().title("Конечное значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
@@ -148,37 +162,46 @@ public class CascadeChart extends BaseChart {
         calculatedData.setRows(newRows);
         Double previous = 0D;
         for (int i = fromRowIndex; i < toRowIndex; i++) {
+            Double[] values = new Double[5];
             List<Object> row = rs.getRows().get(i);
             Double value = (Double) row.get(valueColumnIndex);
             value = value == null ? 0D : value;
-            List<Object> newRow = new ArrayList<>();
             if (i == fromRowIndex) {
-                previous = value;
-                newRow.add(value);
+                values[START_VALUE_INDEX] = value;
+                values[CURRENT_VALUE_INDEX] = null;
+                values[PREVIOUS_VALUE_INDEX] = null;
+                values[DELTA_VALUE_INDEX] = null;
+                values[END_VALUE_INDEX] = null;
             } else {
-                newRow.add(null);
+                values[START_VALUE_INDEX] = null;
+                values[CURRENT_VALUE_INDEX] = value;
+                values[PREVIOUS_VALUE_INDEX] = previous;
+                values[DELTA_VALUE_INDEX] = value - previous;
+                values[END_VALUE_INDEX] = null;
             }
-            newRow.add(previous);
-            newRow.add(value - previous);
-
-            if (i == toRowIndex - 1) {
-                newRow.add(value);
-            } else {
-                newRow.add(null);
-            }
-
             previous = value;
-            newRows.add(newRow);
             if (value > yMinMax[1]) {
                 yMinMax[1] = value;
             }
             if (value < yMinMax[0]) {
                 yMinMax[0] = value;
             }
+            newRows.add(Arrays.asList(values));
         }
 
-        reportExcelWriter.joinTable(rs, calculatedData);
+        // добавим итоговую строку
+        Double[] values = new Double[5];
+        values[START_VALUE_INDEX] = null;
+        values[CURRENT_VALUE_INDEX] = null;
+        values[PREVIOUS_VALUE_INDEX] = null;
+        values[DELTA_VALUE_INDEX] = null;
+        values[END_VALUE_INDEX] = previous;
+        newRows.add(Arrays.asList(values));
+
+
+        reportExcelWriter.joinTable(fromRowIndex, rs, calculatedData);
     }
+
 
     @Override
     public ISeries addNewSeries(ChartDescriptor.Series s) {

@@ -3,8 +3,8 @@ package com.dias.services.reports.service;
 import com.dias.services.reports.dto.reports.ReportDTO;
 import com.dias.services.reports.exception.ObjectNotFoundException;
 import com.dias.services.reports.exception.ReportsException;
-import com.dias.services.reports.export.ReportExcelWriter;
-import com.dias.services.reports.export.ReportPdfWriter;
+import com.dias.services.reports.export.excel.ReportExcelWriter;
+import com.dias.services.reports.export.pdf.ReportPdfWriter;
 import com.dias.services.reports.model.Report;
 import com.dias.services.reports.query.NoGroupByQueryBuilder;
 import com.dias.services.reports.query.TableName;
@@ -345,6 +345,25 @@ public class ReportService extends AbstractService<Report> {
                 if (seriesColorNode != null) {
                     series.setColor(seriesColorNode.asText());
                 }
+
+                JsonNode colorNode = sNode.get("colorPositive");
+                if (colorNode != null) {
+                    series.setColorPositive(colorNode.asText());
+                }
+                colorNode = sNode.get("colorNegative");
+                if (colorNode != null) {
+                    series.setColorNegative(colorNode.asText());
+                }
+                colorNode = sNode.get("colorInitial");
+                if (colorNode != null) {
+                    series.setColorInitial(colorNode.asText());
+                }
+                colorNode = sNode.get("colorTotal");
+                if (colorNode != null) {
+                    series.setColorTotal(colorNode.asText());
+                }
+
+
                 JsonNode rowsRangeNode = sNode.get(PROPERTY_ROWS);
                 if (rowsRangeNode != null && rowsRangeNode.get(PROPERTY_FROM) != null) {
                     series.setStartRow(rowsRangeNode.get(PROPERTY_FROM).asInt());
