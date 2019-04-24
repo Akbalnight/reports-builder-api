@@ -112,9 +112,9 @@ public class CascadeChart extends BaseChart {
         CTLineSer lineSeries = lineChart.addNewSer();
 
         // спрячем маркеры и линии, поскольку нам нужны только up/down бары
-        //lineSeries.addNewMarker().addNewSymbol().setVal(STMarkerStyle.NONE);
-        //CTShapeProperties sp = lineSeries.addNewSpPr();
-        //sp.addNewLn().addNewNoFill();
+        lineSeries.addNewMarker().addNewSymbol().setVal(STMarkerStyle.NONE);
+        CTShapeProperties sp = lineSeries.addNewSpPr();
+        sp.addNewLn().addNewNoFill();
 
         lineSeries.addNewOrder().setVal(order);
         lineSeries.addNewIdx().setVal(seriesIndex);
