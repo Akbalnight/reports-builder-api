@@ -156,6 +156,22 @@ public class CascadeChart extends BaseChart {
                         </c:ext>
                     </c:extLst>
             */
+            /*CTDLbls dLbls = lineSeries.addNewDLbls();
+            CTExtension ext = dLbls.addNewExtLst().addNewExt();
+            ext.setUri("{02D57815-91ED-43cb-92C2-25804820EDAC}");
+            XmlCursor cur = ext.newCursor();
+            cur.toEndToken();
+            cur.beginElement(new QName("http://schemas.microsoft.com/office/drawing/2012/chart", "showDataLabelsRange", "c15"));
+            cur.insertAttributeWithValue("val", "1");
+
+            ext = lineSeries.addNewExtLst().addNewExt();
+            ext.setUri("{02D57815-91ED-43cb-92C2-25804820EDAC}");
+            cur = ext.newCursor();
+            cur.toEndToken();
+            cur.beginElement(new QName("http://schemas.microsoft.com/office/drawing/2012/chart", "showDataLabelsRange", "c15"));
+            */
+
+
         }
 
     }
