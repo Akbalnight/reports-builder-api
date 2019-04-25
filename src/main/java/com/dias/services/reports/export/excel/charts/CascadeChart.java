@@ -129,7 +129,7 @@ public class CascadeChart extends BaseChart {
         lineSeries.addNewTx().setV(title);
 
         if (chartDescriptor.isShowDotValues()) {
-            CTDLbls dLbls = lineSeries.addNewDLbls();
+            /*CTDLbls dLbls = lineSeries.addNewDLbls();
             //CTNumFmt ctNumFmt = dLbls.addNewNumFmt();
             //ctNumFmt.setFormatCode("#.##\"\"");
             //ctNumFmt.setSourceLinked(false);
@@ -141,6 +141,21 @@ public class CascadeChart extends BaseChart {
             dLbls.addNewShowBubbleSize().setVal(false);
             dLbls.addNewShowLeaderLines().setVal(false);
             dLbls.addNewShowLegendKey().setVal(false);
+            */
+            // TODO необходимо использовать расширения
+            // что-то можно взять здесь: https://stackoverflow.com/questions/40382369/embed-files-into-xssf-sheets-in-excel-using-apache-poi
+            /*
+                     <c:extLst>
+                        <c:ext uri="{02D57815-91ED-43cb-92C2-25804820EDAC}" xmlns:c15="http://schemas.microsoft.com/office/drawing/2012/chart">
+                            <c15:datalabelsRange>
+                                <c15:f>Данные!$K$10:$K$16</c15:f>
+                            </c15:datalabelsRange>
+                        </c:ext>
+                        <c:ext uri="{C3380CC4-5D6E-409C-BE32-E72D297353CC}" xmlns:c16="http://schemas.microsoft.com/office/drawing/2014/chart">
+                            <c16:uniqueId val="{00000003-3920-49F9-91D2-BDCC3873B7F5}" />
+                        </c:ext>
+                    </c:extLst>
+            */
         }
 
     }
@@ -166,7 +181,7 @@ public class CascadeChart extends BaseChart {
         chartSeries.addNewTx().setV(title);
 
         if (chartDescriptor.isShowDotValues()) {
-            CTDLbls dLbls = chartSeries.addNewDLbls();
+            /*CTDLbls dLbls = chartSeries.addNewDLbls();
             CTNumFmt ctNumFmt = dLbls.addNewNumFmt();
             ctNumFmt.setFormatCode("#.##\"\"");
             ctNumFmt.setSourceLinked(false);
@@ -177,7 +192,7 @@ public class CascadeChart extends BaseChart {
             dLbls.addNewShowCatName().setVal(false);
             dLbls.addNewShowBubbleSize().setVal(false);
             dLbls.addNewShowLeaderLines().setVal(false);
-            dLbls.addNewShowLegendKey().setVal(false);
+            dLbls.addNewShowLegendKey().setVal(false);*/
         }
 
     }
