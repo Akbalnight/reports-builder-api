@@ -13,6 +13,9 @@ import java.util.List;
 @Setter
 public class ChartDescriptor {
 
+    public static final String SERIES_TYPE_LINEAR = "linear";
+    public static final String SERIES_TYPE_BAR = "bar";
+    public static final String SERIES_TYPE_AREA = "area";
     private String title;
     private String axisXTitle;
     private String axisYTitle;

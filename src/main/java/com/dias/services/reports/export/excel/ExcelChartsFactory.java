@@ -69,6 +69,10 @@ class ExcelChartsFactory {
 
             chart = new ScatterMarkerChart(rs, ctChart, chartDescriptor);
 
+        } else if (repType == ReportType.Wcombo) {
+
+            chart = new ComboChart(rs, ctChart, chartDescriptor);
+
         } else if (repType == ReportType.linear) {
 
             Integer categoryRsColumnIndex = rs.getColumnsMap().get(chartDescriptor.getAxisXColumn());

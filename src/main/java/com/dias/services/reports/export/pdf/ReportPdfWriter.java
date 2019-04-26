@@ -800,13 +800,13 @@ public class ReportPdfWriter {
                 CategoryDataset dataset = buildSeriesCategoryDataset(rs, chartDescriptor, s, withSummary, yMinMax);
                 CategoryItemRenderer renderer = null;
 
-                if ("linear".equals(s.getType())) {
+                if (ChartDescriptor.SERIES_TYPE_LINEAR.equals(s.getType())) {
                     // Add the first dataset and render as bar
                     renderer = new LineAndShapeRenderer();
-                } else if ("bar".equals(s.getType())) {
+                } else if (ChartDescriptor.SERIES_TYPE_BAR.equals(s.getType())) {
                     // Add the second dataset and render as lines
                     renderer = new BarRenderer();
-                } else if ("area".equals(s.getType())) {
+                } else if (ChartDescriptor.SERIES_TYPE_AREA.equals(s.getType())) {
                     renderer = new AreaRenderer();
                 }
 
@@ -830,13 +830,13 @@ public class ReportPdfWriter {
             for (ChartDescriptor.Series s : series) {
                 XYDataset xyDataSet = buildSeriesXYDataset(rs, columnMap, chartDescriptor, withSummary, dateFormat, isDateAxis, xMinMax, yMinMax, s);
                 XYItemRenderer renderer = null;
-                if ("linear".equals(s.getType())) {
+                if (ChartDescriptor.SERIES_TYPE_LINEAR.equals(s.getType())) {
                     // Add the first dataset and render as bar
                     renderer = new XYLineAndShapeRenderer();
-                } else if ("bar".equals(s.getType())) {
+                } else if (ChartDescriptor.SERIES_TYPE_BAR.equals(s.getType())) {
                     // Add the second dataset and render as lines
                     renderer = new XYBarRenderer();
-                } else if ("area".equals(s.getType())) {
+                } else if (ChartDescriptor.SERIES_TYPE_AREA.equals(s.getType())) {
                     renderer = new XYAreaRenderer();
                 }
 

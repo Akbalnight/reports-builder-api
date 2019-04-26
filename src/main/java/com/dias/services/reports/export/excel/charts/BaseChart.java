@@ -23,11 +23,11 @@ public abstract class BaseChart implements IChartWithSeries {
     protected final ChartDescriptor chartDescriptor;
     private final boolean isCategoryAxisNumeric;
     private final boolean isCategoryAxisDate;
-    private final ResultSetWithTotal rs;
+    protected final ResultSetWithTotal rs;
     private final Integer categoryRsColumnIndex;
     private double[] xMinMax = new double[]{Double.MAX_VALUE, Double.MIN_NORMAL};
     double[] yMinMax = new double[]{Double.MAX_VALUE, Double.MIN_NORMAL};
-    private int[] xFromTo = new int[]{-1, 0};
+    protected int[] xFromTo = new int[]{-1, 0};
 
 
 
@@ -99,7 +99,7 @@ public abstract class BaseChart implements IChartWithSeries {
         return LABEL_POSITION_OUTSIDE_TOP;
     }
 
-    private void defineMinMax(double[] minmax, int column, int from, int to) {
+    protected void defineMinMax(double[] minmax, int column, int from, int to) {
         List<List<Object>> rows = rs.getRows();
         for (int i = from; i >= 0 && i < to; i++) {
             List<Object> row = rows.get(i);
