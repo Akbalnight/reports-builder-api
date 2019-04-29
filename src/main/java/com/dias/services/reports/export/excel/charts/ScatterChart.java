@@ -43,7 +43,7 @@ public class ScatterChart extends BaseChart {
     }
 
     @Override
-    protected int getValueLabelsLocation() {
+    protected STDLblPos.Enum getValueLabelsLocation() {
         return LABEL_POSITION_TOP;
     }
 }

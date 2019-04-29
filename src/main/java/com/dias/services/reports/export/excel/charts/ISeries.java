@@ -26,13 +26,13 @@ public interface ISeries {
     default void doWithRange(int from, int to) {
     }
 
-    default void addDotValues(ChartDescriptor chartDescriptor, Integer dataLabelPos) {
+    default void addDotValues(ChartDescriptor chartDescriptor, STDLblPos.Enum dataLabelPos) {
         if (chartDescriptor.isShowDotValues()) {
             //добавляем метки к столбцам
             CTDLbls dLbls = addNewDLbls();
             //укажем положение - OUT_END (соответствует 7)
             CTDLblPos ctdLblPos = dLbls.addNewDLblPos();
-            ctdLblPos.setVal(STDLblPos.OUT_END);
+            ctdLblPos.setVal(dataLabelPos);
             dLbls.addNewShowVal().setVal(true);
             //отключим отображение всего лишнего
             dLbls.addNewShowSerName().setVal(false);

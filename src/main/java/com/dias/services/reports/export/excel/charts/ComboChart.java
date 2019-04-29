@@ -125,7 +125,11 @@ public class ComboChart extends BaseChart {
         if (series.getColor() != null) {
             Color color = series.toAwtColor(series.getColor());
             CTShapeProperties sp = ser.addNewSpPr();
-            sp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
+            sp.addNewLn().addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
+            CTMarker ctMarker = ser.addNewMarker();
+            CTShapeProperties markerSp = ctMarker.addNewSpPr();
+            markerSp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
+            markerSp.addNewLn().addNewNoFill();
         }
 
         String xFormula = dataSheetName + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to;

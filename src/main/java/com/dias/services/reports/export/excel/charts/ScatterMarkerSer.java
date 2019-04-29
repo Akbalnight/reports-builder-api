@@ -22,7 +22,7 @@ public class ScatterMarkerSer extends ScatterSer {
     }
 
     @Override
-    public void addDotValues(ChartDescriptor chartDescriptor, Integer dataLabelPos) {
+    public void addDotValues(ChartDescriptor chartDescriptor, STDLblPos.Enum dataLabelPos) {
         if (chartDescriptor.isShowDotValues()) {
             //добавляем метки к столбцам
             CTDLbls dLbls = addNewDLbls();

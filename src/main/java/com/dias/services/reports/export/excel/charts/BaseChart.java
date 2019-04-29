@@ -14,8 +14,8 @@ import java.util.Map;
 
 public abstract class BaseChart implements IChartWithSeries {
 
-    private static final int LABEL_POSITION_OUTSIDE_TOP = 7;
-    static final int LABEL_POSITION_TOP = 9;
+    static final STDLblPos.Enum LABEL_POSITION_OUTSIDE_TOP = STDLblPos.OUT_END;
+    static final STDLblPos.Enum LABEL_POSITION_TOP = STDLblPos.T;
     protected static final int AXIS_Y_ID = 2;
     protected static final int AXIS_X_ID = 1;
 
@@ -95,7 +95,7 @@ public abstract class BaseChart implements IChartWithSeries {
         }
     }
 
-    protected int getValueLabelsLocation() {
+    protected STDLblPos.Enum getValueLabelsLocation() {
         return LABEL_POSITION_OUTSIDE_TOP;
     }
 

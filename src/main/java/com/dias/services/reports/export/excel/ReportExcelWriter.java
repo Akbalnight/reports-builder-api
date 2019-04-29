@@ -104,16 +104,30 @@ public class ReportExcelWriter {
             //для вывода серий
             rs = rs.convertToGroupped(report.getQueryDescriptor().getGroupBy(), report.getQueryDescriptor().getOrderBy());
         }
+
+        ChartDescriptor chartDescriptor = null;
+        if (isChart) {
+            // необходимо отсортировать данные в случае числовой оси X или оси с датами
+            // в противном случае, поскольку excel связывает маркеры в порядке следования в строках,
+            // графики будут выглядеть в некоторых случаях странно - образутся петли
+            chartDescriptor = tablesService.extractChartDescriptor(report);
+            String xColumnName = chartDescriptor.getAxisXColumn();
+            Integer xColumnIndex = rs.getColumnsMap().get(xColumnName);
+            boolean needToSort = rs.getDateColumnsIndexes().contains(xColumnIndex) || rs.getNumericColumnsIndexes().contains(xColumnIndex);
+            if (needToSort) {
+                rs.sortByColumn(xColumnIndex);
+            }
+        }
+
         int firstRowWithData = writeTableReport(report, rs, sheet);
         if (isChart) {
-            writeChartReport(report, rs, sheet, repType, firstRowWithData);
+            writeChartReport(chartDescriptor, report, rs, sheet, repType, firstRowWithData);
         }
         workbook.write(out);
         out.close();
     }
 
-    private void writeChartReport(ReportDTO report, ResultSetWithTotal rs, XSSFSheet sheet, ReportType repType, int firstRowWithData) throws IOException {
-        ChartDescriptor chartDescriptor = tablesService.extractChartDescriptor(report);
+    private void writeChartReport(ChartDescriptor chartDescriptor, ReportDTO report, ResultSetWithTotal rs, XSSFSheet sheet, ReportType repType, int firstRowWithData) throws IOException {
         if (chartDescriptor != null) {
             int excelStartColumn = START_COLUMN_INDEX + 1 + (rs.containsTotal() ? 1 : 0);
             Map<String, Integer> excelColumnsMap = getColumnMap(excelStartColumn, rs);

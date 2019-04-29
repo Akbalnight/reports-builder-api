@@ -3,10 +3,7 @@ package com.dias.services.reports.export.excel.charts;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
 import lombok.experimental.Delegate;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTChart;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTLineChart;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTValAx;
+import org.openxmlformats.schemas.drawingml.x2006.chart.*;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
 
 /**
@@ -44,7 +41,7 @@ public class LineChart extends BaseChart {
     }
 
     @Override
-    protected int getValueLabelsLocation() {
+    protected STDLblPos.Enum getValueLabelsLocation() {
         return LABEL_POSITION_TOP;
     }
 }

@@ -75,7 +75,7 @@ public class CascadeChart extends BaseChart {
         updateDataSheet();
         Integer lastColumn = excelColumnsMap.values().stream().max(Integer::compareTo).get();
 
-        addTotalBar(dataSheetName, 0, lastColumn + START_VALUE_INDEX + 1, 1, diagramSeries.toAwtColor(diagramSeries.getColorInitial()), from, to, START_VALUE_TITLE); // начальное значение
+        addTotalBar(dataSheetName, 0, lastColumn + START_VALUE_INDEX + 1, 1, diagramSeries.toAwtColor(diagramSeries.getColorInitial()), from, to + 1, START_VALUE_TITLE); // начальное значение
         addTotalBar(dataSheetName, 1, lastColumn + END_VALUE_INDEX + 1, 2, diagramSeries.toAwtColor(diagramSeries.getColorTotal()), from, to + 1, END_VALUE_TITLE); // конечное значение
 
         CTLineChart lineChart = plot.addNewLineChart();
@@ -88,17 +88,17 @@ public class CascadeChart extends BaseChart {
         CTUpDownBar upBars = updowns.addNewUpBars();
 
 
-        if (diagramSeries.getColorPositive() != null) {
+        if (diagramSeries.getColorNegative() != null) {
             CTShapeProperties sp = upBars.addNewSpPr();
-            Color color = diagramSeries.toAwtColor(diagramSeries.getColorPositive());
+            Color color = diagramSeries.toAwtColor(diagramSeries.getColorNegative());
             sp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
             sp.addNewLn().addNewNoFill();
         }
 
         CTUpDownBar downBars = updowns.addNewDownBars();
-        if (diagramSeries.getColorNegative() != null) {
+        if (diagramSeries.getColorPositive() != null) {
             CTShapeProperties sp = downBars.addNewSpPr();
-            Color color = diagramSeries.toAwtColor(diagramSeries.getColorNegative());
+            Color color = diagramSeries.toAwtColor(diagramSeries.getColorPositive());
             sp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
             sp.addNewLn().addNewNoFill();
         }
