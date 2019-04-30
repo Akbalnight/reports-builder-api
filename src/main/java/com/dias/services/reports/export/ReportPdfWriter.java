@@ -440,7 +440,9 @@ public class ReportPdfWriter {
 
         List<List<Object>> rows = rs.getRows();
         List<Integer> numericIndexes = rs.getNumericColumnsIndexes();
+        List<Integer> datesIndexes = rs.getDateColumnsIndexes();
         List<Integer> groupRowIndexes = rs.getGroupRowsIndexes();
+        DateFormatWithPattern[] dateFormat = new DateFormatWithPattern[1];
         for (int i = 0; i < rows.size(); i++) {
             List<Object> row = rows.get(i);
 
@@ -475,7 +477,17 @@ public class ReportPdfWriter {
                     if (numericIndexes.contains(j)) {
                         addBigDecimalCell(table, cellValue, font, nullSymbol);
                     } else {
-                        addCell(table, cellValue != null ? cellValue.toString() : nullSymbol, font);
+                        String value = null;
+                        if (datesIndexes.contains(j)) {
+                            if (dateFormat[0] == null) {
+                                resolveDateFormat(dateFormat, cellValue);
+                            }
+                            if (dateFormat[0] != null && cellValue instanceof LocalDateTime) {
+                                value = ((LocalDateTime)cellValue).format(dateFormat[0].toFormat());
+                            }
+                        }
+                        value = (value != null) ? value : cellValue != null ? cellValue.toString() : nullSymbol;
+                        addCell(table, value, font);
                     }
                 }
             }
