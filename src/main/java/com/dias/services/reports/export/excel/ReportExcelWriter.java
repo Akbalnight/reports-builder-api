@@ -1,6 +1,8 @@
-package com.dias.services.reports.export;
+package com.dias.services.reports.export.excel;
 
 import com.dias.services.reports.dto.reports.ReportDTO;
+import com.dias.services.reports.export.ExportChartsHelper;
+import com.dias.services.reports.export.ReportType;
 import com.dias.services.reports.query.NoGroupByQueryBuilder;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.Calculation;
@@ -74,6 +76,11 @@ public class ReportExcelWriter {
 
     private XSSFDataFormat dataFormat;
     private XSSFFont defaultFont;
+    private XSSFSheet sheet;
+    private int titleEndRowIndex;
+    private int parametersEndRowIndex;
+    private int headersEndRowIndex;
+    private int rowsEndRowIndex;
 
     public ReportExcelWriter(ReportService tablesService, Translator translator, String nullSymbol) {
         this.tablesService = tablesService;
@@ -88,7 +95,7 @@ public class ReportExcelWriter {
     public void writeExcel(ReportDTO report, ResultSetWithTotal rs, OutputStream out) throws IOException {
         init();
         ReportType repType = ReportType.byNameOrDefaultForUnknown(report.getType());
-        XSSFSheet sheet = workbook.createSheet(ReportType.table == repType ? report.getName() : DATA_SHEET_DEFAULT_NAME);
+        sheet = workbook.createSheet(ReportType.table == repType ? report.getName() : DATA_SHEET_DEFAULT_NAME);
         boolean isChart = ReportType.table != repType;
         if (!isChart) {
             //преобразуем резалтсет в резалтсет с группировками только
@@ -97,20 +104,34 @@ public class ReportExcelWriter {
             //для вывода серий
             rs = rs.convertToGroupped(report.getQueryDescriptor().getGroupBy(), report.getQueryDescriptor().getOrderBy());
         }
+
+        ChartDescriptor chartDescriptor = null;
+        if (isChart) {
+            // необходимо отсортировать данные в случае числовой оси X или оси с датами
+            // в противном случае, поскольку excel связывает маркеры в порядке следования в строках,
+            // графики будут выглядеть в некоторых случаях странно - образутся петли
+            chartDescriptor = tablesService.extractChartDescriptor(report);
+            String xColumnName = chartDescriptor.getAxisXColumn();
+            Integer xColumnIndex = rs.getColumnsMap().get(xColumnName);
+            boolean needToSort = rs.getDateColumnsIndexes().contains(xColumnIndex) || rs.getNumericColumnsIndexes().contains(xColumnIndex);
+            if (needToSort) {
+                rs.sortByColumn(xColumnIndex);
+            }
+        }
+
         int firstRowWithData = writeTableReport(report, rs, sheet);
         if (isChart) {
-            writeChartReport(report, rs, sheet, repType, firstRowWithData);
+            writeChartReport(chartDescriptor, report, rs, sheet, repType, firstRowWithData);
         }
         workbook.write(out);
         out.close();
     }
 
-    private void writeChartReport(ReportDTO report, ResultSetWithTotal rs, XSSFSheet sheet, ReportType repType, int firstRowWithData) throws IOException {
-        ChartDescriptor chartDescriptor = tablesService.extractChartDescriptor(report);
+    private void writeChartReport(ChartDescriptor chartDescriptor, ReportDTO report, ResultSetWithTotal rs, XSSFSheet sheet, ReportType repType, int firstRowWithData) throws IOException {
         if (chartDescriptor != null) {
             int excelStartColumn = START_COLUMN_INDEX + 1 + (rs.containsTotal() ? 1 : 0);
             Map<String, Integer> excelColumnsMap = getColumnMap(excelStartColumn, rs);
-            ExcelChartsHelper.addChartToWorkbook(workbook, chartDescriptor, report, repType, firstRowWithData, rs, sheet, excelColumnsMap);
+            ExcelChartsFactory.addChartToWorkbook(workbook, chartDescriptor, report, repType, firstRowWithData, rs, sheet, excelColumnsMap, this);
         }
     }
 
@@ -124,13 +145,29 @@ public class ReportExcelWriter {
         //первая колонка будет содержать номер строки
         sheet.setColumnWidth(START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0), N_COLUMN);
 
-        int rowNum = writeTitle(report, sheet, 0);
-        rowNum = writeParameters(report, sheet, rowNum);
-        rowNum = writeHeaders(rs, sheet, rowNum);
-        firstDataRowIndex = rowNum;
-        rowNum = writeRows(rs, sheet, rowNum);
-        writeTotal(report, rs, sheet, numberOfColumns, rowNum, firstDataRowIndex);
+        titleEndRowIndex = writeTitle(report, sheet, 0);
+        parametersEndRowIndex = writeParameters(report, sheet, titleEndRowIndex);
+        headersEndRowIndex = writeHeaders(rs, sheet, parametersEndRowIndex, 0, false);
+        firstDataRowIndex = headersEndRowIndex;
+        rowsEndRowIndex = writeRows(rs, sheet, headersEndRowIndex, 0, false);
+        writeTotal(report, rs, sheet, numberOfColumns, rowsEndRowIndex, firstDataRowIndex);
         return firstDataRowIndex;
+    }
+
+    public void joinTable(int fromRowIndex, ResultSetWithTotal initialResultSet, ResultSetWithTotal rs) {
+
+        int firstDataRowIndex;
+        int numberOfInitialColumns = initialResultSet.getHeaders().size();
+        int numberOfNewColumns = rs.getHeaders().size();
+        int firstColumnOfNewData = START_COLUMN_INDEX + 1 + numberOfInitialColumns + (initialResultSet.containsTotal() ? 1 : 0);
+
+        IntStream.range(firstColumnOfNewData, firstColumnOfNewData + numberOfNewColumns).forEach(i -> {
+            sheet.setColumnWidth(i, COLUMN_WIDTH);
+        });
+
+        //первая колонка будет содержать номер строки
+        firstDataRowIndex = writeHeaders(rs, sheet, parametersEndRowIndex, START_COLUMN_INDEX + numberOfInitialColumns + 1, true);
+        writeRows(rs, sheet, firstDataRowIndex + fromRowIndex, START_COLUMN_INDEX + numberOfInitialColumns + 1, true);
     }
 
     private static Map<String, Integer> getColumnMap(int startColumn, ResultSetWithTotal rs) {
@@ -174,21 +211,25 @@ public class ReportExcelWriter {
         }
     }
 
-    private int writeHeaders(ResultSetWithTotal rs, XSSFSheet sheet, int rowNum) {
-        XSSFRow row = sheet.createRow(rowNum++);
+    private int writeHeaders(ResultSetWithTotal rs, XSSFSheet sheet, int rowNum, int shift, boolean rowsCreated) {
+        XSSFRow row = rowsCreated ? sheet.getRow(rowNum++) : sheet.createRow(rowNum++);
         row.setHeight(HEADER_HEIGHT);
         List<ColumnWithType> headers = rs.getHeaders();
-        int cellNum = START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0);
-        Cell cell = createCell(row, cellNum++, headerStyle, ROW_NUMBER_TITLE);
-        addMediumBordersToStyle(cell.getCellStyle());
+        int cellNum = START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0) + shift;
+
+        if (!rowsCreated) {
+            Cell cell = createCell(row, cellNum++, headerStyle, ROW_NUMBER_TITLE);
+            addMediumBordersToStyle(cell.getCellStyle());
+        }
+
         for(ColumnWithType header : headers) {
-            cell = createCell(row, cellNum++, headerStyle, StringUtils.isEmpty(header.getTitle()) ? header.getColumn() : header.getTitle());
+            Cell cell = createCell(row, cellNum++, headerStyle, StringUtils.isEmpty(header.getTitle()) ? header.getColumn() : header.getTitle());
             addMediumBordersToStyle(cell.getCellStyle());
         }
         return rowNum;
     }
 
-    private int writeRows(ResultSetWithTotal rs, XSSFSheet sheet, int rowNum) {
+    private int writeRows(ResultSetWithTotal rs, XSSFSheet sheet, int rowNum, int shift, boolean rowsCreated) {
         List<Integer> groupRowsIndexes = rs.getGroupRowsIndexes();
         List<Integer> dateTypeColumnsIndexes = rs.getDateColumnsIndexes();
         List<Integer> numericTypeColumnsIndexes = rs.getNumericColumnsIndexes();
@@ -196,10 +237,13 @@ public class ReportExcelWriter {
         String dateFormatPattern = null;
         for (int i = 0; i < rows.size(); i++) {
             List<Object> r = rows.get(i);
-            XSSFRow xlsRow = sheet.createRow(rowNum++);
-            int dataRowCellNum = START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0);
-            //выводим номер строки
-            writeNumericOrStringCell(xlsRow, dataRowCellNum++, i + 1, defaultStyle, true);
+            XSSFRow xlsRow = rowsCreated ? sheet.getRow(rowNum++) : sheet.createRow(rowNum++);
+            int dataRowCellNum = START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0) + shift;
+
+            if (!rowsCreated) {
+                //выводим номер строки
+                writeNumericOrStringCell(xlsRow, dataRowCellNum++, i + 1, defaultStyle, true);
+            }
 
             //определим стиль вывода данных
             //в случае выводы группы - используем специальный стиль

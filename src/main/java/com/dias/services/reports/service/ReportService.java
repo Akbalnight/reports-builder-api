@@ -3,8 +3,8 @@ package com.dias.services.reports.service;
 import com.dias.services.reports.dto.reports.ReportDTO;
 import com.dias.services.reports.exception.ObjectNotFoundException;
 import com.dias.services.reports.exception.ReportsException;
-import com.dias.services.reports.export.ReportExcelWriter;
-import com.dias.services.reports.export.ReportPdfWriter;
+import com.dias.services.reports.export.excel.ReportExcelWriter;
+import com.dias.services.reports.export.pdf.ReportPdfWriter;
 import com.dias.services.reports.model.Report;
 import com.dias.services.reports.query.NoGroupByQueryBuilder;
 import com.dias.services.reports.query.TableName;
@@ -44,6 +44,7 @@ public class ReportService extends AbstractService<Report> {
     private static final String PROPERTY_KEY = "key";
     private static final String PROPERTY_NAME = "name";
     private static final String PROPERTY_COLOR = "color";
+    private static final String PROPERTY_TYPE = "type";
     private static final String PROPERTY_ROWS = "rows";
     private static final String PROPERTY_FROM = "from";
     private static final String PROPERTY_TO = "to";
@@ -57,6 +58,7 @@ public class ReportService extends AbstractService<Report> {
     public static final String PROPERTY_CALCULATED_X_RANGE = "calculatedXRange";
     public static final String PROPERTY_CALCULATED_Y_RANGE = "calculatedYRange";
     public static final String PROPERTY_SHOW_DOT_VALUES = "showDotValues";
+
 
     private static Logger LOG = Logger.getLogger(ReportService.class.getName());
 
@@ -343,6 +345,25 @@ public class ReportService extends AbstractService<Report> {
                 if (seriesColorNode != null) {
                     series.setColor(seriesColorNode.asText());
                 }
+
+                JsonNode colorNode = sNode.get("colorPositive");
+                if (colorNode != null) {
+                    series.setColorPositive(colorNode.asText());
+                }
+                colorNode = sNode.get("colorNegative");
+                if (colorNode != null) {
+                    series.setColorNegative(colorNode.asText());
+                }
+                colorNode = sNode.get("colorInitial");
+                if (colorNode != null) {
+                    series.setColorInitial(colorNode.asText());
+                }
+                colorNode = sNode.get("colorTotal");
+                if (colorNode != null) {
+                    series.setColorTotal(colorNode.asText());
+                }
+
+
                 JsonNode rowsRangeNode = sNode.get(PROPERTY_ROWS);
                 if (rowsRangeNode != null && rowsRangeNode.get(PROPERTY_FROM) != null) {
                     series.setStartRow(rowsRangeNode.get(PROPERTY_FROM).asInt());
@@ -352,6 +373,10 @@ public class ReportService extends AbstractService<Report> {
                 }
                 String title = sNode.get(PROPERTY_NAME) != null ? sNode.get(PROPERTY_NAME).asText() : columnKeyNode.asText();
                 series.setTitle(title);
+
+                String type = sNode.get(PROPERTY_TYPE) != null ? sNode.get(PROPERTY_TYPE).asText() : columnKeyNode.asText();
+                series.setType(type);
+
                 seriesList.add(series);
             } else {
                 wrongSeriesCount++;

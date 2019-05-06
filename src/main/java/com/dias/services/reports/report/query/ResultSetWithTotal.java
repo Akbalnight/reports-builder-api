@@ -184,4 +184,15 @@ public class ResultSetWithTotal {
         return indexes;
     }
 
+    public void sortByColumn(Integer xColumnIndex) {
+        Collections.sort(rows, (row1, row2) -> {
+            Object o1 = row1.get(xColumnIndex);
+            Object o2 = row2.get(xColumnIndex);
+            if (o1 != null && o2 != null) {
+                return Objects.compare((Comparable) o1, (Comparable)o2, Comparator.naturalOrder());
+            } else {
+                return o1 == null ? -1 : 1;
+            }
+        });
+    }
 }

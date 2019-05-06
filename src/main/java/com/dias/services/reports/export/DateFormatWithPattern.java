@@ -13,7 +13,7 @@ public class DateFormatWithPattern {
     private DateTimeFormatter format;
     private SimpleDateFormat classicFormat;
 
-    DateFormatWithPattern(String pattern) {
+    public DateFormatWithPattern(String pattern) {
         this.pattern = pattern;
     }
 
