@@ -42,6 +42,7 @@ public class ReportService extends AbstractService<Report> {
 
     private static final String PROPERTY_VALUE_AXIS = "valueAxis";
     private static final String PROPERTY_KEY = "key";
+    private static final String PROPERTY_DATA_KEY = "dataKey";
     private static final String PROPERTY_NAME = "name";
     private static final String PROPERTY_COLOR = "color";
     private static final String PROPERTY_TYPE = "type";
@@ -332,6 +333,13 @@ public class ReportService extends AbstractService<Report> {
         if (seriesNode == null) {
             throw new ReportsException(ReportsException.WRONG_DIAGRAMM_FORMAT, reportDTO.getId(), PROPERTY_VALUE_AXIS);
         }
+        JsonNode categoriesNode = description.get(PROPERTY_DATA_AXIS);
+
+        // колонка для x-значений может быть в общем случае определяться в сериях
+        if (categoriesNode != null && categoriesNode.get(PROPERTY_KEY) != null) {
+            descriptor.setAxisXColumn(categoriesNode.get(PROPERTY_KEY).asText());
+        }
+
         List<ChartDescriptor.Series> seriesList = new ArrayList<>();
         descriptor.setSeries(seriesList);
         int wrongSeriesCount = 0;
@@ -344,6 +352,14 @@ public class ReportService extends AbstractService<Report> {
                 JsonNode seriesColorNode = sNode.get(PROPERTY_COLOR);
                 if (seriesColorNode != null) {
                     series.setColor(seriesColorNode.asText());
+                }
+
+                JsonNode dataKeyNode = sNode.get(PROPERTY_DATA_KEY);
+                if (dataKeyNode != null) {
+                    series.setDataKey(dataKeyNode.asText());
+                    if (descriptor.getAxisXColumn() == null) {
+                        descriptor.setAxisXColumn(dataKeyNode.asText());
+                    }
                 }
 
                 JsonNode colorNode = sNode.get("colorPositive");
@@ -411,8 +427,6 @@ public class ReportService extends AbstractService<Report> {
         }
         
 
-        JsonNode categoriesNode = description.get(PROPERTY_DATA_AXIS);
-        descriptor.setAxisXColumn(categoriesNode.get(PROPERTY_KEY).asText());
 
         return descriptor;
     }

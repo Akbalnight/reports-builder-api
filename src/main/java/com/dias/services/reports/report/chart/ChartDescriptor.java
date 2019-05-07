@@ -31,6 +31,7 @@ public class ChartDescriptor {
     public static class Series {
         private String type; // для комбинированной диаграммы. каждая серия имеет свой тип
         private String valueColumn;
+        private String dataKey;
         private String color;
         private String colorPositive;
         private String colorNegative;

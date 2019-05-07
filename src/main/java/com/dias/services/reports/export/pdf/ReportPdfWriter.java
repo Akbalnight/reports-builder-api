@@ -452,7 +452,10 @@ public class ReportPdfWriter {
         int sizeOfRows = withSummary ? rows.size() - 1 : rows.size();
 
         for (ChartDescriptor.Series s : series) {
-
+            if (s.getDataKey() != null) {
+                // серия может переопределить колонку для x-значений (Wscatter диаграмма)
+                categoryColumnIndex = columnMap.get(s.getDataKey());
+            }
             XYSeries xySeries = new XYSeries(s.getTitle());
             ds.addSeries(xySeries);
             String valueColumn = s.getValueColumn();
