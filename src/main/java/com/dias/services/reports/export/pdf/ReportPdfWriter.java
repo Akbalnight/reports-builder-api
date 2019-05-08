@@ -54,8 +54,6 @@ import java.util.Map;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
 
-import java.util.List;
-
 public class ReportPdfWriter {
 
     public static final String SUMMARY_CATEGORY_KEY = "Итого";
@@ -134,9 +132,9 @@ public class ReportPdfWriter {
             XYDataset xyDataSet = null;
             double[] xMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
             double[] yMinMax = new double[]{Double.MIN_NORMAL, Double.MIN_NORMAL};
-            if (reportType != ReportType.Wcascade
-                    && reportType != ReportType.Wpie
-                    && reportType != ReportType.Wcombo) {
+            if (reportType != ReportType.cascade
+                    && reportType != ReportType.pie
+                    && reportType != ReportType.combo) {
                 if (!isDateXAxis && !isNumericXAxis) {
                     defaultCategoryDataset = getDefaultCategoryDataset(rs, chartDescriptor, withSummary, yMinMax);
                 } else {
@@ -173,7 +171,7 @@ public class ReportPdfWriter {
 
                 }
 
-            } else if (ReportType.Wcombo == reportType) {
+            } else if (ReportType.combo == reportType) {
 
                 chart = createComboChart(
                         rs,
@@ -186,14 +184,14 @@ public class ReportPdfWriter {
                         yMinMax,
                         dateFormat);
 
-            } else if (ReportType.Wpie == reportType) {
+            } else if (ReportType.pie == reportType) {
                 PieDataset dataset = getPieDataset(rs, columnMap, chartDescriptor);
                 chart = ChartFactory.createPieChart(chartDescriptor.getTitle(),
                         dataset,
                         chartDescriptor.getShowLegend(),
                         false,
                         false);
-            } else if (ReportType.Wcascade == reportType) {
+            } else if (ReportType.cascade == reportType) {
                 CategoryDataset dataset = buildWaterfallCategoryDataset(rs, columnMap, chartDescriptor, withSummary, yMinMax);
                 chart = ChartFactory.createWaterfallChart(chartDescriptor.getTitle(),
                         chartDescriptor.getAxisXTitle(),
@@ -224,7 +222,7 @@ public class ReportPdfWriter {
                     //Для оси категорий делаем поворот условный, в зависимости от общей длины меток
                     rotateCategoryLabelsIfNeeded(dataset, chart);
                 }
-            } else if (ReportType.Wscatter == reportType && xyDataSet != null) {
+            } else if (ReportType.scatter == reportType && xyDataSet != null) {
                 chart = ChartFactory.createScatterPlot(chartDescriptor.getTitle(),
                         chartDescriptor.getAxisXTitle(),
                         chartDescriptor.getAxisYTitle(),
@@ -271,7 +269,7 @@ public class ReportPdfWriter {
 
             if (chart != null) {
 
-                if (ReportType.hbar != reportType && ReportType.Wcascade != reportType) {
+                if (ReportType.hbar != reportType && ReportType.cascade != reportType) {
                     if (isDateXAxis) {
                         //В случае XY оси подписи (их периодичность) устанавливаются автоматически
                         //Для дат поворот делаем безусловно, поскольку метки длинные
@@ -453,7 +451,7 @@ public class ReportPdfWriter {
 
         for (ChartDescriptor.Series s : series) {
             if (s.getDataKey() != null) {
-                // серия может переопределить колонку для x-значений (Wscatter диаграмма)
+                // серия может переопределить колонку для x-значений (scatter диаграмма)
                 categoryColumnIndex = columnMap.get(s.getDataKey());
             }
             XYSeries xySeries = new XYSeries(s.getTitle());

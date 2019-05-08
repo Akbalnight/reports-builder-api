@@ -13,10 +13,10 @@ public enum ReportType {
     linear, //линейный график
     bar, //барчарт
     table, //просто таблица
-    Wpie, // круговая
-    Wscatter,
-    Wcombo, // комбинированная диаграмма
-    Wcascade; // каскад (водопад)
+    pie, // круговая
+    scatter,
+    combo, // комбинированная диаграмма
+    cascade; // каскад (водопад)
 
     private static Logger LOG = Logger.getLogger(ReportType.class.getName());
 
