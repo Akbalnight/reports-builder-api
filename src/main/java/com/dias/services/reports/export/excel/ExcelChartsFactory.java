@@ -49,11 +49,11 @@ class ExcelChartsFactory {
     private static void createByType(ReportExcelWriter reportExcelWriter, ReportType repType, CTChart ctChart, ChartDescriptor chartDescriptor, ResultSetWithTotal rs, int firstDataRow, Map<String, Integer> excelColumnsMap, String dataSheetName) {
         BaseChart chart = null;
 
-        if (repType == ReportType.Wpie) {
+        if (repType == ReportType.pie) {
 
             chart = new PieChart(rs, ctChart, chartDescriptor);
 
-        } else if (repType == ReportType.Wcascade) {
+        } else if (repType == ReportType.cascade) {
 
             chart = new CascadeChart(excelColumnsMap, firstDataRow, reportExcelWriter, rs, ctChart, chartDescriptor);
 
@@ -65,11 +65,11 @@ class ExcelChartsFactory {
 
             chart = new BarChart(rs, ctChart, chartDescriptor, STBarDir.COL);
 
-        } else if (repType == ReportType.Wscatter) {
+        } else if (repType == ReportType.scatter) {
 
             chart = new ScatterMarkerChart(rs, ctChart, chartDescriptor);
 
-        } else if (repType == ReportType.Wcombo) {
+        } else if (repType == ReportType.combo) {
 
             chart = new ComboChart(rs, ctChart, chartDescriptor);
 
