@@ -2,7 +2,6 @@ package com.dias.services.reports.export.excel.charts;
 
 import com.dias.services.reports.export.excel.ReportExcelWriter;
 import com.dias.services.reports.report.chart.ChartDescriptor;
-import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
 import com.dias.services.reports.service.ReportBuilderService;
 import com.dias.services.reports.subsystem.ColumnWithType;
@@ -64,7 +63,7 @@ public class CascadeChart extends BaseChart {
         toRowIndex = (diagramSeries.getEndRow() != null && diagramSeries.getEndRow() < rowsNumber) ? diagramSeries.getEndRow(): rowsNumber;
         from = firstDataRow + fromRowIndex + 1;
         to = firstDataRow + toRowIndex;
-        int xColumn = excelColumnsMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
+        int xColumn = excelColumnsMap.get(chartDescriptor.getAxisXColumn());
         xColumnName = CellReference.convertNumToColString(xColumn);
 
     }

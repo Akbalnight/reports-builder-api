@@ -7,7 +7,6 @@ import com.dias.services.reports.export.ReportType;
 import com.dias.services.reports.query.NoGroupByQueryBuilder;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.Calculation;
-import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.Condition;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
 import com.dias.services.reports.service.ReportService;
@@ -23,10 +22,7 @@ import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
 import org.jfree.chart.labels.StandardXYItemLabelGenerator;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.plot.Plot;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.category.*;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
@@ -53,6 +49,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
+
+import java.util.List;
 
 public class ReportPdfWriter {
 
@@ -164,6 +162,7 @@ public class ReportPdfWriter {
                             chartDescriptor.getShowLegend(),
                             false,
                             false);
+                    ((BarRenderer)chart.getCategoryPlot().getRenderer()).setShadowVisible(false);
 
                     if (ReportType.hbar == reportType) {
                         chart.getCategoryPlot().setRangeAxisLocation(AxisLocation.BOTTOM_OR_RIGHT);
@@ -202,6 +201,7 @@ public class ReportPdfWriter {
                         false,
                         false);
                 WaterfallBarRenderer renderer = (WaterfallBarRenderer) chart.getCategoryPlot().getRenderer();
+                renderer.setShadowVisible(false);
                 ChartDescriptor.Series series = chartDescriptor.getSeries().get(0);
                 if (series.getColorInitial() != null) {
                     renderer.setFirstBarPaint(series.toAwtColor(series.getColorInitial()));
@@ -269,7 +269,9 @@ public class ReportPdfWriter {
 
             if (chart != null) {
 
-                if (ReportType.hbar != reportType && ReportType.cascade != reportType) {
+                if (ReportType.hbar != reportType
+                        && ReportType.cascade != reportType
+                        && ReportType.pie != reportType) {
                     if (isDateXAxis) {
                         //В случае XY оси подписи (их периодичность) устанавливаются автоматически
                         //Для дат поворот делаем безусловно, поскольку метки длинные
@@ -306,17 +308,25 @@ public class ReportPdfWriter {
                     } else if (chartDescriptor.isShowDotValues() && ReportType.hbar == reportType) {
                         Double max = calculateAxisUpperBoundToIncludeLabelsForColumnChart(yMinMax[1]);
                         chart.getXYPlot().getRangeAxis().setUpperBound(max.intValue());
+                    } else {
+                        chart.getXYPlot().getRangeAxis().setRange(0, yMinMax[1]);
                     }
 
                 } else if (plot instanceof CategoryPlot) {
+
                     CategoryItemRenderer renderer = chart.getCategoryPlot().getRenderer();
                     renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
                     renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
+
                     if (chartDescriptor.isCalculatedYRange()) {
                         chart.getCategoryPlot().getRangeAxis().setRange(yMinMax[0], yMinMax[1]);
                     } else if (chartDescriptor.isShowDotValues() && ReportType.hbar == reportType) {
                         Double max = calculateAxisUpperBoundToIncludeLabelsForColumnChart(yMinMax[1]);
                         chart.getCategoryPlot().getRangeAxis().setUpperBound(max.intValue());
+                    }
+                } else if (plot instanceof PiePlot) {
+                    if (chartDescriptor.isShowDotValues()) {
+                        ((PiePlot) plot).setSimpleLabels(true);
                     }
                 }
 
@@ -335,14 +345,14 @@ public class ReportPdfWriter {
     private CategoryDataset buildWaterfallCategoryDataset(ResultSetWithTotal rs, Map<String, Integer> columnMap, ChartDescriptor chartDescriptor, boolean withSummary, double[] yMinMax) {
         DefaultCategoryDataset ds = new DefaultCategoryDataset();
         List<List<Object>> rows = rs.getRows();
-        Integer categoryColumnIndex = columnMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
+        Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
         //последняя строка - итоговая в случае withSummary = true
         int sizeOfRows = withSummary ? rows.size() - 1 : rows.size();
 
         ChartDescriptor.Series s = series.get(0);
         Number previos = null;
-        String valueColumn = new Column(s.getValueColumn()).getColumnName();
+        String valueColumn = s.getValueColumn();
         Integer seriesVaueIndex = columnMap.get(valueColumn);
         int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
         int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow() : sizeOfRows, sizeOfRows);
@@ -377,19 +387,20 @@ public class ReportPdfWriter {
         List<List<Object>> rows = rs.getRows();
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
         int sizeOfRows = rows.size();
+        Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
 
         for (ChartDescriptor.Series s : series) {
-            String valueColumn = new Column(s.getValueColumn()).getColumnName();
+            String valueColumn = s.getValueColumn();
             Integer seriesVaueIndex = columnMap.get(valueColumn);
+
             int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
             int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow() : sizeOfRows, sizeOfRows);
             if (from < sizeOfRows) {
-                int i = 0;
                 for (List<Object> row : rows.subList(from, to)) {
-                    i++;
                     Object value = row.get(seriesVaueIndex);
                     Number seriesValueNumber = value != null && Number.class.isAssignableFrom(value.getClass()) ? (Number) value : 0;
-                    ds.setValue(Integer.toString(i), seriesValueNumber);
+                    Comparable categoryValue = (Comparable) row.get(categoryColumnIndex);
+                    ds.setValue(categoryValue, seriesValueNumber);
                 }
             }
         }
@@ -521,13 +532,13 @@ public class ReportPdfWriter {
         DefaultCategoryDataset ds = new DefaultCategoryDataset();
         List<List<Object>> rows = rs.getRows();
         Map<String, Integer> columnMap = rs.getColumnsMap();
-        Integer categoryColumnIndex = columnMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
+        Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
         //последняя строка - итоговая в случае withSummary = true
         int sizeOfRows = withSummary ? rows.size() - 1 : rows.size();
 
         for (ChartDescriptor.Series s : series) {
-            String valueColumn = new Column(s.getValueColumn()).getColumnName();
+            String valueColumn = s.getValueColumn();
             Integer seriesVaueIndex = columnMap.get(valueColumn);
             int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
             int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow() : sizeOfRows, sizeOfRows);
@@ -555,10 +566,10 @@ public class ReportPdfWriter {
         DefaultCategoryDataset ds = new DefaultCategoryDataset();
         List<List<Object>> rows = rs.getRows();
         Map<String, Integer> columnMap = rs.getColumnsMap();
-        Integer categoryColumnIndex = columnMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
+        Integer categoryColumnIndex = columnMap.get(chartDescriptor.getAxisXColumn());
         //последняя строка - итоговая в случае withSummary = true
         int sizeOfRows = withSummary ? rows.size() - 1 : rows.size();
-        String valueColumn = new Column(s.getValueColumn()).getColumnName();
+        String valueColumn = s.getValueColumn();
         Integer seriesVaueIndex = columnMap.get(valueColumn);
         int from = s.getStartRow() != null ? s.getStartRow() - 1 : 0;
         int to = Math.min(s.getEndRow() != null && s.getEndRow() > 0 ? s.getEndRow() : sizeOfRows, sizeOfRows);
@@ -819,6 +830,7 @@ public class ReportPdfWriter {
             ValueAxis domainAxis = getValueAxisForXYChart(xAxisLabel, dateAxis, dateFormat);
             NumberAxis valueAxis = new NumberAxis(yAxisLabel);
             XYBarRenderer renderer = new XYBarRenderer();
+            renderer.setShadowVisible(false);
             XYPlot plot = new XYPlot(dataset, domainAxis, valueAxis, renderer);
             plot.setOrientation(orientation);
             JFreeChart chart = new JFreeChart(title, JFreeChart.DEFAULT_TITLE_FONT, plot, legend);
@@ -852,6 +864,7 @@ public class ReportPdfWriter {
                 } else if (ChartDescriptor.SERIES_TYPE_BAR.equals(s.getType())) {
                     // Add the second dataset and render as lines
                     renderer = new BarRenderer();
+                    ((BarRenderer)renderer).setShadowVisible(false);
                 } else if (ChartDescriptor.SERIES_TYPE_AREA.equals(s.getType())) {
                     renderer = new AreaRenderer();
                 }
@@ -882,6 +895,7 @@ public class ReportPdfWriter {
                 } else if (ChartDescriptor.SERIES_TYPE_BAR.equals(s.getType())) {
                     // Add the second dataset and render as lines
                     renderer = new XYBarRenderer();
+                    ((XYBarRenderer)renderer).setShadowVisible(false);
                 } else if (ChartDescriptor.SERIES_TYPE_AREA.equals(s.getType())) {
                     renderer = new XYAreaRenderer();
                 }

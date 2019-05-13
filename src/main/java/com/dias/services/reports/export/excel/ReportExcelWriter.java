@@ -166,8 +166,8 @@ public class ReportExcelWriter {
         });
 
         //первая колонка будет содержать номер строки
-        firstDataRowIndex = writeHeaders(rs, sheet, parametersEndRowIndex, START_COLUMN_INDEX + numberOfInitialColumns + 1, true);
-        writeRows(rs, sheet, firstDataRowIndex + fromRowIndex, START_COLUMN_INDEX + numberOfInitialColumns + 1, true);
+        firstDataRowIndex = writeHeaders(rs, sheet, parametersEndRowIndex, numberOfInitialColumns + 1 + (initialResultSet.containsTotal() ? 1 : 0), true);
+        writeRows(rs, sheet, firstDataRowIndex + fromRowIndex, numberOfInitialColumns + 1 + (initialResultSet.containsTotal() ? 1 : 0), true);
     }
 
     private static Map<String, Integer> getColumnMap(int startColumn, ResultSetWithTotal rs) {
@@ -175,7 +175,7 @@ public class ReportExcelWriter {
         List<ColumnWithType> headers = rs.getHeaders();
         for (int i = 0; i < headers.size(); i++) {
             ColumnWithType columnWithType = headers.get(i);
-            Column column1 = new Column(columnWithType.getColumn());
+            Column column1 = new Column(columnWithType.getColumn(), true);
             String column = column1.getColumnName();
             result.put(column, startColumn + i);
             result.put(columnWithType.getTitle(), startColumn + i);
@@ -237,7 +237,17 @@ public class ReportExcelWriter {
         String dateFormatPattern = null;
         for (int i = 0; i < rows.size(); i++) {
             List<Object> r = rows.get(i);
-            XSSFRow xlsRow = rowsCreated ? sheet.getRow(rowNum++) : sheet.createRow(rowNum++);
+            XSSFRow xlsRow = null;
+            if (rowsCreated) {
+                xlsRow = sheet.getRow(rowNum);
+            }
+            if (xlsRow == null) {
+                // строка может отсутствовать либо в случае, когда страница только формируется,
+                // либо в случае, когда строка добавлена динамически (например, строка с итогом для каскадной диаграммы)
+                xlsRow = sheet.createRow(rowNum);
+            }
+            rowNum++;
+
             int dataRowCellNum = START_COLUMN_INDEX + (rs.containsTotal() ? 1 : 0) + shift;
 
             if (!rowsCreated) {

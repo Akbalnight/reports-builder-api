@@ -48,7 +48,7 @@ public abstract class BaseChart implements IChartWithSeries {
         Integer rowsNumber = rs.getRows().size();
         List<ChartDescriptor.Series> series = chartDescriptor.getSeries();
         Map<String, Integer> rsColumnsMap = rs.getColumnsMap();
-        int xColumn = excelColumnsMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
+        int xColumn = excelColumnsMap.get(chartDescriptor.getAxisXColumn());
         String xColumnName = CellReference.convertNumToColString(xColumn);
 
 
@@ -65,7 +65,7 @@ public abstract class BaseChart implements IChartWithSeries {
             chartSeries.setFforX(dataSheetName + "!$" + xColumnName + "$" + from + ":$" + xColumnName + "$" + to);
             CTNumDataSource ctNumDataSource = chartSeries.addNewVal();
             CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
-            int valueColumnIndex = excelColumnsMap.get(new Column(s.getValueColumn()).getColumnName());
+            int valueColumnIndex = excelColumnsMap.get(s.getValueColumn());
             if (chartDescriptor.isCalculatedXRange()) {
                 if (xFromTo[0] > fromRowIndex || xFromTo[0] == -1){
                     xFromTo[0] = fromRowIndex;

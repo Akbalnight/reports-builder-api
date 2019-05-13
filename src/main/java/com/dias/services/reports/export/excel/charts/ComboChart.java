@@ -1,7 +1,6 @@
 package com.dias.services.reports.export.excel.charts;
 
 import com.dias.services.reports.report.chart.ChartDescriptor;
-import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
 import org.apache.poi.ss.util.CellReference;
 import org.openxmlformats.schemas.drawingml.x2006.chart.*;
@@ -21,7 +20,7 @@ public class ComboChart extends BaseChart {
 
     @Override
     public void addSeries(int firstDataRow, Map<String, Integer> excelColumnsMap, String dataSheetName) {
-        int xColumn = excelColumnsMap.get(new Column(chartDescriptor.getAxisXColumn()).getColumnName());
+        int xColumn = excelColumnsMap.get(chartDescriptor.getAxisXColumn());
         String xColumnName = CellReference.convertNumToColString(xColumn);
         Map<String, Integer> rsColumnsMap = rs.getColumnsMap();
         for (int i = 0; i < chartDescriptor.getSeries().size(); i++) {
@@ -148,7 +147,7 @@ public class ComboChart extends BaseChart {
         if (series.getTitle() != null) {
             tx.setV(series.getTitle());
         } else {
-            int valueColumnIndex = excelColumnsMap.get(new Column(series.getValueColumn()).getColumnName());
+            int valueColumnIndex = excelColumnsMap.get(series.getValueColumn());
             String valueColumnName = CellReference.convertNumToColString(valueColumnIndex);
             tx.addNewStrRef().setF(dataSheetName + "!$" + valueColumnName + "$" + firstDataRow);
         }
@@ -169,7 +168,7 @@ public class ComboChart extends BaseChart {
 
     private void addSeriesYFormula(ChartDescriptor.Series series, String dataSheetName, Map<String, Integer> excelColumnsMap, CTNumDataSource ctNumDataSource, int from, int to) {
         CTNumRef ctNumRef = ctNumDataSource.addNewNumRef();
-        int valueColumnIndex = excelColumnsMap.get(new Column(series.getValueColumn()).getColumnName());
+        int valueColumnIndex = excelColumnsMap.get(series.getValueColumn());
         String valueColumnName = CellReference.convertNumToColString(valueColumnIndex);
         ctNumRef.setF(dataSheetName + "!$" + valueColumnName + "$" + from + ":$" + valueColumnName + "$" + to);
     }

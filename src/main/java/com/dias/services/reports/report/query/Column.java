@@ -26,8 +26,18 @@ public class Column {
     @JsonIgnore
     private String columnName;
 
-    public Column(String column) {
-        setColumn(column);
+    /**
+     *
+     * @param column - имя колонки
+     * @param parseName - флаг, необходимо ли пытаться распарсить имя колонки
+     */
+    public Column(String column, boolean parseName) {
+        if (parseName) {
+            setColumn(column);
+        } else {
+            this.column = column;
+            columnName = column;
+        }
     }
 
     public void setColumn(String column) {
