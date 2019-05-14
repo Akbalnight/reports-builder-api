@@ -1,0 +1,54 @@
+{
+  "name": "pie",
+  "type": "pie",
+  "title": "pie",
+  "description": {
+    "version": 1,
+    "names": {
+      "chart": "Pie"
+    },
+    "dataAxis": {
+      "key": "Дата с"
+    },
+    "valueAxis": [
+      {
+        "key": "heatPipe",
+        "rows": {
+          "isAll": true
+        }
+      }
+    ],
+    "general": {
+      "showLegend": true,
+      "showDotValues": true
+    }
+  },
+  "isFavorite": false,
+  "isPublic": false,
+  "queryDescriptor": {
+    "select": [
+      {
+        "column": "history_values_by_day.abnormal_worktime",
+        "title": "abnormalWorktime",
+        "sortable": false,
+        "filterable": false
+      },
+      {
+        "column": "history_values_by_day.heat_pipe",
+        "title": "heatPipe",
+        "sortable": false,
+        "filterable": false
+      },
+      {
+        "column": "day_statement.date_from",
+        "title": "Дата с",
+        "sortable": false,
+        "filterable": false
+      }
+    ],
+    "groupBy": [],
+    "orderBy": [],
+    "where": [],
+    "aggregations": []
+  }
+}

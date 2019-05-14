@@ -280,13 +280,16 @@ public class ReportService extends AbstractService<Report> {
     public ResultSetWithTotal syncExecuteWithTotalReport(QueryDescriptor queryDescriptor, Long limit, Long offset) {
 
         ResultSet resultSet = syncExecuteReport(queryDescriptor, limit, offset);
+        List<TotalValue> total = new ArrayList<>();
 
-        String result =
-                new NoGroupByQueryBuilder(queryDescriptor, tablesService)
-                        .withColumns(getTablesColumnTypesMap(queryDescriptor))
-                        .buildSummaryQuery();
+        if (queryDescriptor.getAggregations().length > 0) {
+            String result =
+                    new NoGroupByQueryBuilder(queryDescriptor, tablesService)
+                            .withColumns(getTablesColumnTypesMap(queryDescriptor))
+                            .buildSummaryQuery();
 
-        List<TotalValue> total = template.query(result, getTotalExtractor(queryDescriptor));
+            total = template.query(result, getTotalExtractor(queryDescriptor));
+        }
 
         return new ResultSetWithTotal(resultSet.getRows(), resultSet.getHeaders(), total, null);
     }
