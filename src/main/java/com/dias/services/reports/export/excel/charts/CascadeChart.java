@@ -1,5 +1,6 @@
 package com.dias.services.reports.export.excel.charts;
 
+import com.dias.services.reports.export.ExportChartsHelper;
 import com.dias.services.reports.export.excel.ReportExcelWriter;
 import com.dias.services.reports.report.chart.ChartDescriptor;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
@@ -11,6 +12,8 @@ import org.openxmlformats.schemas.drawingml.x2006.chart.*;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
 
 import java.awt.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,13 +37,14 @@ public class CascadeChart extends BaseChart {
     private final int toRowIndex;
     private final int from;
     private final int to;
-    private final String xColumnName;
+    private String xColumnName;
 
-    private final static int START_VALUE_INDEX = 0;
-    private final static int CURRENT_VALUE_INDEX = 1;
-    private final static int PREVIOUS_VALUE_INDEX = 2;
-    private final static int DELTA_VALUE_INDEX = 3;
-    private final static int END_VALUE_INDEX = 4;
+    private final static int CATEGORY_VALUE_INDEX = 0;
+    private final static int START_VALUE_INDEX = 1;
+    private final static int CURRENT_VALUE_INDEX = 2;
+    private final static int PREVIOUS_VALUE_INDEX = 3;
+    private final static int DELTA_VALUE_INDEX = 4;
+    private final static int END_VALUE_INDEX = 5;
 
     public CascadeChart(Map<String, Integer> excelColumnsMap, int firstDataRow, ReportExcelWriter reportExcelWriter, ResultSetWithTotal rs, CTChart ctChart, ChartDescriptor chartDescriptor) {
         super(rs, ctChart, chartDescriptor);
@@ -63,9 +67,6 @@ public class CascadeChart extends BaseChart {
         toRowIndex = (diagramSeries.getEndRow() != null && diagramSeries.getEndRow() < rowsNumber) ? diagramSeries.getEndRow(): rowsNumber;
         from = firstDataRow + fromRowIndex + 1;
         to = firstDataRow + toRowIndex;
-        int xColumn = excelColumnsMap.get(chartDescriptor.getAxisXColumn());
-        xColumnName = CellReference.convertNumToColString(xColumn);
-
     }
 
     @Override
@@ -73,6 +74,12 @@ public class CascadeChart extends BaseChart {
 
         updateDataSheet();
         Integer lastColumn = excelColumnsMap.values().stream().max(Integer::compareTo).get();
+
+        // x-значения нужно брать также из вычислимых новых данных
+        // поскольку итоговая стртрока содержит категорию предыдущего значения
+        // и является вычислимой
+        xColumnName = CellReference.convertNumToColString(lastColumn + CATEGORY_VALUE_INDEX + 1);
+
 
         addTotalBar(dataSheetName, 0, lastColumn + START_VALUE_INDEX + 1, 1, diagramSeries.toAwtColor(diagramSeries.getColorInitial()), from, to + 1, START_VALUE_TITLE); // начальное значение
         addTotalBar(dataSheetName, 1, lastColumn + END_VALUE_INDEX + 1, 2, diagramSeries.toAwtColor(diagramSeries.getColorTotal()), from, to + 1, END_VALUE_TITLE); // конечное значение
@@ -217,9 +224,12 @@ public class CascadeChart extends BaseChart {
         Map<String, Integer> rsColumnsMap = rs.getColumnsMap();
         ChartDescriptor.Series s = series.get(0);
         Integer valueColumnIndex = rsColumnsMap.get(s.getValueColumn());
+        Integer xColumnIndex = rsColumnsMap.get(chartDescriptor.getAxisXColumn());
+        boolean isCategoryDate = rs.getDateColumnsIndexes().contains(xColumnIndex);
         ResultSetWithTotal calculatedData = new ResultSetWithTotal();
         List<List<Object>> newRows = new ArrayList<>();
         List<ColumnWithType> newHeaders = new ArrayList<>();
+        newHeaders.add(ColumnWithType.builder().title(chartDescriptor.getAxisXColumn()).type(ReportBuilderService.JAVA_TYPE_STRING).build());
         newHeaders.add(ColumnWithType.builder().title(START_VALUE_TITLE).type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
         newHeaders.add(ColumnWithType.builder().title("Текущее значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
         newHeaders.add(ColumnWithType.builder().title("Предыдущее значение").type(ReportBuilderService.JAVA_TYPE_NUMERIC).build());
@@ -228,11 +238,26 @@ public class CascadeChart extends BaseChart {
         calculatedData.setHeaders(newHeaders);
         calculatedData.setRows(newRows);
         Double previous = 0D;
+        Object xValue = null;
+        DateTimeFormatter dateTimeFormatter = null;
         for (int i = fromRowIndex; i < toRowIndex; i++) {
-            Double[] values = new Double[5];
+            Object[] values = new Object[6];
             List<Object> row = rs.getRows().get(i);
             Double value = (Double) row.get(valueColumnIndex);
             value = value == null ? 0D : value;
+            xValue = row.get(xColumnIndex);
+            if (isCategoryDate) {
+                if (dateTimeFormatter == null && xValue != null) {
+                    String pattern = ExportChartsHelper.calculateDateFormatPattern(xValue.toString());
+                    if (pattern != null) {
+                        dateTimeFormatter = DateTimeFormatter.ofPattern(pattern);
+                    }
+                }
+                if (dateTimeFormatter != null && xValue instanceof LocalDateTime) {
+                    xValue = ((LocalDateTime)xValue).format(dateTimeFormatter);
+                }
+            }
+            values[CATEGORY_VALUE_INDEX] = xValue;
             if (i == fromRowIndex) {
                 values[START_VALUE_INDEX] = value;
                 values[CURRENT_VALUE_INDEX] = null;
@@ -257,7 +282,8 @@ public class CascadeChart extends BaseChart {
         }
 
         // добавим итоговую строку
-        Double[] values = new Double[5];
+        Object[] values = new Object[6];
+        values[CATEGORY_VALUE_INDEX] = xValue;
         values[START_VALUE_INDEX] = null;
         values[CURRENT_VALUE_INDEX] = null;
         values[PREVIOUS_VALUE_INDEX] = null;

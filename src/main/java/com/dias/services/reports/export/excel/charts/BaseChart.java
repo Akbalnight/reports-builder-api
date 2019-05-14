@@ -1,7 +1,6 @@
 package com.dias.services.reports.export.excel.charts;
 
 import com.dias.services.reports.report.chart.ChartDescriptor;
-import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.util.CellReference;
