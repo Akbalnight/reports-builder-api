@@ -1,0 +1,68 @@
+{
+  "name": "Linear",
+  "type": "linear",
+  "title": "Linear x-num",
+  "description": {
+    "version": 1,
+    "names": {
+      "chart": "Linear x-num",
+      "xAxis": "x",
+      "yAxis": "y"
+    },
+    "dataAxis": {
+      "key": "abnormalWorktime"
+    },
+    "valueAxis": [
+      {
+        "key": "heatPipe",
+        "name": "line",
+        "color": "#999999",
+        "rows": {
+          "isAll": true
+        }
+      },
+      {
+        "key": "abnormalWorktime",
+        "name": "bar",
+        "color": "#004DCF",
+        "rows": {
+          "isAll": true
+        }
+      }
+    ],
+    "general": {
+      "showLegend": true,
+      "calculatedXRange": true,
+      "calculatedYRange": true,
+      "showDotValues": true
+    }
+  },
+  "isFavorite": false,
+  "isPublic": false,
+  "queryDescriptor": {
+    "select": [
+      {
+        "column": "history_values_by_day.abnormal_worktime",
+        "title": "abnormalWorktime",
+        "sortable": false,
+        "filterable": false
+      },
+      {
+        "column": "history_values_by_day.heat_pipe",
+        "title": "heatPipe",
+        "sortable": false,
+        "filterable": false
+      },
+      {
+        "column": "day_statement.date_from",
+        "title": "Дата с",
+        "sortable": false,
+        "filterable": false
+      }
+    ],
+    "groupBy": [],
+    "orderBy": [],
+    "where": [],
+    "aggregations": []
+  }
+}

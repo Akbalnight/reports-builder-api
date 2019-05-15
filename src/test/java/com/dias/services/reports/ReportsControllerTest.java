@@ -6,18 +6,11 @@ import com.dias.services.reports.report.query.ResultSetWithTotal;
 import com.dias.services.reports.subsystem.ColumnWithType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.*;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.XMLUnit;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
-import org.openxmlformats.schemas.drawingml.x2006.chart.CTChart;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTChartsheet;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTDrawing;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTWorksheet;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.ChartsheetDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.json.JacksonJsonParser;
 import org.springframework.http.MediaType;
@@ -26,8 +19,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -164,44 +155,21 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
         Assert.assertEquals("history_values_by_day.heat_pipe", totalValue.getColumn());
 
     }
+
     @Test()
-    @Ignore
     public void order050exportToExcel() throws Exception {
 
         MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/" + createdReportId + "/_export?format=XLSX"))
-                .andExpect(status().isOk()).andReturn();
-
-        String expected = Util.readResource("ReportsController/excelRows.txt");
-        String[] expextedRows = expected.split("\n");
+                .andExpect(status().isOk())
+                .andReturn();
 
         byte[] bytes = result.getResponse().getContentAsByteArray();
         XSSFWorkbook wb = new XSSFWorkbook(new ByteArrayInputStream(bytes));
         XSSFSheet sheet = wb.getSheetAt(0);
-        int index = 0;
-        XSSFRow r;
-        while ((r = sheet.getRow(index)) != null) {
-            Iterator<Cell> cellIterator = r.cellIterator();
-            List<Object> row = new ArrayList<>();
-            while (cellIterator.hasNext()) {
-                Cell cell = cellIterator.next();
-                if (cell.getCellType() == CellType.STRING) {
-                    row.add(cell.getStringCellValue());
-                } else if (cell.getCellType() == CellType.NUMERIC) {
-                    row.add(cell.getNumericCellValue());
-                }
+        String excelActual = sheet.getCTWorksheet().toString();
+        Diff diff = XMLUnit.compareXML(Util.readResource("ReportsController/report_excel.txt"), excelActual);
+        Assert.assertTrue(diff.similar());
 
-            }
-            String expextedRow = expextedRows[index];
-            String[] expectedCells = !expextedRow.isEmpty() ? expextedRow.split(",") : new String[]{};
-            Assert.assertEquals(expectedCells.length, row.size());
-            if (expectedCells.length > 0) {
-                for (int i = 0; i < expectedCells.length; i++) {
-                    Assert.assertEquals(expectedCells[i].trim(), row.get(i).toString().trim());
-                }
-            }
-            index++;
-        }
-        Assert.assertTrue(index > 0);
     }
 
     @Test
@@ -230,30 +198,112 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
 
     @Test
     public void order080createNewPieChart() throws Exception {
+        checkExportExcelResult("ReportsController/report_pie.json", "Pie", "ReportsController/report_pie.txt");
+    }
+
+    @Test
+    public void order090createNewLineChart() throws Exception {
+        checkExportExcelResult("ReportsController/report_linear_date.json", "Linear x-date", "ReportsController/report_linear_date.txt");
+    }
+
+    @Test
+    public void order100createNewLineChartXNum() throws Exception {
+        checkExportExcelResult("ReportsController/report_linear_num.json", "Linear x-num", "ReportsController/report_linear_num.txt");
+    }
+
+    @Test
+    public void order110createNewBarChartXStr() throws Exception {
+        checkExportExcelResult("ReportsController/report_bar_str.json", "Bar x-str", "ReportsController/report_bar_str.txt");
+    }
+
+    @Test
+    public void order120createNewBarChartXNum() throws Exception {
+        checkExportExcelResult("ReportsController/report_bar_num.json", "Bar x-num", "ReportsController/report_bar_num.txt");
+    }
+
+    @Test
+    public void order130createNewBarChartXDate() throws Exception {
+        checkExportExcelResult("ReportsController/report_bar_date.json", "Bar x-date", "ReportsController/report_bar_date.txt");
+    }
+
+    @Test
+    public void order140createNewHBarChartXStr() throws Exception {
+        checkExportExcelResult("ReportsController/report_hbar_str.json", "HBar x-str", "ReportsController/report_hbar_str.txt");
+    }
+
+    @Test
+    public void order150createNewHBarChartXNum() throws Exception {
+        checkExportExcelResult("ReportsController/report_hbar_num.json", "HBar x-num", "ReportsController/report_hbar_num.txt");
+    }
+
+    @Test
+    public void order160createNewScatterChartXDate() throws Exception {
+        checkExportExcelResult("ReportsController/report_scatter_date.json", "Scatter x-date", "ReportsController/report_scatter_date.txt");
+    }
+
+    @Test
+    public void order170createNewScatterChartXStr() throws Exception {
+        checkExportExcelResult("ReportsController/report_scatter_str.json", "Scatter x-str", "ReportsController/report_scatter_str.txt");
+    }
+
+    @Test
+    public void order180createNewScatterChartXNum() throws Exception {
+        checkExportExcelResult("ReportsController/report_scatter_num.json", "Scatter x-num", "ReportsController/report_scatter_num.txt");
+    }
+
+    @Test
+    public void order190createNewCascadeChartXStr() throws Exception {
+        checkExportExcelResult("ReportsController/report_cascade_str.json", "Cascade x-str", "ReportsController/report_cascade_str.txt");
+    }
+
+    @Test
+    public void order200createNewCascadeChartXDate() throws Exception {
+        checkExportExcelResult("ReportsController/report_cascade_date.json", "Cascade x-date", "ReportsController/report_cascade_date.txt");
+    }
+
+    @Test
+    public void order210createNewCascadeChartXNum() throws Exception {
+        checkExportExcelResult("ReportsController/report_cascade_num.json", "Cascade x-num", "ReportsController/report_cascade_num.txt");
+    }
+
+    @Test
+    public void order220createNewComboChartXStr() throws Exception {
+        checkExportExcelResult("ReportsController/report_combo_str.json", "Combo x-str", "ReportsController/report_combo_str.txt");
+    }
+
+    @Test
+    public void order230createNewComboChartXDate() throws Exception {
+        checkExportExcelResult("ReportsController/report_combo_date.json", "Combo x-date", "ReportsController/report_combo_date.txt");
+    }
+
+    @Test
+    public void order240createNewComboChartXNum() throws Exception {
+        checkExportExcelResult("ReportsController/report_combo_num.json", "Combo x-num", "ReportsController/report_combo_num.txt");
+    }
+
+    private void checkExportExcelResult(String reportPath, String reportName, String reportExpectedResultPath) throws Exception {
         MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(Util.readResource("ReportsController/report_pie.json")))
+                .content(Util.readResource(reportPath)))
                 .andExpect(status().isCreated()).andReturn();
         Map resultMap = new JacksonJsonParser().parseMap(result.getResponse().getContentAsString());
         Integer createdPieChartId = (Integer) resultMap.get("id");
 
         result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/" + createdPieChartId + "/_export")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(Util.readResource("ReportsController/report_pie.json")))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
 
         XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(result.getResponse().getContentAsByteArray()));
-        XSSFSheet sheet = workbook.getSheet("Pie");
+        XSSFSheet sheet = workbook.getSheet(reportName);
         XSSFDrawing drawing = sheet.getDrawingPatriarch();
         List<XSSFChart> charts = drawing.getCharts();
 
         Assert.assertEquals(1, charts.size());
 
         String actualChartData = charts.get(0).getCTChart().toString();
-        Diff diff = XMLUnit.compareXML(Util.readResource("ReportsController/report_pie.txt"), actualChartData);
+        Diff diff = XMLUnit.compareXML(Util.readResource(reportExpectedResultPath), actualChartData);
         Assert.assertTrue(diff.similar());
 
     }
-
 
 }

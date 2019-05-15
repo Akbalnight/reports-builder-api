@@ -1,0 +1,177 @@
+<xml-fragment xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  <c:title>
+    <c:tx>
+      <c:rich>
+        <a:bodyPr/>
+        <a:p>
+          <a:r>
+            <a:t>Cascade x-num</a:t>
+          </a:r>
+        </a:p>
+      </c:rich>
+    </c:tx>
+  </c:title>
+  <c:plotArea>
+    <c:layout/>
+    <c:barChart>
+      <c:barDir val="col"/>
+      <c:grouping val="clustered"/>
+      <c:varyColors val="false"/>
+      <c:ser>
+        <c:idx val="0"/>
+        <c:order val="1"/>
+        <c:tx>
+          <c:v>Начальное значение</c:v>
+        </c:tx>
+        <c:spPr>
+          <a:solidFill>
+            <a:srgbClr val="0000FF"/>
+          </a:solidFill>
+        </c:spPr>
+        <c:cat>
+          <c:strRef>
+            <c:f>Данные!$G$6:$G$7</c:f>
+          </c:strRef>
+        </c:cat>
+        <c:val>
+          <c:numRef>
+            <c:f>Данные!$H$6:$H$7</c:f>
+          </c:numRef>
+        </c:val>
+      </c:ser>
+      <c:ser>
+        <c:idx val="1"/>
+        <c:order val="2"/>
+        <c:tx>
+          <c:v>Итог</c:v>
+        </c:tx>
+        <c:spPr>
+          <a:solidFill>
+            <a:srgbClr val="999999"/>
+          </a:solidFill>
+        </c:spPr>
+        <c:cat>
+          <c:strRef>
+            <c:f>Данные!$G$6:$G$7</c:f>
+          </c:strRef>
+        </c:cat>
+        <c:val>
+          <c:numRef>
+            <c:f>Данные!$L$6:$L$7</c:f>
+          </c:numRef>
+        </c:val>
+      </c:ser>
+      <c:gapWidth val="0"/>
+      <c:overlap val="100"/>
+      <c:axId val="1"/>
+      <c:axId val="2"/>
+    </c:barChart>
+    <c:lineChart>
+      <c:ser>
+        <c:idx val="2"/>
+        <c:order val="0"/>
+        <c:tx>
+          <c:v/>
+        </c:tx>
+        <c:spPr>
+          <a:ln>
+            <a:noFill/>
+          </a:ln>
+        </c:spPr>
+        <c:marker>
+          <c:symbol val="none"/>
+        </c:marker>
+        <c:cat>
+          <c:strRef>
+            <c:f>Данные!$G$6:$G$6</c:f>
+          </c:strRef>
+        </c:cat>
+        <c:val>
+          <c:numRef>
+            <c:f>Данные!$I$6:$I$6</c:f>
+          </c:numRef>
+        </c:val>
+      </c:ser>
+      <c:ser>
+        <c:idx val="3"/>
+        <c:order val="3"/>
+        <c:tx>
+          <c:v/>
+        </c:tx>
+        <c:spPr>
+          <a:ln>
+            <a:noFill/>
+          </a:ln>
+        </c:spPr>
+        <c:marker>
+          <c:symbol val="none"/>
+        </c:marker>
+        <c:cat>
+          <c:strRef>
+            <c:f>Данные!$G$6:$G$6</c:f>
+          </c:strRef>
+        </c:cat>
+        <c:val>
+          <c:numRef>
+            <c:f>Данные!$J$6:$J$6</c:f>
+          </c:numRef>
+        </c:val>
+      </c:ser>
+      <c:upDownBars>
+        <c:gapWidth val="0"/>
+        <c:upBars>
+          <c:spPr>
+            <a:solidFill>
+              <a:srgbClr val="FF0000"/>
+            </a:solidFill>
+            <a:ln>
+              <a:noFill/>
+            </a:ln>
+          </c:spPr>
+        </c:upBars>
+        <c:downBars>
+          <c:spPr>
+            <a:solidFill>
+              <a:srgbClr val="00FF00"/>
+            </a:solidFill>
+            <a:ln>
+              <a:noFill/>
+            </a:ln>
+          </c:spPr>
+        </c:downBars>
+      </c:upDownBars>
+      <c:axId val="1"/>
+      <c:axId val="2"/>
+      <c:axId val="1"/>
+      <c:axId val="2"/>
+    </c:lineChart>
+    <c:valAx>
+      <c:axId val="2"/>
+      <c:scaling>
+        <c:orientation val="minMax"/>
+        <c:max val="1794.94"/>
+        <c:min val="1794.94"/>
+      </c:scaling>
+      <c:delete val="false"/>
+      <c:axPos val="l"/>
+      <c:tickLblPos val="nextTo"/>
+      <c:crossAx val="1"/>
+    </c:valAx>
+    <c:catAx>
+      <c:axId val="1"/>
+      <c:scaling>
+        <c:orientation val="minMax"/>
+      </c:scaling>
+      <c:delete val="false"/>
+      <c:axPos val="b"/>
+      <c:tickLblPos val="nextTo"/>
+      <c:crossAx val="2"/>
+      <c:crossesAt val="1794.94"/>
+    </c:catAx>
+  </c:plotArea>
+  <c:legend>
+    <c:legendPos val="r"/>
+    <c:overlay val="false"/>
+  </c:legend>
+  <c:plotVisOnly val="true"/>
+</xml-fragment>
