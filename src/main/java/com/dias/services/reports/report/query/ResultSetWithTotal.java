@@ -77,7 +77,7 @@ public class ResultSetWithTotal {
         for (int i = 0; i < headers.size(); i++) {
             ColumnWithType column = headers.get(i);
 
-            Column column1 = new Column(column.getColumn());
+            Column column1 = new Column(column.getColumn(), true);
             String columnName = column1.getColumnName();
             result.put(columnName, i);
             result.put(column.getTitle(), i);

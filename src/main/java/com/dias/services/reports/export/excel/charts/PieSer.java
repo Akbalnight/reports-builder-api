@@ -19,6 +19,7 @@ public class PieSer implements ISeries {
 
     @Override
     public void setFforX(String formula) {
+        series.addNewCat().addNewStrRef().setF(formula);
     }
 
     @Override

@@ -59,6 +59,10 @@ public class ReportService extends AbstractService<Report> {
     public static final String PROPERTY_CALCULATED_X_RANGE = "calculatedXRange";
     public static final String PROPERTY_CALCULATED_Y_RANGE = "calculatedYRange";
     public static final String PROPERTY_SHOW_DOT_VALUES = "showDotValues";
+    public static final String PROPERTY_COLOR_POSITIVE = "colorPositive";
+    public static final String PROPERTY_COLOR_NEGATIVE = "colorNegative";
+    public static final String PROPERTY_COLOR_INITIAL = "colorInitial";
+    public static final String PROPERTY_COLOR_TOTAL = "colorTotal";
 
 
     private static Logger LOG = Logger.getLogger(ReportService.class.getName());
@@ -276,13 +280,16 @@ public class ReportService extends AbstractService<Report> {
     public ResultSetWithTotal syncExecuteWithTotalReport(QueryDescriptor queryDescriptor, Long limit, Long offset) {
 
         ResultSet resultSet = syncExecuteReport(queryDescriptor, limit, offset);
+        List<TotalValue> total = new ArrayList<>();
 
-        String result =
-                new NoGroupByQueryBuilder(queryDescriptor, tablesService)
-                        .withColumns(getTablesColumnTypesMap(queryDescriptor))
-                        .buildSummaryQuery();
+        if (queryDescriptor.getAggregations().length > 0) {
+            String result =
+                    new NoGroupByQueryBuilder(queryDescriptor, tablesService)
+                            .withColumns(getTablesColumnTypesMap(queryDescriptor))
+                            .buildSummaryQuery();
 
-        List<TotalValue> total = template.query(result, getTotalExtractor(queryDescriptor));
+            total = template.query(result, getTotalExtractor(queryDescriptor));
+        }
 
         return new ResultSetWithTotal(resultSet.getRows(), resultSet.getHeaders(), total, null);
     }
@@ -336,9 +343,7 @@ public class ReportService extends AbstractService<Report> {
         JsonNode categoriesNode = description.get(PROPERTY_DATA_AXIS);
 
         // колонка для x-значений может быть в общем случае определяться в сериях
-        if (categoriesNode != null && categoriesNode.get(PROPERTY_KEY) != null) {
-            descriptor.setAxisXColumn(categoriesNode.get(PROPERTY_KEY).asText());
-        }
+        descriptor.setAxisXColumn(getTextValue(categoriesNode, PROPERTY_KEY, null));
 
         List<ChartDescriptor.Series> seriesList = new ArrayList<>();
         descriptor.setSeries(seriesList);
@@ -348,36 +353,19 @@ public class ReportService extends AbstractService<Report> {
             ChartDescriptor.Series series = new ChartDescriptor.Series();
             JsonNode columnKeyNode = sNode.get(PROPERTY_KEY);
             if (columnKeyNode != null) {
+
                 series.setValueColumn(columnKeyNode.asText());
-                JsonNode seriesColorNode = sNode.get(PROPERTY_COLOR);
-                if (seriesColorNode != null) {
-                    series.setColor(seriesColorNode.asText());
+                series.setColor(getTextValue(sNode, PROPERTY_COLOR, null));
+                series.setDataKey(getTextValue(sNode, PROPERTY_DATA_KEY, null));
+                if (descriptor.getAxisXColumn() == null) {
+                    descriptor.setAxisXColumn(series.getDataKey());
                 }
-
-                JsonNode dataKeyNode = sNode.get(PROPERTY_DATA_KEY);
-                if (dataKeyNode != null) {
-                    series.setDataKey(dataKeyNode.asText());
-                    if (descriptor.getAxisXColumn() == null) {
-                        descriptor.setAxisXColumn(dataKeyNode.asText());
-                    }
-                }
-
-                JsonNode colorNode = sNode.get("colorPositive");
-                if (colorNode != null) {
-                    series.setColorPositive(colorNode.asText());
-                }
-                colorNode = sNode.get("colorNegative");
-                if (colorNode != null) {
-                    series.setColorNegative(colorNode.asText());
-                }
-                colorNode = sNode.get("colorInitial");
-                if (colorNode != null) {
-                    series.setColorInitial(colorNode.asText());
-                }
-                colorNode = sNode.get("colorTotal");
-                if (colorNode != null) {
-                    series.setColorTotal(colorNode.asText());
-                }
+                series.setColorPositive(getTextValue(sNode, PROPERTY_COLOR_POSITIVE, null));
+                series.setColorNegative(getTextValue(sNode, PROPERTY_COLOR_NEGATIVE, null));
+                series.setColorInitial(getTextValue(sNode, PROPERTY_COLOR_INITIAL, null));
+                series.setColorTotal(getTextValue(sNode, PROPERTY_COLOR_TOTAL, null));
+                series.setTitle(getTextValue(sNode, PROPERTY_NAME, columnKeyNode.asText()));
+                series.setType(getTextValue(sNode, PROPERTY_TYPE, columnKeyNode.asText()));
 
 
                 JsonNode rowsRangeNode = sNode.get(PROPERTY_ROWS);
@@ -387,12 +375,6 @@ public class ReportService extends AbstractService<Report> {
                 if (rowsRangeNode != null && rowsRangeNode.get(PROPERTY_TO) != null) {
                     series.setEndRow(rowsRangeNode.get(PROPERTY_TO).asInt());
                 }
-                String title = sNode.get(PROPERTY_NAME) != null ? sNode.get(PROPERTY_NAME).asText() : columnKeyNode.asText();
-                series.setTitle(title);
-
-                String type = sNode.get(PROPERTY_TYPE) != null ? sNode.get(PROPERTY_TYPE).asText() : columnKeyNode.asText();
-                series.setType(type);
-
                 seriesList.add(series);
             } else {
                 wrongSeriesCount++;
@@ -408,16 +390,10 @@ public class ReportService extends AbstractService<Report> {
             }
         }
 
-        JsonNode namesNode = description.get(PROPERTY_NAMES);
-        if (!StringUtils.isEmpty(namesNode.get(PROPERTY_CHART).asText())) {
-            descriptor.setTitle(namesNode.get(PROPERTY_CHART).asText());
-        }
-        if (!StringUtils.isEmpty(namesNode.get(PROPERTY_X_AXIS).asText())) {
-            descriptor.setAxisXTitle(namesNode.get(PROPERTY_X_AXIS).asText());
-        }
-        if (!StringUtils.isEmpty(namesNode.get(PROPERTY_Y_AXIS).asText())) {
-            descriptor.setAxisYTitle(namesNode.get(PROPERTY_Y_AXIS).asText());
-        }
+        descriptor.setTitle(getTextValue(description.get(PROPERTY_NAMES), PROPERTY_CHART, null));
+        descriptor.setAxisXTitle(getTextValue(description, PROPERTY_X_AXIS, null));
+        descriptor.setAxisYTitle(getTextValue(description, PROPERTY_Y_AXIS, null));
+
         JsonNode generalNode = description.get(PROPERTY_GENERAL);
         if (generalNode != null) {
             descriptor.setShowLegend(generalNode.get(PROPERTY_SHOW_LEGEND) != null && generalNode.get(PROPERTY_SHOW_LEGEND).asBoolean());
@@ -430,6 +406,12 @@ public class ReportService extends AbstractService<Report> {
 
         return descriptor;
     }
+
+    private String getTextValue(JsonNode node, String propertyName, String defaultValue) {
+        JsonNode propNode = node != null ? node.get(propertyName) : null;
+        return propNode != null && !StringUtils.isEmpty(propNode.asText()) ? propNode.asText() : defaultValue;
+    }
+
 
     /**
      *

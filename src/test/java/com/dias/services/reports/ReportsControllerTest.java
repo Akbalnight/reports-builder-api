@@ -8,11 +8,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
+import org.custommonkey.xmlunit.Diff;
+import org.custommonkey.xmlunit.XMLUnit;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTChart;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTChartsheet;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTDrawing;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTWorksheet;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.ChartsheetDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.json.JacksonJsonParser;
 import org.springframework.http.MediaType;
@@ -220,6 +225,33 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
                 .content(Util.readResource("ReportsController/descriptor_join.json"))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
+
+    }
+
+    @Test
+    public void order080createNewPieChart() throws Exception {
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(Util.readResource("ReportsController/report_pie.json")))
+                .andExpect(status().isCreated()).andReturn();
+        Map resultMap = new JacksonJsonParser().parseMap(result.getResponse().getContentAsString());
+        Integer createdPieChartId = (Integer) resultMap.get("id");
+
+        result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/" + createdPieChartId + "/_export")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(Util.readResource("ReportsController/report_pie.json")))
+                .andExpect(status().isOk()).andReturn();
+
+        XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(result.getResponse().getContentAsByteArray()));
+        XSSFSheet sheet = workbook.getSheet("Pie");
+        XSSFDrawing drawing = sheet.getDrawingPatriarch();
+        List<XSSFChart> charts = drawing.getCharts();
+
+        Assert.assertEquals(1, charts.size());
+
+        String actualChartData = charts.get(0).getCTChart().toString();
+        Diff diff = XMLUnit.compareXML(Util.readResource("ReportsController/report_pie.txt"), actualChartData);
+        Assert.assertTrue(diff.similar());
 
     }
 
