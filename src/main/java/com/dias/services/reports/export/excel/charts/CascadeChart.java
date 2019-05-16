@@ -12,6 +12,7 @@ import org.openxmlformats.schemas.drawingml.x2006.chart.*;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties;
 
 import java.awt.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -243,8 +244,21 @@ public class CascadeChart extends BaseChart {
         for (int i = fromRowIndex; i < toRowIndex; i++) {
             Object[] values = new Object[6];
             List<Object> row = rs.getRows().get(i);
-            Double value = (Double) row.get(valueColumnIndex);
+            Object objectValue = row.get(valueColumnIndex);
+
+            Double value = 0D;
+            if (objectValue instanceof Double) {
+                value = (Double) objectValue;
+            } else if (objectValue instanceof BigDecimal) {
+                value = ((BigDecimal)objectValue).doubleValue();
+            } else if (objectValue != null) {
+                try {
+                    value = Double.parseDouble(objectValue.toString());
+                } catch (Exception ignore) {
+                }
+            }
             value = value == null ? 0D : value;
+
             xValue = row.get(xColumnIndex);
             if (isCategoryDate) {
                 if (dateTimeFormatter == null && xValue != null) {

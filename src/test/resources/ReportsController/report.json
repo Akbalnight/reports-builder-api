@@ -1,8 +1,7 @@
 {
   "name": "repo_2",
-  "type": "Common1",
+  "type": "table",
   "title": "Отчет №2",
-  "createdBy": null,
   "description": {
     "f1": {
       "s1": "sq1"
@@ -78,12 +77,12 @@
     "aggregations": [
       {
         "column": "history_values_by_day.heat_pipe",
-        "title": "Сумма heat_pipe",
+        "title": "heatPipe",
         "function": "sum"
       },
       {
         "column": "history_values_by_day.abnormal_worktime",
-        "title": "Сумма abnormal_worktime",
+        "title": "abnormalWorktime",
         "function": "sum"
       }
     ]

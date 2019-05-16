@@ -1,0 +1,78 @@
+<xml-fragment xmlns:main="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <main:dimension ref="B1:F9"/>
+  <main:sheetViews>
+    <main:sheetView workbookViewId="0" tabSelected="true"/>
+  </main:sheetViews>
+  <main:sheetFormatPr defaultRowHeight="15.0"/>
+  <main:cols>
+    <main:col min="1" max="1" customWidth="true" width="0.78125" collapsed="false"/>
+    <main:col min="2" max="2" customWidth="true" width="23.4375" collapsed="false"/>
+    <main:col min="3" max="3" customWidth="true" width="7.8125" collapsed="false"/>
+    <main:col min="4" max="4" customWidth="true" width="23.4375" collapsed="false"/>
+    <main:col min="5" max="5" customWidth="true" width="23.4375" collapsed="false"/>
+    <main:col min="6" max="6" customWidth="true" width="23.4375" collapsed="false"/>
+  </main:cols>
+  <main:sheetData>
+    <main:row r="1"/>
+    <main:row r="2" ht="60.0" customHeight="true">
+      <main:c r="B2" s="6" t="s">
+        <main:v>0</main:v>
+      </main:c>
+    </main:row>
+    <main:row r="3"/>
+    <main:row r="4">
+      <main:c r="B4" s="3" t="s">
+        <main:v>1</main:v>
+      </main:c>
+      <main:c r="C4" s="2" t="s">
+        <main:v>2</main:v>
+      </main:c>
+    </main:row>
+    <main:row r="5">
+      <main:c r="C5" s="2" t="s">
+        <main:v>3</main:v>
+      </main:c>
+    </main:row>
+    <main:row r="6"/>
+    <main:row r="7" ht="60.0" customHeight="true">
+      <main:c r="C7" s="7" t="s">
+        <main:v>4</main:v>
+      </main:c>
+      <main:c r="D7" s="7" t="s">
+        <main:v>5</main:v>
+      </main:c>
+      <main:c r="E7" s="7" t="s">
+        <main:v>6</main:v>
+      </main:c>
+      <main:c r="F7" s="7" t="s">
+        <main:v>7</main:v>
+      </main:c>
+    </main:row>
+    <main:row r="8">
+      <main:c r="C8" s="1" t="n">
+        <main:v>1.0</main:v>
+      </main:c>
+      <main:c r="D8" s="1" t="n">
+        <main:v>1.0</main:v>
+      </main:c>
+      <main:c r="E8" s="1" t="n">
+        <main:v>1794.94</main:v>
+      </main:c>
+      <main:c r="F8" s="1" t="s">
+        <main:v>11</main:v>
+      </main:c>
+    </main:row>
+    <main:row r="9" ht="20.0" customHeight="true">
+      <main:c r="B9" s="11" t="s">
+        <main:v>12</main:v>
+      </main:c>
+      <main:c r="D9" s="12">
+        <main:f>sum(D8:D8)</main:f>
+      </main:c>
+      <main:c r="E9" s="12">
+        <main:f>sum(E8:E8)</main:f>
+      </main:c>
+    </main:row>
+  </main:sheetData>
+  <main:pageMargins bottom="0.75" footer="0.3" header="0.3" left="0.7" right="0.7" top="0.75"/>
+</xml-fragment>
