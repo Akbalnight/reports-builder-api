@@ -1,32 +1,47 @@
 package com.dias.services.reports;
 
+import com.dias.services.reports.dto.reports.ReportDTO;
+import com.dias.services.reports.export.pdf.ReportPdfWriter;
+import com.dias.services.reports.model.Report;
 import com.dias.services.reports.query.TotalValue;
 import com.dias.services.reports.report.query.ResultSet;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
+import com.dias.services.reports.service.ReportService;
 import com.dias.services.reports.subsystem.ColumnWithType;
+import com.dias.services.reports.subsystem.TablesService;
+import com.dias.services.reports.translation.Translator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.itextpdf.text.DocumentException;
 import org.apache.poi.xssf.usermodel.XSSFChart;
 import org.apache.poi.xssf.usermodel.XSSFDrawing;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.XMLUnit;
+import org.jfree.chart.JFreeChart;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.json.JacksonJsonParser;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.awt.*;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,9 +53,23 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private ReportService reportService;
+
+    @Autowired
+    private Translator translator;
+
+    @Autowired
+    private TablesService tablesService;
+
+    private ModelMapper modelMapper = new ModelMapper();
+
+
     @Before
     public void setUp() throws IOException {
         super.setUp();
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        ReportService.updateModelMapper(objectMapper, modelMapper);
     }
 
     @Test
@@ -204,98 +233,105 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
 
     @Test
     public void order080createNewPieChart() throws Exception {
-        checkExportExcelResult("ReportsController/report_pie.json", "Pie", "ReportsController/report_pie.txt");
+        doExportAndCheck("ReportsController/report_pie.json", "Pie", "ReportsController/report_pie.txt", "ReportsController/pdf_report_pie.json");
     }
 
     @Test
     public void order090createNewLineChart() throws Exception {
-        checkExportExcelResult("ReportsController/report_linear_date.json", "Linear x-date", "ReportsController/report_linear_date.txt");
+        doExportAndCheck("ReportsController/report_linear_date.json", "Linear x-date", "ReportsController/report_linear_date.txt", "ReportsController/pdf_report_linear_date.json");
     }
 
     @Test
     public void order100createNewLineChartXNum() throws Exception {
-        checkExportExcelResult("ReportsController/report_linear_num.json", "Linear x-num", "ReportsController/report_linear_num.txt");
+        doExportAndCheck("ReportsController/report_linear_num.json", "Linear x-num", "ReportsController/report_linear_num.txt", "ReportsController/pdf_report_linear_num.json");
     }
 
     @Test
     public void order110createNewBarChartXStr() throws Exception {
-        checkExportExcelResult("ReportsController/report_bar_str.json", "Bar x-str", "ReportsController/report_bar_str.txt");
+        doExportAndCheck("ReportsController/report_bar_str.json", "Bar x-str", "ReportsController/report_bar_str.txt", "ReportsController/pdf_report_bar_str.json");
     }
 
     @Test
     public void order120createNewBarChartXNum() throws Exception {
-        checkExportExcelResult("ReportsController/report_bar_num.json", "Bar x-num", "ReportsController/report_bar_num.txt");
+        doExportAndCheck("ReportsController/report_bar_num.json", "Bar x-num", "ReportsController/report_bar_num.txt", "ReportsController/pdf_report_bar_num.json");
     }
 
     @Test
     public void order130createNewBarChartXDate() throws Exception {
-        checkExportExcelResult("ReportsController/report_bar_date.json", "Bar x-date", "ReportsController/report_bar_date.txt");
+        doExportAndCheck("ReportsController/report_bar_date.json", "Bar x-date", "ReportsController/report_bar_date.txt", "ReportsController/pdf_report_bar_date.json");
     }
 
     @Test
     public void order140createNewHBarChartXStr() throws Exception {
-        checkExportExcelResult("ReportsController/report_hbar_str.json", "HBar x-str", "ReportsController/report_hbar_str.txt");
+        doExportAndCheck("ReportsController/report_hbar_str.json", "HBar x-str", "ReportsController/report_hbar_str.txt", "ReportsController/pdf_report_hbar_str.json");
     }
 
     @Test
     public void order150createNewHBarChartXNum() throws Exception {
-        checkExportExcelResult("ReportsController/report_hbar_num.json", "HBar x-num", "ReportsController/report_hbar_num.txt");
+        doExportAndCheck("ReportsController/report_hbar_num.json", "HBar x-num", "ReportsController/report_hbar_num.txt", "ReportsController/pdf_report_hbar_num.json");
     }
 
     @Test
     public void order160createNewScatterChartXDate() throws Exception {
-        checkExportExcelResult("ReportsController/report_scatter_date.json", "Scatter x-date", "ReportsController/report_scatter_date.txt");
+        doExportAndCheck("ReportsController/report_scatter_date.json", "Scatter x-date", "ReportsController/report_scatter_date.txt", "ReportsController/pdf_report_scatter_date.json");
     }
 
     @Test
     public void order170createNewScatterChartXStr() throws Exception {
-        checkExportExcelResult("ReportsController/report_scatter_str.json", "Scatter x-str", "ReportsController/report_scatter_str.txt");
+        doExportAndCheck("ReportsController/report_scatter_str.json", "Scatter x-str", "ReportsController/report_scatter_str.txt", "ReportsController/pdf_report_scatter_str.json");
     }
 
     @Test
     public void order180createNewScatterChartXNum() throws Exception {
-        checkExportExcelResult("ReportsController/report_scatter_num.json", "Scatter x-num", "ReportsController/report_scatter_num.txt");
+        doExportAndCheck("ReportsController/report_scatter_num.json", "Scatter x-num", "ReportsController/report_scatter_num.txt", "ReportsController/pdf_report_scatter_num.json");
     }
 
     @Test
     public void order190createNewCascadeChartXStr() throws Exception {
-        checkExportExcelResult("ReportsController/report_cascade_str.json", "Cascade x-str", "ReportsController/report_cascade_str.txt");
+        doExportAndCheck("ReportsController/report_cascade_str.json", "Cascade x-str", "ReportsController/report_cascade_str.txt", "ReportsController/pdf_report_cascade_str.json");
     }
 
     @Test
     public void order200createNewCascadeChartXDate() throws Exception {
-        checkExportExcelResult("ReportsController/report_cascade_date.json", "Cascade x-date", "ReportsController/report_cascade_date.txt");
+        doExportAndCheck("ReportsController/report_cascade_date.json", "Cascade x-date", "ReportsController/report_cascade_date.txt", "ReportsController/pdf_report_cascade_date.json");
     }
 
     @Test
     public void order210createNewCascadeChartXNum() throws Exception {
-        checkExportExcelResult("ReportsController/report_cascade_num.json", "Cascade x-num", "ReportsController/report_cascade_num.txt");
+        doExportAndCheck("ReportsController/report_cascade_num.json", "Cascade x-num", "ReportsController/report_cascade_num.txt", "ReportsController/pdf_report_cascade_num.json");
     }
 
     @Test
     public void order220createNewComboChartXStr() throws Exception {
-        checkExportExcelResult("ReportsController/report_combo_str.json", "Combo x-str", "ReportsController/report_combo_str.txt");
+        doExportAndCheck("ReportsController/report_combo_str.json", "Combo x-str", "ReportsController/report_combo_str.txt", "ReportsController/pdf_report_combo_str.json");
     }
 
     @Test
     public void order230createNewComboChartXDate() throws Exception {
-        checkExportExcelResult("ReportsController/report_combo_date.json", "Combo x-date", "ReportsController/report_combo_date.txt");
+        doExportAndCheck("ReportsController/report_combo_date.json", "Combo x-date", "ReportsController/report_combo_date.txt", "ReportsController/pdf_report_combo_date.json");
     }
 
     @Test
     public void order240createNewComboChartXNum() throws Exception {
-        checkExportExcelResult("ReportsController/report_combo_num.json", "Combo x-num", "ReportsController/report_combo_num.txt");
+        doExportAndCheck("ReportsController/report_combo_num.json", "Combo x-num", "ReportsController/report_combo_num.txt", "ReportsController/pdf_report_combo_num.json");
     }
 
-    private void checkExportExcelResult(String reportPath, String reportName, String reportExpectedResultPath) throws Exception {
+    private void doExportAndCheck(String reportPath, String reportName, String reportExpectedResultPath, String pdfReportExpectedResultPath) throws Exception {
         MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(Util.readResource(reportPath)))
                 .andExpect(status().isCreated()).andReturn();
         Map resultMap = new JacksonJsonParser().parseMap(result.getResponse().getContentAsString());
-        Integer createdPieChartId = (Integer) resultMap.get("id");
+        Integer reportId = (Integer) resultMap.get("id");
 
-        result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/" + createdPieChartId + "/_export")
+        exportToExcelAndCompare(reportId, reportName, reportExpectedResultPath);
+        exportToPdfAndCompare(reportId, pdfReportExpectedResultPath);
+
+    }
+
+    private void exportToExcelAndCompare(Integer reportId, String reportName, String reportExpectedResultPath) throws Exception {
+        MvcResult result;
+        result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/" + reportId + "/_export")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
 
@@ -309,7 +345,79 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
         String actualChartData = charts.get(0).getCTChart().toString();
         Diff diff = XMLUnit.compareXML(Util.readResource(reportExpectedResultPath), actualChartData);
         Assert.assertTrue(diff.similar());
+    }
 
+    private void exportToPdfAndCompare(Integer createdPieChartId, String reportExpectedResultPath) throws com.dias.services.reports.exception.ObjectNotFoundException, DocumentException, IOException {
+        Report report = reportService.getById(createdPieChartId.longValue());
+        ReportDTO reportDTO = convertToDTO(report);
+        ResultSetWithTotal rs = reportService.syncExecuteWithTotalReport(reportDTO.getQueryDescriptor(), null, null);
+        JFreeChart chart = new ReportPdfWriter(reportService, translator, "").writePdf(reportDTO, rs, new ByteArrayOutputStream()).getLeft();
+
+        ObjectNode node = objectMapper.createObjectNode();
+        serializeChartObject(chart, node);
+        Assert.assertTrue(node.equals(objectMapper.readTree(Util.readResource(reportExpectedResultPath))));
+
+    }
+
+    private ReportDTO convertToDTO(Report report) {
+        return modelMapper.map(report, ReportDTO.class);
+    }
+
+    private void serializeChartObject(Object o, ObjectNode objectNode) {
+        Field[] fields = o.getClass().getDeclaredFields();
+        for (Field field: fields) {
+            if (!java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
+                Class<?> type = field.getType();
+                field.setAccessible(true);
+                if (isSimpleField(type)) {
+                    try {
+                        objectNode.put(field.getName(), Objects.toString(field.get(o)));
+                    } catch (final IllegalAccessException ignore) {
+                    }
+
+                } else if (Collection.class.isAssignableFrom(type)) {
+
+                    try {
+                        Collection fieldValue = (Collection) field.get(o);
+                        if (fieldValue != null) {
+                            ArrayNode collection = objectNode.putArray(field.getName());
+                            for (Object child : fieldValue) {
+                                if (isSimpleField(child.getClass())) {
+                                    collection.add(Objects.toString(child));
+                                } else {
+                                    ObjectNode childObject = collection.addObject();
+                                    serializeChartObject(child, childObject);
+                                }
+                            }
+                        }
+                    } catch (IllegalAccessException ignore) {
+                    }
+
+                } else if (type.getName().contains("org.jfree")
+                        && !"org.jfree.data.xy.IntervalXYDelegate".equals(type.getName())) { // игнорируем во избежание stackOverflowException
+
+                    try {
+                        Object fieldValue = field.get(o);
+                        if (fieldValue != null) {
+                            ObjectNode refObject = objectNode.putObject(field.getName());
+                            serializeChartObject(fieldValue, refObject);
+                        }
+                    } catch (IllegalAccessException ignore) {
+                    }
+
+                }
+            }
+        }
+    }
+
+    private boolean isSimpleField(Class<?> type) {
+        return type.isPrimitive()
+                || type == String.class
+                || Number.class.isAssignableFrom(type)
+                || type.isEnum()
+                || Boolean.class.isAssignableFrom(type)
+                || Color.class.isAssignableFrom(type)
+                || Paint.class.isAssignableFrom(type);
     }
 
 }

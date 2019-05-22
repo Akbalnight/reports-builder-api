@@ -1,0 +1,235 @@
+{
+  "borderVisible": "false",
+  "borderPaint": "java.awt.Color[r=0,g=0,b=0]",
+  "padding": {
+    "unitType": {
+      "name": "UnitType.ABSOLUTE"
+    },
+    "top": "0.0",
+    "left": "0.0",
+    "bottom": "0.0",
+    "right": "0.0"
+  },
+  "title": {
+    "text": "Bar x-str",
+    "textAlignment": {
+      "name": "HorizontalAlignment.CENTER"
+    },
+    "paint": "java.awt.Color[r=0,g=0,b=0]",
+    "backgroundPaint": "null",
+    "toolTipText": "null",
+    "urlText": "null",
+    "content": {
+      "lines": [
+        {
+          "fragments": [
+            {
+              "text": "Bar x-str",
+              "paint": "java.awt.Color[r=0,g=0,b=0]",
+              "baselineOffset": "0.0"
+            }
+          ]
+        }
+      ],
+      "lineAlignment": {
+        "name": "HorizontalAlignment.CENTER"
+      }
+    },
+    "expandToFitSpace": "false",
+    "maximumLinesToDisplay": "2147483647"
+  },
+  "subtitles": [
+    {
+      "sources": {},
+      "backgroundPaint": "java.awt.Color[r=255,g=255,b=255]",
+      "legendItemGraphicEdge": {
+        "name": "RectangleEdge.LEFT"
+      },
+      "legendItemGraphicAnchor": {
+        "name": "RectangleAnchor.CENTER"
+      },
+      "legendItemGraphicLocation": {
+        "name": "RectangleAnchor.CENTER"
+      },
+      "legendItemGraphicPadding": {
+        "unitType": {
+          "name": "UnitType.ABSOLUTE"
+        },
+        "top": "2.0",
+        "left": "2.0",
+        "bottom": "2.0",
+        "right": "2.0"
+      },
+      "itemPaint": "java.awt.Color[r=64,g=64,b=64]",
+      "itemLabelPadding": {
+        "unitType": {
+          "name": "UnitType.ABSOLUTE"
+        },
+        "top": "2.0",
+        "left": "2.0",
+        "bottom": "2.0",
+        "right": "2.0"
+      },
+      "items": {
+        "blocks": [
+          {
+            "blocks": [
+              {
+                "dataset": {
+                  "data": {
+                    "rowKeys": [
+                      "ser1",
+                      "ser2"
+                    ],
+                    "columnKeys": [
+                      "Пожар"
+                    ],
+                    "rows": [
+                      {
+                        "keys": [
+                          "Пожар"
+                        ],
+                        "values": [
+                          "1794.94"
+                        ]
+                      },
+                      {
+                        "keys": [
+                          "Пожар"
+                        ],
+                        "values": [
+                          "1.00"
+                        ]
+                      }
+                    ],
+                    "sortRowKeys": "false"
+                  }
+                },
+                "datasetIndex": "0",
+                "series": "0",
+                "toolTipText": "null",
+                "urlText": "null"
+              }
+            ],
+            "arrangement": {}
+          },
+          {
+            "blocks": [
+              {
+                "dataset": {
+                  "data": {
+                    "rowKeys": [
+                      "ser1",
+                      "ser2"
+                    ],
+                    "columnKeys": [
+                      "Пожар"
+                    ],
+                    "rows": [
+                      {
+                        "keys": [
+                          "Пожар"
+                        ],
+                        "values": [
+                          "1794.94"
+                        ]
+                      },
+                      {
+                        "keys": [
+                          "Пожар"
+                        ],
+                        "values": [
+                          "1.00"
+                        ]
+                      }
+                    ],
+                    "sortRowKeys": "false"
+                  }
+                },
+                "datasetIndex": "0",
+                "series": "0",
+                "toolTipText": "null",
+                "urlText": "null"
+              }
+            ],
+            "arrangement": {}
+          }
+        ],
+        "arrangement": {
+          "horizontalGap": "0.0",
+          "verticalGap": "0.0"
+        }
+      },
+      "hLayout": {
+        "horizontalAlignment": {
+          "name": "HorizontalAlignment.CENTER"
+        },
+        "verticalAlignment": {
+          "name": "VerticalAlignment.CENTER"
+        },
+        "horizontalGap": "2.0",
+        "verticalGap": "2.0"
+      },
+      "vLayout": {
+        "horizontalGap": "0.0",
+        "verticalGap": "0.0"
+      }
+    }
+  ],
+  "plot": {
+    "orientation": {
+      "name": "PlotOrientation.VERTICAL"
+    },
+    "axisOffset": {
+      "unitType": {
+        "name": "UnitType.ABSOLUTE"
+      },
+      "top": "4.0",
+      "left": "4.0",
+      "bottom": "4.0",
+      "right": "4.0"
+    },
+    "domainAxes": {},
+    "domainAxisLocations": {},
+    "drawSharedDomainAxis": "false",
+    "rangeAxes": {},
+    "rangeAxisLocations": {},
+    "datasets": {},
+    "renderers": {},
+    "renderingOrder": {
+      "name": "DatasetRenderingOrder.REVERSE"
+    },
+    "columnRenderingOrder": {
+      "name": "SortOrder.ASCENDING"
+    },
+    "rowRenderingOrder": {
+      "name": "SortOrder.ASCENDING"
+    },
+    "domainGridlinesVisible": "false",
+    "domainGridlinePosition": {
+      "name": "CategoryAnchor.MIDDLE"
+    },
+    "domainGridlinePaint": "java.awt.Color[r=255,g=255,b=255]",
+    "rangeZeroBaselineVisible": "false",
+    "rangeZeroBaselinePaint": "java.awt.Color[r=0,g=0,b=0]",
+    "rangeGridlinesVisible": "true",
+    "rangeGridlinePaint": "java.awt.Color[r=255,g=255,b=255]",
+    "rangeMinorGridlinesVisible": "false",
+    "rangeMinorGridlinePaint": "java.awt.Color[r=255,g=255,b=255]",
+    "anchorValue": "0.0",
+    "crosshairDatasetIndex": "0",
+    "domainCrosshairVisible": "false",
+    "domainCrosshairPaint": "java.awt.Color[r=0,g=0,b=255]",
+    "rangeCrosshairVisible": "false",
+    "rangeCrosshairValue": "0.0",
+    "rangeCrosshairPaint": "java.awt.Color[r=0,g=0,b=255]",
+    "rangeCrosshairLockedOnData": "true",
+    "annotations": [],
+    "weight": "0",
+    "rangePannable": "false"
+  },
+  "backgroundPaint": "java.awt.Color[r=255,g=255,b=255]",
+  "backgroundImageAlignment": "15",
+  "backgroundImageAlpha": "0.5",
+  "notify": "true"
+}
