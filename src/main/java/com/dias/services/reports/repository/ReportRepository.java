@@ -22,6 +22,8 @@ import java.util.logging.Logger;
 public class ReportRepository extends AbstractRepository<Report> {
 
     private static final String INIT_SCRIPT = "/db/schema.sql";
+    public static final String REPORTS_TABLE_NAME = "report";
+    public static final String REPORTS_SEQUENCE_NAME = "report_id_seq";
 
     private static Logger LOG = Logger.getLogger(ReportRepository.class.getName());
 
@@ -91,7 +93,7 @@ public class ReportRepository extends AbstractRepository<Report> {
 
     @Override
     public String getTableName() {
-        return "report";
+        return REPORTS_TABLE_NAME;
     }
 
     @Override
@@ -101,7 +103,7 @@ public class ReportRepository extends AbstractRepository<Report> {
 
     @Override
     protected String getInsertSql() {
-        return "insert into report (" +
+        return "insert into " + REPORTS_TABLE_NAME + " (" +
                 "id," +
                 "name," +
                 "title," +
@@ -112,7 +114,7 @@ public class ReportRepository extends AbstractRepository<Report> {
                 "is_public," +
                 "query_descriptor" +
                 ") values (" +
-                "nextval('report_id_seq')," +
+                "nextval('" + REPORTS_SEQUENCE_NAME + "')," +
                 ":name," +
                 ":title," +
                 ":type," +
@@ -125,7 +127,7 @@ public class ReportRepository extends AbstractRepository<Report> {
 
     @Override
     protected String getUpdateSql() {
-        return "update report set " +
+        return "update " + REPORTS_TABLE_NAME + " set " +
                 "name=:name, " +
                 "title=:title, " +
                 "type=:type, " +
