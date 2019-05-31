@@ -1,0 +1,243 @@
+{
+  "borderVisible": "false",
+  "borderPaint": "java.awt.Color[r=0,g=0,b=0]",
+  "padding": {
+    "unitType": {
+      "name": "UnitType.ABSOLUTE"
+    },
+    "top": "0.0",
+    "left": "0.0",
+    "bottom": "0.0",
+    "right": "0.0"
+  },
+  "title": {
+    "text": "Scatter x-num",
+    "textAlignment": {
+      "name": "HorizontalAlignment.CENTER"
+    },
+    "paint": "java.awt.Color[r=0,g=0,b=0]",
+    "backgroundPaint": "null",
+    "toolTipText": "null",
+    "urlText": "null",
+    "content": {
+      "lines": [
+        {
+          "fragments": [
+            {
+              "text": "Scatter x-num",
+              "paint": "java.awt.Color[r=0,g=0,b=0]",
+              "baselineOffset": "0.0"
+            }
+          ]
+        }
+      ],
+      "lineAlignment": {
+        "name": "HorizontalAlignment.CENTER"
+      }
+    },
+    "expandToFitSpace": "false",
+    "maximumLinesToDisplay": "2147483647"
+  },
+  "subtitles": [
+    {
+      "sources": {},
+      "backgroundPaint": "java.awt.Color[r=255,g=255,b=255]",
+      "legendItemGraphicEdge": {
+        "name": "RectangleEdge.LEFT"
+      },
+      "legendItemGraphicAnchor": {
+        "name": "RectangleAnchor.CENTER"
+      },
+      "legendItemGraphicLocation": {
+        "name": "RectangleAnchor.CENTER"
+      },
+      "legendItemGraphicPadding": {
+        "unitType": {
+          "name": "UnitType.ABSOLUTE"
+        },
+        "top": "2.0",
+        "left": "2.0",
+        "bottom": "2.0",
+        "right": "2.0"
+      },
+      "itemPaint": "java.awt.Color[r=64,g=64,b=64]",
+      "itemLabelPadding": {
+        "unitType": {
+          "name": "UnitType.ABSOLUTE"
+        },
+        "top": "2.0",
+        "left": "2.0",
+        "bottom": "2.0",
+        "right": "2.0"
+      },
+      "items": {
+        "blocks": [
+          {
+            "blocks": [
+              {
+                "dataset": {
+                  "data": [
+                    {
+                      "data": [
+                        {
+                          "x": "1.00",
+                          "y": "1794.94"
+                        }
+                      ],
+                      "maximumItemCount": "2147483647",
+                      "autoSort": "true",
+                      "allowDuplicateXValues": "true",
+                      "minX": "1.0",
+                      "maxX": "1.0",
+                      "minY": "1794.94",
+                      "maxY": "1794.94"
+                    },
+                    {
+                      "data": [
+                        {
+                          "x": "1.00",
+                          "y": "1.00"
+                        }
+                      ],
+                      "maximumItemCount": "2147483647",
+                      "autoSort": "true",
+                      "allowDuplicateXValues": "true",
+                      "minX": "1.0",
+                      "maxX": "1.0",
+                      "minY": "1.0",
+                      "maxY": "1.0"
+                    }
+                  ]
+                },
+                "datasetIndex": "0",
+                "series": "0",
+                "toolTipText": "null",
+                "urlText": "null"
+              }
+            ],
+            "arrangement": {}
+          },
+          {
+            "blocks": [
+              {
+                "dataset": {
+                  "data": [
+                    {
+                      "data": [
+                        {
+                          "x": "1.00",
+                          "y": "1794.94"
+                        }
+                      ],
+                      "maximumItemCount": "2147483647",
+                      "autoSort": "true",
+                      "allowDuplicateXValues": "true",
+                      "minX": "1.0",
+                      "maxX": "1.0",
+                      "minY": "1794.94",
+                      "maxY": "1794.94"
+                    },
+                    {
+                      "data": [
+                        {
+                          "x": "1.00",
+                          "y": "1.00"
+                        }
+                      ],
+                      "maximumItemCount": "2147483647",
+                      "autoSort": "true",
+                      "allowDuplicateXValues": "true",
+                      "minX": "1.0",
+                      "maxX": "1.0",
+                      "minY": "1.0",
+                      "maxY": "1.0"
+                    }
+                  ]
+                },
+                "datasetIndex": "0",
+                "series": "0",
+                "toolTipText": "null",
+                "urlText": "null"
+              }
+            ],
+            "arrangement": {}
+          }
+        ],
+        "arrangement": {
+          "horizontalGap": "0.0",
+          "verticalGap": "0.0"
+        }
+      },
+      "hLayout": {
+        "horizontalAlignment": {
+          "name": "HorizontalAlignment.CENTER"
+        },
+        "verticalAlignment": {
+          "name": "VerticalAlignment.CENTER"
+        },
+        "horizontalGap": "2.0",
+        "verticalGap": "2.0"
+      },
+      "vLayout": {
+        "horizontalGap": "0.0",
+        "verticalGap": "0.0"
+      }
+    }
+  ],
+  "plot": {
+    "orientation": {
+      "name": "PlotOrientation.VERTICAL"
+    },
+    "axisOffset": {
+      "unitType": {
+        "name": "UnitType.ABSOLUTE"
+      },
+      "top": "4.0",
+      "left": "4.0",
+      "bottom": "4.0",
+      "right": "4.0"
+    },
+    "domainAxes": {},
+    "domainAxisLocations": {},
+    "rangeAxes": {},
+    "rangeAxisLocations": {},
+    "datasets": {},
+    "renderers": {},
+    "domainGridlinesVisible": "true",
+    "domainGridlinePaint": "java.awt.Color[r=255,g=255,b=255]",
+    "rangeGridlinesVisible": "true",
+    "rangeGridlinePaint": "java.awt.Color[r=255,g=255,b=255]",
+    "domainMinorGridlinesVisible": "false",
+    "domainMinorGridlinePaint": "java.awt.Color[r=255,g=255,b=255]",
+    "rangeMinorGridlinesVisible": "false",
+    "rangeMinorGridlinePaint": "java.awt.Color[r=255,g=255,b=255]",
+    "domainZeroBaselineVisible": "false",
+    "domainZeroBaselinePaint": "java.awt.Color[r=0,g=0,b=0]",
+    "rangeZeroBaselineVisible": "false",
+    "rangeZeroBaselinePaint": "java.awt.Color[r=0,g=0,b=0]",
+    "domainCrosshairVisible": "false",
+    "domainCrosshairValue": "0.0",
+    "domainCrosshairPaint": "java.awt.Color[r=0,g=0,b=255]",
+    "domainCrosshairLockedOnData": "true",
+    "rangeCrosshairVisible": "false",
+    "rangeCrosshairValue": "0.0",
+    "rangeCrosshairPaint": "java.awt.Color[r=0,g=0,b=255]",
+    "rangeCrosshairLockedOnData": "true",
+    "annotations": [],
+    "domainTickBandPaint": "null",
+    "rangeTickBandPaint": "null",
+    "datasetRenderingOrder": {
+      "name": "DatasetRenderingOrder.REVERSE"
+    },
+    "seriesRenderingOrder": {
+      "name": "SeriesRenderingOrder.REVERSE"
+    },
+    "weight": "1",
+    "domainPannable": "false",
+    "rangePannable": "false"
+  },
+  "backgroundPaint": "java.awt.Color[r=255,g=255,b=255]",
+  "backgroundImageAlignment": "15",
+  "backgroundImageAlpha": "0.5",
+  "notify": "true"
+}

@@ -92,6 +92,11 @@ public class ReportService extends AbstractService<Report> {
         this.tablesService = tablesService;
         this.objectMapper = objMapper;
 
+        updateModelMapper(objectMapper, modelMapper);
+
+    }
+
+    public static void updateModelMapper(ObjectMapper objectMapper, ModelMapper modelMapper) {
         Converter<String, QueryDescriptor> stringToQryDescriptorConverter = mappingContext -> {
             try {
                 String source = mappingContext.getSource();
@@ -152,7 +157,6 @@ public class ReportService extends AbstractService<Report> {
 
         modelMapper.addMappings(stringToQryDescriptorMappings);
         modelMapper.addMappings(mapToStringMappings);
-
     }
 
     public ReportDTO getReportById(Long id) throws ObjectNotFoundException {

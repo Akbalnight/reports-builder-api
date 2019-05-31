@@ -1,0 +1,199 @@
+{
+  "borderVisible": "false",
+  "borderPaint": "java.awt.Color[r=0,g=0,b=0]",
+  "padding": {
+    "unitType": {
+      "name": "UnitType.ABSOLUTE"
+    },
+    "top": "0.0",
+    "left": "0.0",
+    "bottom": "0.0",
+    "right": "0.0"
+  },
+  "title": {
+    "text": "Pie",
+    "textAlignment": {
+      "name": "HorizontalAlignment.CENTER"
+    },
+    "paint": "java.awt.Color[r=0,g=0,b=0]",
+    "backgroundPaint": "null",
+    "toolTipText": "null",
+    "urlText": "null",
+    "content": {
+      "lines": [
+        {
+          "fragments": [
+            {
+              "text": "Pie",
+              "paint": "java.awt.Color[r=0,g=0,b=0]",
+              "baselineOffset": "0.0"
+            }
+          ]
+        }
+      ],
+      "lineAlignment": {
+        "name": "HorizontalAlignment.CENTER"
+      }
+    },
+    "expandToFitSpace": "false",
+    "maximumLinesToDisplay": "2147483647"
+  },
+  "subtitles": [
+    {
+      "sources": {},
+      "backgroundPaint": "java.awt.Color[r=255,g=255,b=255]",
+      "legendItemGraphicEdge": {
+        "name": "RectangleEdge.LEFT"
+      },
+      "legendItemGraphicAnchor": {
+        "name": "RectangleAnchor.CENTER"
+      },
+      "legendItemGraphicLocation": {
+        "name": "RectangleAnchor.CENTER"
+      },
+      "legendItemGraphicPadding": {
+        "unitType": {
+          "name": "UnitType.ABSOLUTE"
+        },
+        "top": "2.0",
+        "left": "2.0",
+        "bottom": "2.0",
+        "right": "2.0"
+      },
+      "itemPaint": "java.awt.Color[r=64,g=64,b=64]",
+      "itemLabelPadding": {
+        "unitType": {
+          "name": "UnitType.ABSOLUTE"
+        },
+        "top": "2.0",
+        "left": "2.0",
+        "bottom": "2.0",
+        "right": "2.0"
+      },
+      "items": {
+        "blocks": [
+          {
+            "blocks": [
+              {
+                "dataset": {
+                  "data": {
+                    "keys": [
+                      ""
+                    ],
+                    "values": [
+                      "1794.94"
+                    ]
+                  }
+                },
+                "datasetIndex": "0",
+                "series": "0",
+                "toolTipText": "null",
+                "urlText": "null"
+              }
+            ],
+            "arrangement": {}
+          }
+        ],
+        "arrangement": {
+          "horizontalGap": "0.0",
+          "verticalGap": "0.0"
+        }
+      },
+      "hLayout": {
+        "horizontalAlignment": {
+          "name": "HorizontalAlignment.CENTER"
+        },
+        "verticalAlignment": {
+          "name": "VerticalAlignment.CENTER"
+        },
+        "horizontalGap": "2.0",
+        "verticalGap": "2.0"
+      },
+      "vLayout": {
+        "horizontalGap": "0.0",
+        "verticalGap": "0.0"
+      }
+    }
+  ],
+  "plot": {
+    "dataset": {
+      "data": {
+        "keys": [
+          ""
+        ],
+        "values": [
+          "1794.94"
+        ]
+      }
+    },
+    "pieIndex": "0",
+    "interiorGap": "0.08",
+    "circular": "true",
+    "startAngle": "90.0",
+    "direction": {
+      "name": "Rotation.CLOCKWISE",
+      "factor": "-1.0"
+    },
+    "sectionPaintMap": {},
+    "baseSectionPaint": "java.awt.Color[r=128,g=128,b=128]",
+    "autoPopulateSectionPaint": "true",
+    "sectionOutlinesVisible": "true",
+    "sectionOutlinePaintMap": {},
+    "baseSectionOutlinePaint": "java.awt.Color[r=128,g=128,b=128]",
+    "autoPopulateSectionOutlinePaint": "false",
+    "sectionOutlineStrokeMap": {},
+    "autoPopulateSectionOutlineStroke": "false",
+    "shadowPaint": "java.awt.Color[r=128,g=128,b=128]",
+    "shadowXOffset": "4.0",
+    "shadowYOffset": "4.0",
+    "labelGenerator": {
+      "attributedLabels": {}
+    },
+    "labelPaint": "java.awt.Color[r=0,g=0,b=0]",
+    "labelBackgroundPaint": "java.awt.Color[r=255,g=255,b=192]",
+    "labelOutlinePaint": "java.awt.Color[r=0,g=0,b=0]",
+    "labelShadowPaint": "java.awt.Color[r=151,g=151,b=151]",
+    "simpleLabels": "true",
+    "labelPadding": {
+      "unitType": {
+        "name": "UnitType.ABSOLUTE"
+      },
+      "top": "2.0",
+      "left": "2.0",
+      "bottom": "2.0",
+      "right": "2.0"
+    },
+    "simpleLabelOffset": {
+      "unitType": {
+        "name": "UnitType.RELATIVE"
+      },
+      "top": "0.18",
+      "left": "0.18",
+      "bottom": "0.18",
+      "right": "0.18"
+    },
+    "maximumLabelWidth": "0.14",
+    "labelGap": "0.025",
+    "labelLinksVisible": "true",
+    "labelLinkStyle": {
+      "name": "PieLabelLinkStyle.CUBIC_CURVE"
+    },
+    "labelLinkMargin": "0.025",
+    "labelLinkPaint": "java.awt.Color[r=0,g=0,b=0]",
+    "labelDistributor": {
+      "minGap": "4.0"
+    },
+    "legendLabelGenerator": {
+      "attributedLabels": {}
+    },
+    "ignoreNullValues": "false",
+    "ignoreZeroValues": "false",
+    "minimumArcAngleToDraw": "1.0E-5",
+    "sectionPaint": "null",
+    "sectionOutlinePaint": "null"
+  },
+  "backgroundPaint": "java.awt.Color[r=255,g=255,b=255]",
+  "backgroundImageAlignment": "15",
+  "backgroundImageAlpha": "0.5",
+  "notify": "true"
+}

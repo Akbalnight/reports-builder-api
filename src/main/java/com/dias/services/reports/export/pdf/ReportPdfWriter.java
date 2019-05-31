@@ -18,6 +18,7 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.*;
 import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
@@ -93,7 +94,7 @@ public class ReportPdfWriter {
         this.nullSymbol = nullSymbol;
     }
 
-    public void writePdf(ReportDTO report, ResultSetWithTotal rs, OutputStream out) throws DocumentException, IOException {
+    public Pair<JFreeChart, PdfPTable> writePdf(ReportDTO report, ResultSetWithTotal rs, OutputStream out) throws DocumentException, IOException {
         Document document = new Document(PageSize.A4.rotate());
         PdfWriter.getInstance(document, out);
         document.open();
@@ -103,18 +104,23 @@ public class ReportPdfWriter {
             rs.getRows().add(rs.generateTableReadyTotalRow());
         }
         ReportType reportType = ReportType.byNameOrDefaultForUnknown(report.getType());
+
+        JFreeChart chart = null;
+        PdfPTable table = null;
         if (ReportType.table == reportType) {
-            writeTableReport(report, rs, document, withSummary);
+            table = writeTableReport(report, rs, document, withSummary);
         } else {
-            writeChartReport(report, rs, document, withSummary, reportType);
+            chart = writeChartReport(report, rs, document, withSummary, reportType);
         }
         document.close();
 
+        return Pair.of(chart, table);
     }
 
-    private void writeChartReport(ReportDTO report, ResultSetWithTotal rs, Document document, boolean withSummary, ReportType reportType) throws IOException, DocumentException {
+    private JFreeChart writeChartReport(ReportDTO report, ResultSetWithTotal rs, Document document, boolean withSummary, ReportType reportType) throws IOException, DocumentException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ChartDescriptor chartDescriptor = tablesService.extractChartDescriptor(report);
+        JFreeChart chart = null;
         if (chartDescriptor != null) {
 
             List<Integer> dateColumnIndexes = rs.getDateColumnsIndexes();
@@ -140,7 +146,6 @@ public class ReportPdfWriter {
                 }
             }
 
-            JFreeChart chart;
             if (ReportType.bar == reportType || ReportType.hbar == reportType) {
                 if (xyDataSet != null) {
                     chart = createXYBarChart(
@@ -293,7 +298,9 @@ public class ReportPdfWriter {
                     XYItemRenderer renderer = chart.getXYPlot().getRenderer();
                     renderer.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());
                     renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
-                    if (chartDescriptor.isCalculatedXRange() && !isDateXAxis) {
+                    if (chartDescriptor.isCalculatedXRange()
+                            && !isDateXAxis
+                            && xMinMax[1] > xMinMax[0]) { // максимум должен быть больше минимума
                         // применяем аналогичный в конструкторе отчетов алгорит расчета отступа
                         // для минимального и максимального значений
                         chart.getXYPlot().getDomainAxis().setRange(xMinMax[0], xMinMax[1]);
@@ -303,7 +310,8 @@ public class ReportPdfWriter {
                     }
 
 
-                    if (chartDescriptor.isCalculatedYRange()) {
+                    if (chartDescriptor.isCalculatedYRange()
+                            && yMinMax[1] > yMinMax[0]) {
                         chart.getXYPlot().getRangeAxis().setRange(yMinMax[0], yMinMax[1]);
                     } else if (chartDescriptor.isShowDotValues() && ReportType.hbar == reportType) {
                         Double max = calculateAxisUpperBoundToIncludeLabelsForColumnChart(yMinMax[1]);
@@ -318,7 +326,8 @@ public class ReportPdfWriter {
                     renderer.setBaseItemLabelGenerator(new StandardCategoryItemLabelGenerator());
                     renderer.setBaseItemLabelsVisible(chartDescriptor.isShowDotValues());
 
-                    if (chartDescriptor.isCalculatedYRange()) {
+                    if (chartDescriptor.isCalculatedYRange()
+                            && yMinMax[1] > yMinMax[0]) {
                         chart.getCategoryPlot().getRangeAxis().setRange(yMinMax[0], yMinMax[1]);
                     } else if (chartDescriptor.isShowDotValues() && ReportType.hbar == reportType) {
                         Double max = calculateAxisUpperBoundToIncludeLabelsForColumnChart(yMinMax[1]);
@@ -340,6 +349,7 @@ public class ReportPdfWriter {
             document.add(image);
             os.close();
         }
+        return chart;
     }
 
     private CategoryDataset buildWaterfallCategoryDataset(ResultSetWithTotal rs, Map<String, Integer> columnMap, ChartDescriptor chartDescriptor, boolean withSummary, double[] yMinMax) {
@@ -400,6 +410,9 @@ public class ReportPdfWriter {
                     Object value = row.get(seriesVaueIndex);
                     Number seriesValueNumber = value != null && Number.class.isAssignableFrom(value.getClass()) ? (Number) value : 0;
                     Comparable categoryValue = (Comparable) row.get(categoryColumnIndex);
+                    if (categoryValue == null) {
+                        categoryValue = "";
+                    }
                     ds.setValue(categoryValue, seriesValueNumber);
                 }
             }
@@ -414,7 +427,7 @@ public class ReportPdfWriter {
         return maxValue + NORMAL_FONT.getSize() * (Double.toString(maxValue).length() + 5) / CHART_WIDTH * maxValue;
     }
 
-    private void writeTableReport(ReportDTO report, ResultSetWithTotal rs, Document document, boolean withSummary) throws DocumentException {
+    private PdfPTable writeTableReport(ReportDTO report, ResultSetWithTotal rs, Document document, boolean withSummary) throws DocumentException {
         writeHeader(document, report.getTitle());
         writeHeaderSpacing(document);
         writeParameters(report, document);
@@ -426,6 +439,7 @@ public class ReportPdfWriter {
         writeTableHeader(rs, table, withSummary);
         writeTableBody(report, rs, table, withSummary);
         document.add(table);
+        return table;
     }
 
     private void rotateCategoryLabelsIfNeeded(CategoryDataset ds, JFreeChart chart) {

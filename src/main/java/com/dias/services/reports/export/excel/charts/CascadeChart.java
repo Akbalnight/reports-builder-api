@@ -15,18 +15,16 @@ import java.awt.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * График c числами по оси X
  */
 public class CascadeChart extends BaseChart {
 
-    public static final String START_VALUE_TITLE = "Начальное значение";
-    public static final String END_VALUE_TITLE = "Итог";
+    private static final String START_VALUE_TITLE = "Начальное значение";
+    private static final String END_VALUE_TITLE = "Итог";
     private final CTPlotArea plot;
 
     @Delegate
@@ -74,40 +72,41 @@ public class CascadeChart extends BaseChart {
     public void addSeries(int firstDataRow, Map<String, Integer> excelColumnsMap, String dataSheetName) {
 
         updateDataSheet();
-        Integer lastColumn = excelColumnsMap.values().stream().max(Integer::compareTo).get();
-
-        // x-значения нужно брать также из вычислимых новых данных
-        // поскольку итоговая стртрока содержит категорию предыдущего значения
-        // и является вычислимой
-        xColumnName = CellReference.convertNumToColString(lastColumn + CATEGORY_VALUE_INDEX + 1);
-
-
-        addTotalBar(dataSheetName, 0, lastColumn + START_VALUE_INDEX + 1, 1, diagramSeries.toAwtColor(diagramSeries.getColorInitial()), from, to + 1, START_VALUE_TITLE); // начальное значение
-        addTotalBar(dataSheetName, 1, lastColumn + END_VALUE_INDEX + 1, 2, diagramSeries.toAwtColor(diagramSeries.getColorTotal()), from, to + 1, END_VALUE_TITLE); // конечное значение
-
-        CTLineChart lineChart = plot.addNewLineChart();
-
-        addLineSeries(lineChart, dataSheetName, 2, lastColumn + CURRENT_VALUE_INDEX + 1, 0, ""); // текущие значения
-        addLineSeries(lineChart, dataSheetName, 3, lastColumn + PREVIOUS_VALUE_INDEX + 1, 3, ""); // предыдущие значения
-
-        CTUpDownBars updowns = lineChart.addNewUpDownBars();
-        updowns.addNewGapWidth().setVal(0);
-        CTUpDownBar upBars = updowns.addNewUpBars();
+        Integer lastColumn = excelColumnsMap.values().stream().max(Integer::compareTo).orElse(null);
+        if (lastColumn != null) {
+            // x-значения нужно брать также из вычислимых новых данных
+            // поскольку итоговая стртрока содержит категорию предыдущего значения
+            // и является вычислимой
+            xColumnName = CellReference.convertNumToColString(lastColumn + CATEGORY_VALUE_INDEX + 1);
 
 
-        if (diagramSeries.getColorNegative() != null) {
-            CTShapeProperties sp = upBars.addNewSpPr();
-            Color color = diagramSeries.toAwtColor(diagramSeries.getColorNegative());
-            sp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
-            sp.addNewLn().addNewNoFill();
-        }
+            addTotalBar(dataSheetName, 0, lastColumn + START_VALUE_INDEX + 1, 1, diagramSeries.toAwtColor(diagramSeries.getColorInitial()), from, to + 1, START_VALUE_TITLE); // начальное значение
+            addTotalBar(dataSheetName, 1, lastColumn + END_VALUE_INDEX + 1, 2, diagramSeries.toAwtColor(diagramSeries.getColorTotal()), from, to + 1, END_VALUE_TITLE); // конечное значение
 
-        CTUpDownBar downBars = updowns.addNewDownBars();
-        if (diagramSeries.getColorPositive() != null) {
-            CTShapeProperties sp = downBars.addNewSpPr();
-            Color color = diagramSeries.toAwtColor(diagramSeries.getColorPositive());
-            sp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
-            sp.addNewLn().addNewNoFill();
+            CTLineChart lineChart = plot.addNewLineChart();
+
+            addLineSeries(lineChart, dataSheetName, 2, lastColumn + CURRENT_VALUE_INDEX + 1, 0, ""); // текущие значения
+            addLineSeries(lineChart, dataSheetName, 3, lastColumn + PREVIOUS_VALUE_INDEX + 1, 3, ""); // предыдущие значения
+
+            CTUpDownBars updowns = lineChart.addNewUpDownBars();
+            updowns.addNewGapWidth().setVal(0);
+            CTUpDownBar upBars = updowns.addNewUpBars();
+
+
+            if (diagramSeries.getColorNegative() != null) {
+                CTShapeProperties sp = upBars.addNewSpPr();
+                Color color = diagramSeries.toAwtColor(diagramSeries.getColorNegative());
+                sp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
+                sp.addNewLn().addNewNoFill();
+            }
+
+            CTUpDownBar downBars = updowns.addNewDownBars();
+            if (diagramSeries.getColorPositive() != null) {
+                CTShapeProperties sp = downBars.addNewSpPr();
+                Color color = diagramSeries.toAwtColor(diagramSeries.getColorPositive());
+                sp.addNewSolidFill().addNewSrgbClr().setVal(new byte[]{(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
+                sp.addNewLn().addNewNoFill();
+            }
         }
     }
 
