@@ -85,7 +85,8 @@ public class ReportRepository extends AbstractRepository<Report> {
         for (String qry: queries) {
             try {
                 template.getJdbcOperations().execute(qry);
-            } catch (Exception ignore) {
+            } catch (Exception e) {
+                LOG.severe(e.getMessage());
             }
         }
 
