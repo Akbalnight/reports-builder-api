@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.sql.ResultSet;
@@ -77,18 +78,21 @@ public class ReportRepository extends AbstractRepository<Report> {
      */
     @Transactional
     public void executeSqlFromFile(Class clazz, NamedParameterJdbcTemplate template, String path) throws IOException {
-        InputStreamReader streamReader = new InputStreamReader(clazz.getResourceAsStream(path), "UTF-8");
-        LineNumberReader reader = new LineNumberReader(streamReader);
-        String query = ScriptUtils.readScript(reader, "--", ";");
-        List<String> queries = new ArrayList<>();
-        ScriptUtils.splitSqlScript(query, ";", queries);
-        for (String qry: queries) {
-            try {
-                template.getJdbcOperations().execute(qry);
-            } catch (Exception ignore) {
+        InputStream resourceAsStream = clazz.getResourceAsStream(path);
+        if (resourceAsStream != null) {
+            InputStreamReader streamReader = new InputStreamReader(resourceAsStream, "UTF-8");
+            LineNumberReader reader = new LineNumberReader(streamReader);
+            String query = ScriptUtils.readScript(reader, "--", ";");
+            List<String> queries = new ArrayList<>();
+            ScriptUtils.splitSqlScript(query, ";", queries);
+            for (String qry: queries) {
+                try {
+                    template.getJdbcOperations().execute(qry);
+                } catch (Exception e) {
+                    LOG.severe(e.getMessage());
+                }
             }
         }
-
     }
 
     @Override

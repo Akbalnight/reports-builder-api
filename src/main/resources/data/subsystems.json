@@ -7,14 +7,14 @@
         "name": "Суточные ведомости",
         "displayName": "Суточные ведомости",
         "join": [
-          ["day_statement","history_values_by_day"]
+          ["day_statement","history_values_by_day_view"]
         ],
         "children": [
           {
             "name":"day_statement"
           },
           {
-            "name": "history_values_by_day"
+            "name": "history_values_by_day_view"
           }
         ]
       },
@@ -22,14 +22,14 @@
         "name": "Часовые ведомости",
         "displayName":"Часовые ведомости",
         "join": [
-          ["hour_statement","history_values_by_hour"]
+          ["hour_statement","history_values_by_hour_view"]
         ],
         "children": [
           {
             "name":"hour_statement"
           },
           {
-            "name": "history_values_by_hour"
+            "name": "history_values_by_hour_view"
           }
         ]
       },

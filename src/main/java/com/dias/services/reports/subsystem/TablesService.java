@@ -3,10 +3,12 @@ package com.dias.services.reports.subsystem;
 import com.dias.services.reports.query.TableName;
 import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.QueryDescriptor;
+import com.dias.services.reports.repository.ReportRepository;
 import com.dias.services.reports.utils.SubsystemUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -24,6 +26,8 @@ public class TablesService {
 
     private final ObjectMapper objectMapper;
     private final SubsystemUtils subsystemUtils;
+    private final ReportRepository reportRepository;
+    private final NamedParameterJdbcTemplate template;
 
     private Map<String, Table> tables;
     private Map<String, String> tableNamesRussianToEnglish;
@@ -31,13 +35,18 @@ public class TablesService {
     private Map<List<String>, String>  tablesJoinRules;
 
     @Autowired
-    public TablesService(ObjectMapper objectMapper, SubsystemUtils subsystemUtils) {
+    public TablesService(ObjectMapper objectMapper, SubsystemUtils subsystemUtils, ReportRepository reportRepository, NamedParameterJdbcTemplate template) {
         this.objectMapper = objectMapper;
         this.subsystemUtils = subsystemUtils;
+        this.reportRepository = reportRepository;
+        this.template = template;
     }
 
     @PostConstruct
     public void init() throws IOException {
+
+        reportRepository.executeSqlFromFile(getClass(), template, "/data/update_schema.sql");
+
         Map<String, Map<String, Object>> map;
         this.tables = new HashMap<>();
         tableNamesRussianToEnglish = new HashMap<>();
