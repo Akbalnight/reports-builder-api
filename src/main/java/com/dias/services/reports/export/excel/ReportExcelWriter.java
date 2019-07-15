@@ -115,7 +115,8 @@ public class ReportExcelWriter {
             Integer xColumnIndex = rs.getColumnsMap().get(xColumnName);
             boolean needToSort = rs.getDateColumnsIndexes().contains(xColumnIndex) || rs.getNumericColumnsIndexes().contains(xColumnIndex);
             if (needToSort) {
-                rs.sortByColumn(xColumnIndex);
+                Integer[] sortRange = extractSortRangeFromFirstSeries(chartDescriptor);
+                rs.sortByColumn(xColumnIndex, sortRange[0],  sortRange[1]);
             }
         }
 
@@ -126,6 +127,29 @@ public class ReportExcelWriter {
         workbook.write(out);
         out.close();
     }
+
+    /**
+     * Получаем диапазон для сортировки значений. Он однозначно определяется значениями
+     * первой серии from, to, поскольку в этом диапазоне мы должны брать значения и исключать
+     * другие значения.
+     *
+     * @param chartDescriptor описание отчета
+     * @return массив с двумя элементами - значением от и значением по
+     */
+    private Integer[] extractSortRangeFromFirstSeries(ChartDescriptor chartDescriptor) {
+        Integer[] sortRange = {0, 0};
+        if (chartDescriptor.getSeries() != null && chartDescriptor.getSeries().size() > 0) {
+            ChartDescriptor.Series ser = chartDescriptor.getSeries().get(0);
+            if (ser != null) {
+                sortRange[0] = ser.getStartRow();
+                sortRange[1] = ser.getEndRow();
+            }
+            sortRange[0] = sortRange[0] == null ? 0 : sortRange[0];
+            sortRange[1] = sortRange[1] == null ? 0 : sortRange[1];
+        }
+        return sortRange;
+    }
+
 
     private void writeChartReport(ChartDescriptor chartDescriptor, ReportDTO report, ResultSetWithTotal rs, XSSFSheet sheet, ReportType repType, int firstRowWithData) throws IOException {
         if (chartDescriptor != null) {
