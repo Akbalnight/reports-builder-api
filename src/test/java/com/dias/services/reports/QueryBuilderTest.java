@@ -5,17 +5,14 @@ import com.dias.services.reports.report.query.QueryDescriptor;
 import com.dias.services.reports.service.ReportBuilderService;
 import com.dias.services.reports.subsystem.ColumnWithType;
 import com.dias.services.reports.subsystem.TablesService;
-import com.dias.services.reports.utils.SubsystemUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class QueryBuilderTest {
+public class QueryBuilderTest extends AbstractReportsModuleTest{
 
     private static final Long LIMIT = 10L;
     private static final String QUERY = "SELECT author as \"Автор\",filename as \"Имя файла\" FROM databasechangelog databasechangelog";
@@ -26,14 +23,8 @@ public class QueryBuilderTest {
     private static final String QUERY_WITH_SIMPLE_WHERE = "SELECT * FROM databasechangelog databasechangelog WHERE filename = 'f_name_0' and filename = 'f_name_0'";
 
 
+    @Autowired
     private TablesService tablesService;
-
-    @Before
-    public void setup() throws IOException {
-        tablesService = new TablesService(new ObjectMapper(), new SubsystemUtils());
-        tablesService.init();
-    }
-
 
     @Test
     public void buildSqlByDescriptor() {

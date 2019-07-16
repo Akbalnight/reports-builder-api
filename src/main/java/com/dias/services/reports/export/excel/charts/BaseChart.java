@@ -57,7 +57,7 @@ public abstract class BaseChart implements IChartWithSeries {
             chartSeries.colorize(s.getAwtColor());
             chartSeries.addNewIdx().setVal(i);
             int fromRowIndex = (s.getStartRow() != null && s.getStartRow() > 0) ? s.getStartRow() - 1 : 0;
-            int toRowIndex = (s.getEndRow() != null && s.getEndRow() < rowsNumber) ? s.getEndRow(): rowsNumber;
+            int toRowIndex = (s.getEndRow() != null && s.getEndRow() > 0 && s.getEndRow() < rowsNumber) ? s.getEndRow(): rowsNumber;
             int from = firstDataRow + fromRowIndex + 1;
             int to = firstDataRow + toRowIndex;
             chartSeries.doWithRange(from, to);
