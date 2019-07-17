@@ -2,6 +2,7 @@ package com.dias.services.reports.repository;
 
 import com.dias.services.reports.model.Report;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
@@ -23,8 +24,13 @@ import java.util.logging.Logger;
 public class ReportRepository extends AbstractRepository<Report> {
 
     private static final String INIT_SCRIPT = "/db/schema.sql";
-    public static final String REPORTS_TABLE_NAME = "report";
-    public static final String REPORTS_SEQUENCE_NAME = "report_id_seq";
+    private static final String REPORTS_SCHEME_TABLE_PROPERTY = "reports.scheme.table";
+
+    @Value("${" + REPORTS_SCHEME_TABLE_PROPERTY + ":report}")
+    public String schemeAndTable;
+
+    @Value("${" + REPORTS_SCHEME_TABLE_PROPERTY + ":report}" + "_id_seq")
+    public String sequenceName;
 
     private static Logger LOG = Logger.getLogger(ReportRepository.class.getName());
 
@@ -83,6 +89,7 @@ public class ReportRepository extends AbstractRepository<Report> {
             InputStreamReader streamReader = new InputStreamReader(resourceAsStream, "UTF-8");
             LineNumberReader reader = new LineNumberReader(streamReader);
             String query = ScriptUtils.readScript(reader, "--", ";");
+            query = query.replaceAll("\\{" + REPORTS_SCHEME_TABLE_PROPERTY + "\\}", schemeAndTable);
             List<String> queries = new ArrayList<>();
             ScriptUtils.splitSqlScript(query, ";", queries);
             for (String qry: queries) {
@@ -97,7 +104,7 @@ public class ReportRepository extends AbstractRepository<Report> {
 
     @Override
     public String getTableName() {
-        return REPORTS_TABLE_NAME;
+        return schemeAndTable;
     }
 
     @Override
@@ -107,7 +114,7 @@ public class ReportRepository extends AbstractRepository<Report> {
 
     @Override
     protected String getInsertSql() {
-        return "insert into " + REPORTS_TABLE_NAME + " (" +
+        return "insert into " + schemeAndTable + " (" +
                 "id," +
                 "name," +
                 "title," +
@@ -118,7 +125,7 @@ public class ReportRepository extends AbstractRepository<Report> {
                 "is_public," +
                 "query_descriptor" +
                 ") values (" +
-                "nextval('" + REPORTS_SEQUENCE_NAME + "')," +
+                "nextval('" + sequenceName + "')," +
                 ":name," +
                 ":title," +
                 ":type," +
@@ -131,7 +138,7 @@ public class ReportRepository extends AbstractRepository<Report> {
 
     @Override
     protected String getUpdateSql() {
-        return "update " + REPORTS_TABLE_NAME + " set " +
+        return "update " + schemeAndTable + " set " +
                 "name=:name, " +
                 "title=:title, " +
                 "type=:type, " +

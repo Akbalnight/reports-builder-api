@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS report (
+CREATE TABLE IF NOT EXISTS {reports.scheme.table} (
   id bigint NOT NULL,
   name varchar(255) DEFAULT NULL,
   title varchar(255) DEFAULT NULL,
@@ -10,4 +10,4 @@ CREATE TABLE IF NOT EXISTS report (
   description text DEFAULT NULL,
   PRIMARY KEY (id)
 );
-CREATE sequence IF NOT EXISTS report_id_seq;
+CREATE sequence IF NOT EXISTS {reports.scheme.table}_id_seq;
