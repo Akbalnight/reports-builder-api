@@ -98,6 +98,23 @@ public class ReportsController extends AbstractController {
         return syncExportReportWithFileName(id, format, null);
     }
 
+    @ApiOperation(value = "Экспорт отчета")
+    @GetMapping(value = "/reports/{id}/_export")
+    public ResponseEntity syncExportReportGet(
+            @PathVariable Long id,
+            @RequestParam(value = "format", required = false) ExportFileFormat format) throws Exception {
+        return syncExportReportWithFileName(id, format, null);
+    }
+
+    @ApiOperation(value = "Экспорт отчета с указанным именем файла (режим совместимости с IE)")
+    @GetMapping(value = "/reports/{id}/_export/{fileName}")
+    public ResponseEntity syncExportReportWithFileNameGet(
+            @PathVariable Long id,
+            @RequestParam(value = "format", required = false) ExportFileFormat format,
+            @RequestParam(value = "fileName", required = false) String fileName) throws Exception {
+        return syncExportReportWithFileName(id, format, fileName);
+    }
+
     @ApiOperation(value = "Экспорт отчета с указанным именем файла (режим совместимости с IE)")
     @PostMapping(value = "/reports/{id}/_export/{fileName}")
     public ResponseEntity syncExportReportWithFileName(
