@@ -941,7 +941,9 @@ public class ReportPdfWriter {
         ValueAxis domainAxis;
         if (dateAxis) {
             domainAxis = new DateAxis(xAxisLabel);
-            ((DateAxis) domainAxis).setDateFormatOverride(dateFormat[0].toClassicFormat());
+            if (dateFormat[0] != null) {
+                ((DateAxis) domainAxis).setDateFormatOverride(dateFormat[0].toClassicFormat());
+            }
         } else {
             domainAxis = new NumberAxis(xAxisLabel);
             ((NumberAxis)domainAxis).setAutoRangeIncludesZero(false);
