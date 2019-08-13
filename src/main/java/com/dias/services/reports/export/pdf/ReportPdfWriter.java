@@ -48,12 +48,15 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import static com.dias.services.reports.utils.PdfExportUtils.*;
 
 import java.util.List;
 
 public class ReportPdfWriter {
+
+    private static Logger LOG = Logger.getLogger(ReportPdfWriter.class.getName());
 
     public static final String SUMMARY_CATEGORY_KEY = "Итого";
 
@@ -667,6 +670,8 @@ public class ReportPdfWriter {
             String pattern = ExportChartsHelper.calculateDateFormatPattern(value.toString());
             if (pattern != null) {
                 dateFormat[0] = new DateFormatWithPattern(pattern);
+            } else {
+                LOG.severe("Формат даты не определен для значения: " + value);
             }
         }
     }
@@ -941,7 +946,9 @@ public class ReportPdfWriter {
         ValueAxis domainAxis;
         if (dateAxis) {
             domainAxis = new DateAxis(xAxisLabel);
-            ((DateAxis) domainAxis).setDateFormatOverride(dateFormat[0].toClassicFormat());
+            if (dateFormat[0] != null) {
+                ((DateAxis) domainAxis).setDateFormatOverride(dateFormat[0].toClassicFormat());
+            }
         } else {
             domainAxis = new NumberAxis(xAxisLabel);
             ((NumberAxis)domainAxis).setAutoRangeIncludesZero(false);
