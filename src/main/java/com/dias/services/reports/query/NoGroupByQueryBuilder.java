@@ -235,12 +235,12 @@ public class NoGroupByQueryBuilder {
             //специальная обработка для value = null значений
             //для = сравнения оставляем null как есть, а = меняем на is
             //для всех других сравнений меняем null на соответствующее типу минимальное значение
+            ColumnWithType columnWithType = defineColumnWithType(part.getColumnName(), part.getFullTableName(), columnWithTypes);
             if (value == null) {
                 value = "null";
                 if ("=".equals(operator)) {
                     operator = " is ";
                 } else {
-                    ColumnWithType columnWithType = defineColumnWithType(part.getColumnName(), part.getFullTableName(), columnWithTypes);
                     if (columnWithType != null) {
                         if (ReportBuilderService.JAVA_TYPE_NUMERIC.equals(columnWithType.getType())) {
                             value = "0";
@@ -249,7 +249,7 @@ public class NoGroupByQueryBuilder {
                         }
                     }
                 }
-            } else {
+            } else if (columnWithType != null && ReportBuilderService.JAVA_TYPE_DATE.equals(columnWithType.getType())) {
                 value = transformToISOifDate(value);
             }
 
