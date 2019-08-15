@@ -1,5 +1,6 @@
 package com.dias.services.reports.query;
 
+import com.dias.services.reports.export.ExportChartsHelper;
 import com.dias.services.reports.report.query.Calculation;
 import com.dias.services.reports.report.query.Column;
 import com.dias.services.reports.report.query.Condition;
@@ -11,7 +12,10 @@ import com.dias.services.reports.translation.Translator;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.engine.jdbc.internal.BasicFormatterImpl;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +26,10 @@ import java.util.stream.Collectors;
  *
  */
 public class NoGroupByQueryBuilder {
+
+    private static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd";
+    private static final SimpleDateFormat isoFormatter = new SimpleDateFormat(ISO_8601_DATE_FORMAT);
+    private static Logger LOG = Logger.getLogger(NoGroupByQueryBuilder.class.getName());
 
     private static final String CLAUSE_SELECT   = "SELECT ";
     private static final String CLAUSE_FROM     = " FROM ";
@@ -227,12 +235,12 @@ public class NoGroupByQueryBuilder {
             //специальная обработка для value = null значений
             //для = сравнения оставляем null как есть, а = меняем на is
             //для всех других сравнений меняем null на соответствующее типу минимальное значение
+            ColumnWithType columnWithType = defineColumnWithType(part.getColumnName(), part.getFullTableName(), columnWithTypes);
             if (value == null) {
                 value = "null";
                 if ("=".equals(operator)) {
                     operator = " is ";
                 } else {
-                    ColumnWithType columnWithType = defineColumnWithType(part.getColumnName(), part.getFullTableName(), columnWithTypes);
                     if (columnWithType != null) {
                         if (ReportBuilderService.JAVA_TYPE_NUMERIC.equals(columnWithType.getType())) {
                             value = "0";
@@ -241,6 +249,8 @@ public class NoGroupByQueryBuilder {
                         }
                     }
                 }
+            } else if (columnWithType != null && ReportBuilderService.JAVA_TYPE_DATE.equals(columnWithType.getType())) {
+                value = transformToISOifDate(value);
             }
 
 
@@ -287,6 +297,24 @@ public class NoGroupByQueryBuilder {
             }
         }
         return bld.toString();
+    }
+
+    private static Object transformToISOifDate(Object value) {
+        // дата может прийти в произвольном формате со стороны клиента
+        // сначала попытаемся ее распарсить, затем трансформировать в ISO 8601
+        String strValue = value.toString();
+        String format = ExportChartsHelper.calculateDateFormatPattern(strValue);
+        if (format != null) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat(format);
+            try {
+                Date date = dateFormat.parse(strValue);
+                return isoFormatter.format(date);
+            } catch (ParseException e) {
+                LOG.severe("Значение не удалось форматировать в ISO 8601 формат даты: " + strValue);
+                return value;
+            }
+        }
+        return value;
     }
 
     private String generateTitleForAggregateFunction(Calculation aggr) {
