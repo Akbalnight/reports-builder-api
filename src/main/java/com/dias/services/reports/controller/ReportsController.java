@@ -1,5 +1,6 @@
 package com.dias.services.reports.controller;
 
+import com.dias.services.notifications.interfaces.INotificationsService;
 import com.dias.services.reports.dto.reports.ReportDTO;
 import com.dias.services.reports.export.ExportFileFormat;
 import com.dias.services.reports.model.Report;
@@ -26,10 +27,12 @@ import java.util.List;
 public class ReportsController extends AbstractController {
 
     private final ReportService reportService;
+    private final INotificationsService notificationService;
 
     @Autowired
-    public ReportsController(ReportService reportService) {
+    public ReportsController(ReportService reportService, INotificationsService notificationsService) {
         this.reportService = reportService;
+        this.notificationService = notificationsService;
     }
 
     @ApiOperation(value = "Получение всех отчетов")
