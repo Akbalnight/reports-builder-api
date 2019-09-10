@@ -39,7 +39,12 @@ public enum NotifificationsData {
     APPROVERS_ADDED(52), // Добавлен новый список согласующих
     APPROVERS_UPDATED(53), // Отредактирован список согласующих
     APPROVERS_RENAMED(54), // Переименован список согласующих
-    APPROVERS_REMOVED(55); // Удален список согласующих
+    APPROVERS_REMOVED(55), // Удален список согласующих
+    REPORT_DELETED(27),  // Удален отчет
+    REPORT_ADDED_FAVORITE(23), // Добавлен в избранное
+    REPORT_ADDED_PUBLIC(24), // Добавлен в публичные
+    REPORT_ADDED_PRIVATE(25), // Добавлен в личное
+    REPORT_EXPORTED(28); // Отчет отправлен на экспорт
 
     private int id;
 

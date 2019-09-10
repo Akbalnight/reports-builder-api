@@ -1,5 +1,8 @@
 package com.dias.services.reports;
 
+import com.dias.services.notifications.database.NotificationsDatabaseDao;
+import com.dias.services.notifications.interfaces.INotificationsDao;
+import com.dias.services.notifications.interfaces.INotificationsService;
 import com.dias.services.reports.repository.ReportRepository;
 import com.dias.services.reports.service.ReportBuilderService;
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,6 +25,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.io.IOException;
 import java.sql.Types;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SpringBootTest(classes = {AbstractReportsModuleTest.TestConfig.class})
@@ -33,11 +37,49 @@ public abstract class AbstractReportsModuleTest {
     private static boolean inited = false;
 
     @TestConfiguration
-    @ComponentScan({"com.dias.services.reports"})
+    @ComponentScan({"com.dias.services"})
     static class TestConfig {
 
         @Autowired
         NamedParameterJdbcTemplate template;
+
+        @Bean
+        public INotificationsService notificationsService() {
+            return new INotificationsService() {
+                @Override
+                public void sendNotification(int typeId, String[] objects, List<Integer> receivers, String targetId, Integer initiatorId) {
+                }
+
+                @Override
+                public void stopNotifications(int typeId, List<Integer> receivers, String targetId) {
+                }
+            };
+        }
+
+        @Bean
+        public INotificationsDao notificationsDatabaseDao() {
+            return new INotificationsDao() {
+                @Override
+                public void createNotifications(int typeId, String[] objects, List<Integer> receivers, String targetId, Integer initiatorId) {
+
+                }
+
+                @Override
+                public void createSendOut(int typeId, String[] objects, String targetId, Integer initiatorId) {
+
+                }
+
+                @Override
+                public void stopNotifications(int typeId, List<Integer> receivers, String targetId) {
+
+                }
+
+                @Override
+                public void stopSendOut(int typeId, String targetId) {
+
+                }
+            };
+        }
 
         @Bean
         public ReportRepository reportRepository() {
@@ -65,6 +107,9 @@ public abstract class AbstractReportsModuleTest {
 
     @Autowired
     private ReportRepository reportRepository;
+
+    @Autowired
+    private INotificationsService notificationsService;
 
     @Before
     public void setUp() throws IOException {

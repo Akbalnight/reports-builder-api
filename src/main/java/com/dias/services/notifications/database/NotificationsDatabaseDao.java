@@ -247,7 +247,7 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
                                     List<Integer> receivers, String targetId, Integer initiatorId) {
         String description = String
                 .format(selectNotificationDescription(typeId), (Object[]) objects);
-        getJDBCTemplate().getJdbcTemplate().batchUpdate(SQL_INSERT_NOTIFICATION,
+        getJDBCTemplate().getJdbcTemplate().batchUpdate(getSqlFromTemplate(SQL_INSERT_NOTIFICATION, schemeName),
                 new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i)
@@ -267,6 +267,10 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
                 });
 
         email(typeId, objects, receivers, initiatorId);
+    }
+
+    private String getSqlFromTemplate(String sqlTemplate, String schemeName) {
+        return sqlTemplate.replaceAll("\\{scheme.name\\}", schemeName);
     }
 
     private String selectNotificationDescription(int typeId) {
@@ -312,7 +316,7 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
         }
 
         paramSource.addValue("idinitiator", initiatorId);
-        getJDBCTemplate().update(SQL_INSERT_SENDOUT, paramSource);
+        getJDBCTemplate().update(getSqlFromTemplate(SQL_INSERT_SENDOUT, schemeName), paramSource);
     }
 
     @Override
@@ -328,7 +332,7 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
         paramSource.addValue("objectId", targetId);
         paramSource.addValue("receivers",
                 receivers.stream().mapToInt(Integer::intValue).toArray());
-        getJDBCTemplate().update(SQL_DELETE_NOTIFICATIONS, paramSource);
+        getJDBCTemplate().update(getSqlFromTemplate(SQL_DELETE_NOTIFICATIONS, schemeName), paramSource);
     }
 
     @Override
@@ -336,7 +340,7 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
         MapSqlParameterSource paramSource = new MapSqlParameterSource("typeId",
                 typeId);
         paramSource.addValue("objectId", targetId);
-        getJDBCTemplate().update(SQL_DELETE_SENDOUTS, paramSource);
+        getJDBCTemplate().update(getSqlFromTemplate(SQL_DELETE_SENDOUTS, schemeName), paramSource);
     }
 
     private void email(int id, String[] objects, List<Integer> receivers,

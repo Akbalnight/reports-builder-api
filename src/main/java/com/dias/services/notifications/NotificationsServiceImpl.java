@@ -3,6 +3,7 @@ package com.dias.services.notifications;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.dias.services.notifications.interfaces.INotificationsDao;
@@ -14,9 +15,12 @@ import com.dias.services.notifications.interfaces.INotificationsService;
  * Users: vmeshkov
  * Description: Добавить уведомления и рассылки
  */
-@Component
 public class NotificationsServiceImpl implements INotificationsService {
-    @Autowired
+
+    public NotificationsServiceImpl(INotificationsDao notificationsDao) {
+        this.notificationsDao = notificationsDao;
+    }
+
     private INotificationsDao notificationsDao;
 
     @Override
