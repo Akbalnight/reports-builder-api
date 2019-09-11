@@ -1,11 +1,11 @@
 package com.dias.services.notifications.database.validate.resource;
 
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
-
-import org.springframework.jdbc.datasource.init.ScriptUtils;
 
 /**
  * SQLScript.java

@@ -23,7 +23,7 @@ public class DetailsFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        Details.setDetails(httpRequest.getHeader("sessionId"), httpRequest.getHeader("userId"));
+        Details.setDetails(httpRequest.getHeader("sessionId"), httpRequest.getHeader(Details.HEADER_USER_ID));
         chain.doFilter(request, response);
     }
 

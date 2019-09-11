@@ -1,14 +1,19 @@
 package com.dias.services.reports;
 
+import com.dias.services.core.Details;
+import com.dias.services.notifications.NotifificationsData;
+import com.dias.services.notifications.interfaces.INotificationsService;
 import com.dias.services.reports.dto.reports.ReportDTO;
 import com.dias.services.reports.export.pdf.ReportPdfWriter;
+import com.dias.services.reports.mocks.TestNotificationMessage;
+import com.dias.services.reports.mocks.TestNotificationListener;
+import com.dias.services.reports.mocks.TestNotificationService;
 import com.dias.services.reports.model.Report;
 import com.dias.services.reports.query.TotalValue;
 import com.dias.services.reports.report.query.ResultSet;
 import com.dias.services.reports.report.query.ResultSetWithTotal;
 import com.dias.services.reports.service.ReportService;
 import com.dias.services.reports.subsystem.ColumnWithType;
-import com.dias.services.reports.subsystem.TablesService;
 import com.dias.services.reports.translation.Translator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ReportsControllerTest extends AbstractReportsModuleTest {
 
+    private static final Integer USER_ID = 999;
     private static Integer createdReportId;
 
     @Autowired
@@ -62,7 +68,7 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     private Translator translator;
 
     @Autowired
-    private TablesService tablesService;
+    private INotificationsService notificationsService;
 
     private ModelMapper modelMapper = new ModelMapper();
 
@@ -87,16 +93,97 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
 
     @Test
     public void order020updateReport() throws Exception {
+        TestNotificationListener notificationListener = new TestNotificationListener();
+        ((TestNotificationService)notificationsService).setNotificationListener(notificationListener);
+
         MvcResult result = mockMvc.perform(MockMvcRequestBuilders.put("/reports/analytics/reports/" + createdReportId)
+                .header(Details.HEADER_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(Util.readResource("ReportsController/updateReport.json")))
                 .andExpect(status().isOk()).andReturn();
         Map resultMap = new JacksonJsonParser().parseMap(result.getResponse().getContentAsString());
         String updatedName = (String) resultMap.get("name");
         Assert.assertEquals("repo_new_2", updatedName);
+
+        //проверим, пришло ли уведомление
+        List<TestNotificationMessage> messages = notificationListener.getMessages();
+        Assert.assertEquals(1, messages.size());
+
+        //проверим что именно пришло
+        TestNotificationMessage message = messages.get(0);
+        Assert.assertEquals(NotifificationsData.REPORT_UPDATED.value(), message.getTypeId());
+        Assert.assertEquals(Long.toString(createdReportId), message.getTargetId());
+        Assert.assertEquals(USER_ID, message.getInitiatorId());
     }
 
+    @Test
+    public void order021updateReportToPrivate() throws Exception {
+        TestNotificationListener notificationListener = new TestNotificationListener();
+        ((TestNotificationService)notificationsService).setNotificationListener(notificationListener);
 
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.put("/reports/analytics/reports/" + createdReportId)
+                .header(Details.HEADER_USER_ID, USER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(Util.readResource("ReportsController/updateReportToPrivate.json")))
+                .andExpect(status().isOk()).andReturn();
+        Map resultMap = new JacksonJsonParser().parseMap(result.getResponse().getContentAsString());
+
+        //проверим, пришло ли уведомление
+        List<TestNotificationMessage> messages = notificationListener.getMessages();
+        Assert.assertEquals(2, messages.size());
+
+        //проверим что именно пришло
+        TestNotificationMessage message = messages.get(1);
+        Assert.assertEquals(NotifificationsData.REPORT_ADDED_PRIVATE.value(), message.getTypeId());
+        Assert.assertEquals(Long.toString(createdReportId), message.getTargetId());
+        Assert.assertEquals(USER_ID, message.getInitiatorId());
+    }
+
+    @Test
+    public void order022updateReportToFavorite() throws Exception {
+        TestNotificationListener notificationListener = new TestNotificationListener();
+        ((TestNotificationService)notificationsService).setNotificationListener(notificationListener);
+
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.put("/reports/analytics/reports/" + createdReportId)
+                .header(Details.HEADER_USER_ID, USER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(Util.readResource("ReportsController/updateReportToFavorite.json")))
+                .andExpect(status().isOk()).andReturn();
+        Map resultMap = new JacksonJsonParser().parseMap(result.getResponse().getContentAsString());
+
+        //проверим, пришло ли уведомление
+        List<TestNotificationMessage> messages = notificationListener.getMessages();
+        Assert.assertEquals(2, messages.size());
+
+        //проверим что именно пришло
+        TestNotificationMessage message = messages.get(1);
+        Assert.assertEquals(NotifificationsData.REPORT_ADDED_FAVORITE.value(), message.getTypeId());
+        Assert.assertEquals(Long.toString(createdReportId), message.getTargetId());
+        Assert.assertEquals(USER_ID, message.getInitiatorId());
+    }
+
+    @Test
+    public void order023updateReportToPublic() throws Exception {
+        TestNotificationListener notificationListener = new TestNotificationListener();
+        ((TestNotificationService)notificationsService).setNotificationListener(notificationListener);
+
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.put("/reports/analytics/reports/" + createdReportId)
+                .header(Details.HEADER_USER_ID, USER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(Util.readResource("ReportsController/updateReportToPublic.json")))
+                .andExpect(status().isOk()).andReturn();
+        Map resultMap = new JacksonJsonParser().parseMap(result.getResponse().getContentAsString());
+
+        //проверим, пришло ли уведомление
+        List<TestNotificationMessage> messages = notificationListener.getMessages();
+        Assert.assertEquals(2, messages.size());
+
+        //проверим что именно пришло
+        TestNotificationMessage message = messages.get(1);
+        Assert.assertEquals(NotifificationsData.REPORT_ADDED_PUBLIC.value(), message.getTypeId());
+        Assert.assertEquals(Long.toString(createdReportId), message.getTargetId());
+        Assert.assertEquals(USER_ID, message.getInitiatorId());
+    }
     @Test
     public void order030getAllReports() throws Exception {
         MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/reports/analytics/reports")
@@ -332,8 +419,13 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
     }
 
     private void exportToExcelAndCompare(Integer reportId, String reportName, String reportExpectedResultPath) throws Exception {
+
+        TestNotificationListener notificationListener = new TestNotificationListener();
+        ((TestNotificationService)notificationsService).setNotificationListener(notificationListener);
+
         MvcResult result;
         result = mockMvc.perform(MockMvcRequestBuilders.post("/reports/analytics/reports/" + reportId + "/_export")
+                .header(Details.HEADER_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
 
@@ -347,6 +439,15 @@ public class ReportsControllerTest extends AbstractReportsModuleTest {
         String actualChartData = charts.get(0).getCTChart().toString();
         Diff diff = XMLUnit.compareXML(Util.readResource(reportExpectedResultPath), actualChartData);
         Assert.assertTrue(diff.similar());
+
+        // на экспорт отчета должно создаваться только одно уведомление
+        List<TestNotificationMessage> messages = notificationListener.getMessages();
+        Assert.assertEquals(1, messages.size());
+        TestNotificationMessage message = messages.get(0);
+        Assert.assertEquals(NotifificationsData.REPORT_EXPORTED.value(), message.getTypeId());
+        Assert.assertEquals(Long.toString(reportId), message.getTargetId());
+        Assert.assertEquals(USER_ID, message.getInitiatorId());
+
     }
 
     private void exportToPdfAndCompare(Integer createdPieChartId, String reportExpectedResultPath) throws com.dias.services.reports.exception.ObjectNotFoundException, DocumentException, IOException {

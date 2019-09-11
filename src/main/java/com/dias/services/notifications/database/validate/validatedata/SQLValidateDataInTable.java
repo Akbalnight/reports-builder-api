@@ -1,13 +1,12 @@
 package com.dias.services.notifications.database.validate.validatedata;
 
-import java.io.IOException;
-
+import com.dias.services.notifications.database.validate.validatedata.strategy.IValidateStrategy;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.RowCountCallbackHandler;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dias.services.notifications.database.validate.validatedata.strategy.IValidateStrategy;
+import java.io.IOException;
 
 /**
  * SQLValidateDataInTable.java

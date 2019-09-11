@@ -2,7 +2,6 @@ package com.dias.services.reports.controller;
 
 import com.dias.services.core.Details;
 import com.dias.services.notifications.NotifificationsData;
-import com.dias.services.notifications.ReportsNotificationsDescriptions;
 import com.dias.services.notifications.interfaces.INotificationsService;
 import com.dias.services.reports.dto.reports.ReportDTO;
 import com.dias.services.reports.export.ExportFileFormat;
@@ -62,37 +61,39 @@ public class ReportsController extends AbstractController {
 
     @ApiOperation(value = "Обновление отчета")
     @PutMapping(value = "/reports/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ReportDTO> update(@PathVariable Long id, @RequestBody ReportDTO report) throws Exception {
+    public ResponseEntity<ReportDTO> update(@PathVariable Long id, @RequestBody ReportDTO reportDTO) throws Exception {
         ReportDTO originalReport = reportService.getReportById(id);
         String reportTitle = originalReport.getTitle();
         boolean wasFavorite = originalReport.getIsFavorite() != null && originalReport.getIsFavorite();
         boolean wasPublic = originalReport.getIsPublic() != null && originalReport.getIsPublic();
-        reportService.merge(originalReport, report);
-        if (!wasFavorite && (report.getIsFavorite() != null && report.getIsFavorite())) {
-            notifyAction(id, reportTitle, ReportsNotificationsDescriptions.REPORT_ADDED_TO_FAVORITE, NotifificationsData.REPORT_ADDED_FAVORITE);
+        reportService.merge(originalReport, reportDTO);
+        notifyAction(id, reportTitle, NotifificationsData.REPORT_UPDATED);
+
+        //  для проверки изменения атрибута всегда проверяем, что атрибут был передан в DTO объекте
+        if (reportDTO.getIsFavorite() != null && !wasFavorite && reportDTO.getIsFavorite()) {
+            notifyAction(id, reportTitle, NotifificationsData.REPORT_ADDED_FAVORITE);
         }
-        if (!wasPublic && (report.getIsPublic() != null && report.getIsPublic())) {
-            notifyAction(id, reportTitle, ReportsNotificationsDescriptions.REPORT_ADDED_TO_PUBLIC, NotifificationsData.REPORT_ADDED_PUBLIC);
+        if (reportDTO.getIsPublic() != null && !wasPublic && reportDTO.getIsPublic()) {
+            notifyAction(id, reportTitle, NotifificationsData.REPORT_ADDED_PUBLIC);
         }
-        if (wasPublic && !(report.getIsPublic() != null && report.getIsPublic())) {
-            notifyAction(id, reportTitle, ReportsNotificationsDescriptions.REPORT_ADDED_TO_PRIVATE, NotifificationsData.REPORT_ADDED_PRIVATE);
+        if (reportDTO.getIsPublic() != null && wasPublic && !reportDTO.getIsPublic()) {
+            notifyAction(id, reportTitle, NotifificationsData.REPORT_ADDED_PRIVATE);
         }
         return new ResponseEntity<>(originalReport, HttpStatus.OK);
     }
 
-    private void notifyAction(Long id, String reportTitle, String opDescription, NotifificationsData op) {
+    private void notifyAction(Long reportId, String reportTitle, NotifificationsData op) {
         try {
             Long userId = Details.getDetails().getUserId();
-            String operationDescription = String.format(opDescription, reportTitle);
             if (userId != null) {
                 notificationService.sendNotification(
                         op.value(),
-                        new String[]{operationDescription},
+                        new String[]{reportTitle},
                         null,
-                        Long.toString(id),
+                        Long.toString(reportId),
                         userId.intValue());
             } else {
-                LOG.severe(String.format("Отсутствует userId в запросе. Уведомление не создано: %s", operationDescription));
+                LOG.severe(String.format("Отсутствует userId в запросе. Уведомление для операции %d по отчету %s не создано: ", op.value(), reportTitle));
             }
         } catch (Exception e) {
             LOG.severe(String.format("Неизвестная ошибка отправки уведомления: %s", e.getMessage()));
@@ -105,7 +106,7 @@ public class ReportsController extends AbstractController {
         ReportDTO report = getById(id);
         String reportTitle = report.getTitle();
         reportService.delete(id);
-        notifyAction(id, reportTitle, ReportsNotificationsDescriptions.REPORT_DELETED_TEMPLATE, NotifificationsData.REPORT_DELETED);
+        notifyAction(id, reportTitle, NotifificationsData.REPORT_DELETED);
 
     }
 
@@ -183,7 +184,7 @@ public class ReportsController extends AbstractController {
         if (fileName != null) {
             resourceResponseEntity.getHeaders().remove(HttpHeaders.CONTENT_DISPOSITION);
         }
-        notifyAction(id, reportTitle, ReportsNotificationsDescriptions.REPORT_EXPORTED, NotifificationsData.REPORT_EXPORTED);
+        notifyAction(id, reportTitle, NotifificationsData.REPORT_EXPORTED);
         return resourceResponseEntity;
     }
 

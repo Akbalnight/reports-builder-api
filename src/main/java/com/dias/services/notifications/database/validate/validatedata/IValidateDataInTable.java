@@ -1,9 +1,9 @@
 package com.dias.services.notifications.database.validate.validatedata;
 
-import java.io.IOException;
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+
+import java.io.IOException;
 
 /**
  * IValidateDataInTable.java

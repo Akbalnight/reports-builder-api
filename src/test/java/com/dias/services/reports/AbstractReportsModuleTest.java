@@ -1,11 +1,13 @@
 package com.dias.services.reports;
 
-import com.dias.services.notifications.database.NotificationsDatabaseDao;
+import com.dias.services.core.DetailsFilter;
 import com.dias.services.notifications.interfaces.INotificationsDao;
 import com.dias.services.notifications.interfaces.INotificationsService;
+import com.dias.services.reports.mocks.TestNotificationService;
 import com.dias.services.reports.repository.ReportRepository;
 import com.dias.services.reports.service.ReportBuilderService;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,15 +47,7 @@ public abstract class AbstractReportsModuleTest {
 
         @Bean
         public INotificationsService notificationsService() {
-            return new INotificationsService() {
-                @Override
-                public void sendNotification(int typeId, String[] objects, List<Integer> receivers, String targetId, Integer initiatorId) {
-                }
-
-                @Override
-                public void stopNotifications(int typeId, List<Integer> receivers, String targetId) {
-                }
-            };
+            return new TestNotificationService();
         }
 
         @Bean
@@ -109,12 +103,16 @@ public abstract class AbstractReportsModuleTest {
     private ReportRepository reportRepository;
 
     @Autowired
+    private DetailsFilter detailsFilter;
+
+    @Autowired
     private INotificationsService notificationsService;
 
     @Before
     public void setUp() throws IOException {
 
         mockMvc = MockMvcBuilders.webAppContextSetup(wac)
+                .addFilter(detailsFilter)
                 .build();
 
         if (!inited) {
@@ -128,5 +126,10 @@ public abstract class AbstractReportsModuleTest {
             ReflectionTestUtils.setField(ReportBuilderService.class, "typesMap", typesMap);
 
         }
+    }
+
+    @After
+    public void clear() {
+        ((TestNotificationService)notificationsService).setNotificationListener(null);
     }
 }

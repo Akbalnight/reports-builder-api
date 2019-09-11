@@ -1,10 +1,8 @@
 package com.dias.services.reports.config;
 
 import com.dias.services.notifications.NotificationsServiceImpl;
-import com.dias.services.notifications.database.NotificationsDatabaseDao;
 import com.dias.services.notifications.interfaces.INotificationsDao;
 import com.dias.services.notifications.interfaces.INotificationsService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -14,7 +12,6 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-import javax.sql.DataSource;
 import java.util.List;
 
 @Configuration

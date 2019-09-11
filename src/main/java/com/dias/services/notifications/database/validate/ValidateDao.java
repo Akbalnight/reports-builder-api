@@ -1,12 +1,11 @@
 package com.dias.services.notifications.database.validate;
 
-import java.io.IOException;
-
+import com.dias.services.notifications.database.validate.validatedata.IValidateDataInTable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dias.services.notifications.database.validate.validatedata.IValidateDataInTable;
+import java.io.IOException;
 
 /**
  * ValidateDao.java

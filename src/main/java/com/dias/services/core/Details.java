@@ -11,6 +11,7 @@ import java.util.Optional;
 public class Details {
     private static final String UNKNOWN = "unknown";
     private static final ThreadLocal<Details> detailsHolder = new InheritableThreadLocal<>();
+    public static final String HEADER_USER_ID = "userId";
 
     /**
      * Идентификатор сессии из шины
