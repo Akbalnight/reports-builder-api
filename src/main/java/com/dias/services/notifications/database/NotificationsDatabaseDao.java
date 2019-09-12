@@ -9,17 +9,10 @@ import com.dias.services.notifications.database.validate.validatedata.strategy.R
 import com.dias.services.notifications.interfaces.INotificationsDao;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,6 +20,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * NotificationsDatabaseDao.java
@@ -34,13 +28,9 @@ import java.util.Map;
  * Users: vmeshkov
  * Description: Имплементация работы с уведомлениями с базой данных
  */
-@Repository
-@EnableAutoConfiguration
 public class NotificationsDatabaseDao extends ValidateDao implements INotificationsDao {
 
-    @Value("${scheme.name:public}")
-    public String schemeName;
-
+    private static Logger LOG = Logger.getLogger(NotificationsDatabaseDao.class.getName());
 
     private final class NotificationData {
         public String description;
@@ -191,25 +181,28 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
                 + "email_body "
                 + "FROM {scheme.name}.notifications_data";
 
-    @Autowired
-    private DataSource dataSource;
-    /**
-     * Шаблон для выполнения SQL запросов
-     */
+    private ObjectMapper objectMapper;
+
     private NamedParameterJdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private String schemeName;
+
+
+    public NotificationsDatabaseDao(ObjectMapper objectMapper,
+                                    String schemeName,
+                                    NamedParameterJdbcTemplate jdbcTemplate) {
+        this.objectMapper = objectMapper;
+        this.schemeName = schemeName;
+        this.jdbcTemplate = jdbcTemplate;
+        init();
+    }
 
     private Map<Integer, NotificationData> mapData = new HashMap<Integer, NotificationData>();
 
     /**
      * Подключение шаблона для выполнения SQL запросов
      */
-    @PostConstruct
-    @Transactional
     public void init() {
-        jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
 
         try {
             validate(new ValidateTable[]
@@ -237,6 +230,7 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
                                     new SQLScript("/notice_db/db_email_create_tables.sql", schemeName))
                     });
         } catch (IOException e) {
+            LOG.severe("Ошибка инициализации таблиц для уведомлений: " + e.getMessage());
         }
     }
 

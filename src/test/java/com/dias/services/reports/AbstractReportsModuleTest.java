@@ -1,7 +1,6 @@
 package com.dias.services.reports;
 
 import com.dias.services.core.DetailsFilter;
-import com.dias.services.notifications.interfaces.INotificationsDao;
 import com.dias.services.notifications.interfaces.INotificationsService;
 import com.dias.services.reports.mocks.TestNotificationService;
 import com.dias.services.reports.repository.ReportRepository;
@@ -27,7 +26,6 @@ import org.springframework.web.context.WebApplicationContext;
 import java.io.IOException;
 import java.sql.Types;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @SpringBootTest(classes = {AbstractReportsModuleTest.TestConfig.class})
@@ -48,31 +46,6 @@ public abstract class AbstractReportsModuleTest {
         @Bean
         public INotificationsService notificationsService() {
             return new TestNotificationService();
-        }
-
-        @Bean
-        public INotificationsDao notificationsDatabaseDao() {
-            return new INotificationsDao() {
-                @Override
-                public void createNotifications(int typeId, String[] objects, List<Integer> receivers, String targetId, Integer initiatorId) {
-
-                }
-
-                @Override
-                public void createSendOut(int typeId, String[] objects, String targetId, Integer initiatorId) {
-
-                }
-
-                @Override
-                public void stopNotifications(int typeId, List<Integer> receivers, String targetId) {
-
-                }
-
-                @Override
-                public void stopSendOut(int typeId, String targetId) {
-
-                }
-            };
         }
 
         @Bean

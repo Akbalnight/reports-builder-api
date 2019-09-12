@@ -1,8 +1,10 @@
 package com.dias.services.reports.config;
 
 import com.dias.services.notifications.NotificationsServiceImpl;
+import com.dias.services.notifications.database.NotificationsDatabaseDao;
 import com.dias.services.notifications.interfaces.INotificationsDao;
 import com.dias.services.notifications.interfaces.INotificationsService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -10,8 +12,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.scheduling.annotation.EnableAsync;
 
+import javax.sql.DataSource;
 import java.util.List;
 
 @Configuration
@@ -22,11 +26,14 @@ public class ServiceConfig {
     @Value("${notifications.enable:false}")
     Boolean enableNotifications;
 
-    @Autowired
-    INotificationsDao notificationsDao;
-
     @Value("${scheme.name:public}")
-    String schemeName;
+    private String schemeName;
+
+    @Autowired
+    NamedParameterJdbcTemplate template;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     @Bean
     public MessageSource messageSource() {
@@ -50,7 +57,7 @@ public class ServiceConfig {
                 }
             };
         } else {
-            return new NotificationsServiceImpl(notificationsDao);
+            return new NotificationsServiceImpl(new NotificationsDatabaseDao(objectMapper, schemeName, template));
         }
     }
 }
