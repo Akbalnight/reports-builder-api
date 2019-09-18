@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Утилита, загружающая ресурсы подсистемы.
@@ -20,15 +21,23 @@ public class SubsystemUtils {
 
     public byte[] loadResource(String path) throws IOException {
         if (StringUtils.isEmpty(SUBSYSTEM_PATH)) {
-            return IOUtils.toByteArray(SubsystemUtils.class.getResourceAsStream(path));
+            InputStream resourceAsStream = SubsystemUtils.class.getResourceAsStream(path);
+            if (resourceAsStream != null) {
+                return IOUtils.toByteArray(resourceAsStream);
+            }
         } else {
-            if (new File(SUBSYSTEM_PATH + path).exists()) {
+            String pathname = SUBSYSTEM_PATH + path;
+            if (new File(pathname).exists()) {
                 // пытаемся загрузить по абсолютному пути
-                return IOUtils.toByteArray(new FileInputStream(SUBSYSTEM_PATH + path));
+                return IOUtils.toByteArray(new FileInputStream(pathname));
             } else {
                 // в противном случае доверяемся окончательно класслоудеру
-                return IOUtils.toByteArray(SubsystemUtils.class.getResourceAsStream(SUBSYSTEM_PATH + path));
+                InputStream resourceAsStream = SubsystemUtils.class.getResourceAsStream(pathname);
+                if (resourceAsStream != null) {
+                    return IOUtils.toByteArray(resourceAsStream);
+                }
             }
         }
+        return null;
     }
 }

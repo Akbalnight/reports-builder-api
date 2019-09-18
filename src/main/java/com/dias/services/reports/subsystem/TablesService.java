@@ -8,12 +8,14 @@ import com.dias.services.reports.utils.SubsystemUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  *
@@ -23,6 +25,11 @@ import java.util.*;
  */
 @Component
 public class TablesService {
+
+    private static Logger LOG = Logger.getLogger(TablesService.class.getName());
+
+    @Value("${scheme.name:public}")
+    private String schemeName;
 
     private final ObjectMapper objectMapper;
     private final SubsystemUtils subsystemUtils;
@@ -45,7 +52,16 @@ public class TablesService {
     @PostConstruct
     public void init() throws IOException {
 
-        reportRepository.executeSqlFromFile(getClass(), template, "/data/update_schema.sql");
+        byte[] updateSchemeData = subsystemUtils.loadResource("/data/update_schema.sql");
+        if (updateSchemeData != null) {
+            try {
+                String query = new String(updateSchemeData, "UTF-8");
+                query = query.replaceAll("\\{scheme.name\\}", schemeName);
+                template.getJdbcOperations().execute(query);
+            } catch (Exception e) {
+                LOG.severe(e.getMessage());
+            }
+        }
 
         Map<String, Map<String, Object>> map;
         this.tables = new HashMap<>();
