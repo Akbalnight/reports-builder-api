@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 /**
  * DetailsFilter.java
@@ -15,6 +16,8 @@ import java.io.IOException;
 @Component
 public class DetailsFilter implements Filter {
 
+    private static Logger LOG = Logger.getLogger(DetailsFilter.class.getName());
+
     @Override
     public void init(FilterConfig filterConfig) {
         // Не требуется
@@ -23,7 +26,9 @@ public class DetailsFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        Details.setDetails(httpRequest.getHeader("sessionId"), httpRequest.getHeader(Details.HEADER_USER_ID));
+        String userIdHeaderValue = httpRequest.getHeader(Details.HEADER_USER_ID);
+        LOG.info(String.format("userId прочитан из заголовка запроса: %s", userIdHeaderValue));
+        Details.setDetails(httpRequest.getHeader("sessionId"), userIdHeaderValue);
         chain.doFilter(request, response);
     }
 
