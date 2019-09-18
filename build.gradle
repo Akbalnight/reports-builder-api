@@ -49,6 +49,10 @@ configure(bootJarCustom) {
 
 dependencies {
 	springBoot { buildInfo() }
+    println("AUTH_API_BUILD ${System.getenv("AUTH_API_BUILD")?.toString()}")
+    if (System.getenv("AUTH_API_BUILD")?.toBoolean()){
+        compile project(":auth-api")
+    }
 	compile('org.springframework.boot:spring-boot-starter-web')
 	compile("org.springframework:spring-jdbc")
 	compile('org.springframework.boot:spring-boot-starter-tomcat')
