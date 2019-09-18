@@ -12,7 +12,7 @@
     ],
     "f3": false
   },
-  "isFavorite": true,
+  "isFavorite": false,
   "isPublic": true,
   "queryDescriptor": {
     "select": [

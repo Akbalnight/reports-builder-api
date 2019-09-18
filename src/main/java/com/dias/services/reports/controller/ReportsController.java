@@ -1,5 +1,8 @@
 package com.dias.services.reports.controller;
 
+import com.dias.services.core.Details;
+import com.dias.services.notifications.NotifificationsData;
+import com.dias.services.notifications.interfaces.INotificationsService;
 import com.dias.services.reports.dto.reports.ReportDTO;
 import com.dias.services.reports.export.ExportFileFormat;
 import com.dias.services.reports.model.Report;
@@ -19,17 +22,22 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/reports/analytics")
 @Api(tags = "REST API модуля отчетов", description = "Контроллер для работы с отчетами")
 public class ReportsController extends AbstractController {
 
+    private static Logger LOG = Logger.getLogger(ReportsController.class.getName());
+
     private final ReportService reportService;
+    private final INotificationsService notificationService;
 
     @Autowired
-    public ReportsController(ReportService reportService) {
+    public ReportsController(ReportService reportService, INotificationsService notificationsService) {
         this.reportService = reportService;
+        this.notificationService = notificationsService;
     }
 
     @ApiOperation(value = "Получение всех отчетов")
@@ -53,16 +61,53 @@ public class ReportsController extends AbstractController {
 
     @ApiOperation(value = "Обновление отчета")
     @PutMapping(value = "/reports/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ReportDTO> update(@PathVariable Long id, @RequestBody ReportDTO report) throws Exception {
+    public ResponseEntity<ReportDTO> update(@PathVariable Long id, @RequestBody ReportDTO reportDTO) throws Exception {
         ReportDTO originalReport = reportService.getReportById(id);
-        reportService.merge(originalReport, report);
+        String reportTitle = originalReport.getTitle();
+        boolean wasFavorite = originalReport.getIsFavorite() != null && originalReport.getIsFavorite();
+        boolean wasPublic = originalReport.getIsPublic() != null && originalReport.getIsPublic();
+        reportService.merge(originalReport, reportDTO);
+        notifyAction(id, reportTitle, NotifificationsData.REPORT_UPDATED);
+
+        //  для проверки изменения атрибута всегда проверяем, что атрибут был передан в DTO объекте
+        if (reportDTO.getIsFavorite() != null && !wasFavorite && reportDTO.getIsFavorite()) {
+            notifyAction(id, reportTitle, NotifificationsData.REPORT_ADDED_FAVORITE);
+        }
+        if (reportDTO.getIsPublic() != null && !wasPublic && reportDTO.getIsPublic()) {
+            notifyAction(id, reportTitle, NotifificationsData.REPORT_ADDED_PUBLIC);
+        }
+        if (reportDTO.getIsPublic() != null && wasPublic && !reportDTO.getIsPublic()) {
+            notifyAction(id, reportTitle, NotifificationsData.REPORT_ADDED_PRIVATE);
+        }
         return new ResponseEntity<>(originalReport, HttpStatus.OK);
+    }
+
+    private void notifyAction(Long reportId, String reportTitle, NotifificationsData op) {
+        try {
+            Long userId = Details.getDetails().getUserId();
+            if (userId != null) {
+                notificationService.sendNotification(
+                        op.value(),
+                        new String[]{reportTitle},
+                        null,
+                        Long.toString(reportId),
+                        userId.intValue());
+            } else {
+                LOG.severe(String.format("Отсутствует userId в запросе. Уведомление для операции %d по отчету %s не создано: ", op.value(), reportTitle));
+            }
+        } catch (Exception e) {
+            LOG.severe(String.format("Неизвестная ошибка отправки уведомления: %s", e.getMessage()));
+        }
     }
 
     @ApiOperation(value = "Удаление отчета")
     @DeleteMapping("/reports/{id}")
     public void delete(@PathVariable Long id) throws Exception {
+        ReportDTO report = getById(id);
+        String reportTitle = report.getTitle();
         reportService.delete(id);
+        notifyAction(id, reportTitle, NotifificationsData.REPORT_DELETED);
+
     }
 
     @ApiOperation(value = "Предпросмотр")
@@ -123,6 +168,8 @@ public class ReportsController extends AbstractController {
             @RequestParam(value = "fileName", required = false) String fileName) throws Exception {
 
         Report report = reportService.getById(id);
+        String reportTitle = report.getTitle();
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ExportFileFormat fileFormat = format != null ? format : ExportFileFormat.XLSX;
         ResponseEntity<Resource> resourceResponseEntity;
@@ -137,6 +184,7 @@ public class ReportsController extends AbstractController {
         if (fileName != null) {
             resourceResponseEntity.getHeaders().remove(HttpHeaders.CONTENT_DISPOSITION);
         }
+        notifyAction(id, reportTitle, NotifificationsData.REPORT_EXPORTED);
         return resourceResponseEntity;
     }
 

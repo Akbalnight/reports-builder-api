@@ -1,8 +1,12 @@
 package com.dias.services.reports;
 
+import com.dias.services.core.DetailsFilter;
+import com.dias.services.notifications.interfaces.INotificationsService;
+import com.dias.services.reports.mocks.TestNotificationService;
 import com.dias.services.reports.repository.ReportRepository;
 import com.dias.services.reports.service.ReportBuilderService;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +37,16 @@ public abstract class AbstractReportsModuleTest {
     private static boolean inited = false;
 
     @TestConfiguration
-    @ComponentScan({"com.dias.services.reports"})
+    @ComponentScan({"com.dias.services"})
     static class TestConfig {
 
         @Autowired
         NamedParameterJdbcTemplate template;
+
+        @Bean
+        public INotificationsService notificationsService() {
+            return new TestNotificationService();
+        }
 
         @Bean
         public ReportRepository reportRepository() {
@@ -66,10 +75,17 @@ public abstract class AbstractReportsModuleTest {
     @Autowired
     private ReportRepository reportRepository;
 
+    @Autowired
+    private DetailsFilter detailsFilter;
+
+    @Autowired
+    private INotificationsService notificationsService;
+
     @Before
     public void setUp() throws IOException {
 
         mockMvc = MockMvcBuilders.webAppContextSetup(wac)
+                .addFilter(detailsFilter)
                 .build();
 
         if (!inited) {
@@ -83,5 +99,10 @@ public abstract class AbstractReportsModuleTest {
             ReflectionTestUtils.setField(ReportBuilderService.class, "typesMap", typesMap);
 
         }
+    }
+
+    @After
+    public void clear() {
+        ((TestNotificationService)notificationsService).setNotificationListener(null);
     }
 }
