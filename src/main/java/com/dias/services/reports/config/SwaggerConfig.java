@@ -1,5 +1,6 @@
 package com.dias.services.reports.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
@@ -10,13 +11,15 @@ import static springfox.documentation.builders.PathSelectors.regex;
 
 @EnableSwagger2
 @Configuration
-public class SwaggerConfig {
-
-    public Docket productApi(){
+public class SwaggerConfig
+{
+    @Bean
+    public Docket productApi()
+    {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("com.dias.services.reports"))
-                .paths(regex("rest.*"))
-                .build();
+                .build()
+                .useDefaultResponseMessages(false);
     }
 }

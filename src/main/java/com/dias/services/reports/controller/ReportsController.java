@@ -13,6 +13,7 @@ import com.dias.services.reports.service.ReportService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,9 @@ public class ReportsController extends AbstractController {
 
     private final ReportService reportService;
     private final INotificationsService notificationService;
+
+    @Value("${userId:10}")
+    public Long defaultUserId;
 
     @Autowired
     public ReportsController(ReportService reportService, INotificationsService notificationsService) {
@@ -85,6 +89,10 @@ public class ReportsController extends AbstractController {
     private void notifyAction(Long reportId, String reportTitle, NotifificationsData op) {
         try {
             Long userId = Details.getDetails().getUserId();
+            if (userId == null) {
+                userId = defaultUserId;
+                LOG.info(String.format("Использован userId по умолчанию: %d", defaultUserId));
+            }
             if (userId != null) {
                 notificationService.sendNotification(
                         op.value(),
