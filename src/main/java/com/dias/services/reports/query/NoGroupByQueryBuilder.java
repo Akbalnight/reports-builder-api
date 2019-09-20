@@ -1,5 +1,6 @@
 package com.dias.services.reports.query;
 
+import com.dias.services.reports.exception.ReportsException;
 import com.dias.services.reports.export.ExportChartsHelper;
 import com.dias.services.reports.report.query.Calculation;
 import com.dias.services.reports.report.query.Column;
@@ -11,6 +12,7 @@ import com.dias.services.reports.subsystem.TablesService;
 import com.dias.services.reports.translation.Translator;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.engine.jdbc.internal.BasicFormatterImpl;
+import org.springframework.http.HttpStatus;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -251,6 +253,15 @@ public class NoGroupByQueryBuilder {
                 }
             } else if (columnWithType != null && ReportBuilderService.JAVA_TYPE_DATE.equals(columnWithType.getType())) {
                 value = transformToISOifDate(value);
+                if (value == null) {
+                    throw new ReportsException("Введите дату в верном формате (например, 01.09.2018 10:15:50)", HttpStatus.BAD_REQUEST);
+                }
+            } else if (columnWithType != null && ReportBuilderService.JAVA_TYPE_NUMERIC.equals(columnWithType.getType())) {
+                try {
+                    Double.parseDouble(value.toString());
+                } catch (NumberFormatException | NullPointerException nfe) {
+                    throw new ReportsException(String.format("%s - не является числом", value), HttpStatus.BAD_REQUEST);
+                }
             }
 
 
@@ -314,7 +325,7 @@ public class NoGroupByQueryBuilder {
                 return value;
             }
         }
-        return value;
+        return null;
     }
 
     private String generateTitleForAggregateFunction(Calculation aggr) {
