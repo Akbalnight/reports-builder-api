@@ -210,18 +210,10 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
                             new ValidateTable(new SQLText(SQL_VALIDATE_NOTIFICATIONS, schemeName), null,
                                     new SQLScript(
                                             "/notice_db/db_notifications_create_tables.sql", schemeName)),
-                            new ValidateTable(new SQLText(SQL_VALIDATE_NOTIFICATIONS_DATA, schemeName),
-                                    new SQLValidateDataInTable(
-                                            SQL_VALIDATE_CONTENT_NOTIFICATIONS_DATA, 55,
-                                            new RefillValidateStrategy(new SQLScript(
-                                                    "/notice_db/db_notifications_data_fill_tables.sql", schemeName)), schemeName),
+                            new ValidateTable(new SQLText(SQL_VALIDATE_NOTIFICATIONS_DATA, schemeName), null,
                                     new SQLScript(
                                             "/notice_db/db_notifications_data_create_tables.sql", schemeName)),
-                            new ValidateTable(new SQLText(SQL_VALIDATE_NOTIFICATIONS_CATEGORIES, schemeName),
-                                    new SQLValidateDataInTable(
-                                            SQL_VALIDATE_CONTENT_NOTIFICATIONS_CATEGORIES, 4,
-                                            new RefillValidateStrategy(new SQLScript(
-                                                    "/notice_db/db_notifications_categories_fill_tables.sql", schemeName)), schemeName),
+                            new ValidateTable(new SQLText(SQL_VALIDATE_NOTIFICATIONS_CATEGORIES, schemeName), null,
                                     new SQLScript(
                                             "/notice_db/db_notifications_categories_create_tables.sql", schemeName)),
                             new ValidateTable(new SQLText(SQL_VALIDATE_SENDOUT, schemeName), null,
