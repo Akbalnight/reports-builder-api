@@ -1,6 +1,4 @@
-drop table if exists {scheme.name}.notifications;
-drop sequence if exists {scheme.name}.notifications_id_seq;
-CREATE TABLE {scheme.name}.notifications(
+CREATE TABLE IF NOT EXISTS {scheme.name}.notifications(
 	"time" timestamp without time zone DEFAULT current_timestamp, 
     id uuid default public.uuid_generate_v4(),
     idinitiator integer,
