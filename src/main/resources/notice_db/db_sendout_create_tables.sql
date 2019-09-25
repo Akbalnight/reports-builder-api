@@ -1,7 +1,4 @@
-drop table if exists {scheme.name}.sendout;
-drop sequence if exists {scheme.name}.sendout_id_seq;
-
-CREATE TABLE {scheme.name}.sendout(
+CREATE TABLE IF NOT EXISTS {scheme.name}.sendout(
   "time" timestamp without time zone DEFAULT current_timestamp,
   id uuid default public.uuid_generate_v4(),
   idinitiator integer,

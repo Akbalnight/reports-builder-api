@@ -4,8 +4,6 @@ import com.dias.services.notifications.database.validate.ValidateDao;
 import com.dias.services.notifications.database.validate.ValidateTable;
 import com.dias.services.notifications.database.validate.resource.SQLScript;
 import com.dias.services.notifications.database.validate.resource.SQLText;
-import com.dias.services.notifications.database.validate.validatedata.SQLValidateDataInTable;
-import com.dias.services.notifications.database.validate.validatedata.strategy.RefillValidateStrategy;
 import com.dias.services.notifications.interfaces.INotificationsDao;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,26 +60,6 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
                 + "        email_body,"
                 + "        props "
                 + "from {scheme.name}.notifications_data";
-
-    /**
-     * SQL проверки заполнения таблицы notifications_data
-     */
-    private static final String SQL_VALIDATE_CONTENT_NOTIFICATIONS_DATA = "select id "
-                + "from {scheme.name}.notifications_data";
-
-    /**
-     * SQL проверки целостности таблицы notification_category
-     */
-    private static final String SQL_VALIDATE_NOTIFICATIONS_CATEGORIES = "select "
-                + "        id,"
-                + "        value "
-                + "from {scheme.name}.notification_category";
-
-    /**
-     * SQL проверки заполнения таблицы notification_category
-     */
-    private static final String SQL_VALIDATE_CONTENT_NOTIFICATIONS_CATEGORIES = "select id "
-                + "from {scheme.name}.notification_category";
 
     /**
      * SQL проверки целостности таблицы notifications
@@ -213,9 +191,6 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
                             new ValidateTable(new SQLText(SQL_VALIDATE_NOTIFICATIONS_DATA, schemeName), null,
                                     new SQLScript(
                                             "/notice_db/db_notifications_data_create_tables.sql", schemeName)),
-                            new ValidateTable(new SQLText(SQL_VALIDATE_NOTIFICATIONS_CATEGORIES, schemeName), null,
-                                    new SQLScript(
-                                            "/notice_db/db_notifications_categories_create_tables.sql", schemeName)),
                             new ValidateTable(new SQLText(SQL_VALIDATE_SENDOUT, schemeName), null,
                                     new SQLScript("/notice_db/db_sendout_create_tables.sql", schemeName)),
                             new ValidateTable(new SQLText(SQL_VALIDATE_EMAILS, schemeName), null,
