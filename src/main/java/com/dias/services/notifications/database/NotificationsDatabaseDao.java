@@ -47,7 +47,7 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
                 + "         objectId,"
                 + "         objects,"
                 + "         sended "
-                + "from {scheme.name}.sendout";
+                + "from {scheme.name}.sendout limit 1";
 
     /**
      * SQL проверки целостности таблицы notifications_data
@@ -74,7 +74,7 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
                 + "         idParent,"
                 + "         status,"
                 + "         description "
-                + "from {scheme.name}.notifications";
+                + "from {scheme.name}.notifications limit 1";
 
     /**
      * SQL проверки целостности таблицы emails
@@ -85,7 +85,7 @@ public class NotificationsDatabaseDao extends ValidateDao implements INotificati
                 + "         title,"
                 + "         body,"
                 + "         receivers,"
-                + "         sended " + "from {scheme.name}.emails";
+                + "         sended " + "from {scheme.name}.emails limit 1";
 
     /**
      * SQL добавления уведломления
