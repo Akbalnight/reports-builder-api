@@ -229,6 +229,7 @@ public class NoGroupByQueryBuilder {
 
         if (part.getColumn() != null) {
             Object value = part.getValue();
+            Object value2 = part.getValue2();
             bld.append(beautify ? part.toUser() : part.toSQL());
             bld.append(SPACE);
             String operator = part.getOperator();
@@ -279,6 +280,21 @@ public class NoGroupByQueryBuilder {
                     value = OPEN_BRACKET + value + CLOSE_BRACKET;
                 }
                 requiresQuoting = false;
+            }
+
+            if (("[between],[not between]".contains("[" + operator.toLowerCase() + "]"))) {
+                operator = operator.toLowerCase();
+                value = value + CLAUSE_AND + value2;
+            }
+
+            if (("[=]".contains("[" + operator + "]"))) {
+               try {
+                   Double.parseDouble(value.toString());
+                   bld.setLength(0);
+                   bld.append(beautify ? part.toUser() : "round("+part.toSQL()+",2)");
+                   bld.append(SPACE);
+               } catch (NumberFormatException | NullPointerException nfe) {}
+
             }
 
             bld.append(operator);
