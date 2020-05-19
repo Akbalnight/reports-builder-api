@@ -21,6 +21,8 @@ public class QueryDescriptor {
     private OrderBy[] orderBy;
     private Condition[] where;
     private Calculation[] aggregations;
+    private Long limit;
+    private Long offset;
 
     public QueryDescriptor copy() {
         QueryDescriptor copy = new QueryDescriptor();

@@ -193,7 +193,8 @@ public class ReportService extends AbstractService<Report> {
     public ResultSet previewByDescriptor(QueryDescriptor queryDescriptor) {
         Map<String, Map<String, ColumnWithType>> columnTypesMap = getTablesColumnTypesMap(queryDescriptor);
         String result = new NoGroupByQueryBuilder(queryDescriptor, tablesService)
-                .withRowLimit(previewRecordsLimit)
+                .withRowLimit(queryDescriptor.getLimit()!=null?queryDescriptor.getLimit():previewRecordsLimit)
+                .withOffset(queryDescriptor.getOffset()!=null?queryDescriptor.getOffset():0)
                 .withColumns(columnTypesMap)
                 .buildSelectQuery();
         return template.query(result, getResultSetResultSetExtractor(queryDescriptor, columnTypesMap));

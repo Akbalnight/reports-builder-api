@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -228,8 +230,8 @@ public class NoGroupByQueryBuilder {
         StringBuilder bld = new StringBuilder();
 
         if (part.getColumn() != null) {
-            Object value = part.getValue();
-            Object value2 = part.getValue2();
+            Object value = сheckToday(part.getValue());
+            Object value2 = сheckToday(part.getValue2());
             bld.append(beautify ? part.toUser() : part.toSQL());
             bld.append(SPACE);
             String operator = part.getOperator();
@@ -254,6 +256,7 @@ public class NoGroupByQueryBuilder {
                 }
             } else if (columnWithType != null && ReportBuilderService.JAVA_TYPE_DATE.equals(columnWithType.getType())) {
                 value = transformToISOifDate(value);
+                if (value2 != null) value2 = transformToISOifDate(value2);
                 if (value == null) {
                     throw new ReportsException("Введите дату в верном формате (например, 01.09.2018 10:15:50)", HttpStatus.BAD_REQUEST);
                 }
@@ -284,7 +287,13 @@ public class NoGroupByQueryBuilder {
 
             if (("[between],[not between]".contains("[" + operator.toLowerCase() + "]"))) {
                 operator = operator.toLowerCase();
-                value = value + CLAUSE_AND + value2;
+                if (value2 == null) value2 = value;
+                try {
+                    Double.parseDouble(value.toString());
+                    value = value + CLAUSE_AND + value2;
+                }  catch (NumberFormatException | NullPointerException nfe) {
+                    value = value + QUOTE + CLAUSE_AND + QUOTE + value2;
+                }
             }
 
             if (("[=]".contains("[" + operator + "]"))) {
@@ -324,6 +333,17 @@ public class NoGroupByQueryBuilder {
             }
         }
         return bld.toString();
+    }
+
+    private static Object сheckToday(Object value) {
+        LocalDate localDate = LocalDate.now();
+        String dateNow = DateTimeFormatter.ofPattern("dd.MM.yyy").format(localDate);
+        if (value != null) {
+            if (value.toString().contains("Сегодня")){
+                return dateNow;
+            }
+        }
+        return value;
     }
 
     private static Object transformToISOifDate(Object value) {
