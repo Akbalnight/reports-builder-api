@@ -40,6 +40,7 @@ public class TablesService {
     private Map<String, String> tableNamesRussianToEnglish;
     private Map<String, String> tableNamesEnglishToRussian;
     private Map<List<String>, String>  tablesJoinRules;
+    private Map<List<String>, String>  tablesJoinFrom;
 
     @Autowired
     public TablesService(ObjectMapper objectMapper, SubsystemUtils subsystemUtils, ReportRepository reportRepository, NamedParameterJdbcTemplate template) {
@@ -82,6 +83,7 @@ public class TablesService {
         });
 
         tablesJoinRules = new HashMap<>();
+        tablesJoinFrom = new HashMap<>();
         data = subsystemUtils.loadResource("/data/joins.json");
         strData = new String(data, "UTF-8");
         JsonNode joins = objectMapper.readTree(strData);
@@ -93,6 +95,9 @@ public class TablesService {
                 tables.add(tablesNode.get(j).asText());
             }
             tablesJoinRules.put(tables, joinNode.get("rule").asText());
+            if (joinNode.get("additionalFrom")!=null){
+                tablesJoinFrom.put(tables, "," + joinNode.get("additionalFrom").asText());
+            } else tablesJoinFrom.put(tables,"");
         }
 
     }
@@ -206,22 +211,57 @@ public class TablesService {
      * @param tableNames
      * @return
      */
-    public String getTablesJoin(Set<TableName> tableNames) {
-        String rule = null;
+    public String getTablesJoin(Set<TableName> tableNames)  {
+        String from = null;
         for (List<String> tables: tablesJoinRules.keySet()){
             boolean found = true;
-            for (String t: tables) {
-                if (tableNames.stream().filter(tableName -> tableName.getTable().equals(t)).count() == 0) {
-                    found = false;
-                    break;
+            if (tables.size()==tableNames.size()) {
+                for (int x = 0; x < tables.size(); x++) {
+                    int finalX = x;
+                    if(tableNames.stream().filter(tableName -> tableName.getTable().equals(tables.get(finalX))).count()==0){
+                        found = false;
+                        break;
+                    }
+                    if (x==tables.size()-1&&found) {
+                        from = tablesJoinRules.get(tables);
+                        break;
+                    }
+
                 }
             }
-            if (found) {
-                rule = tablesJoinRules.get(tables);
-                break;
-            }
+
         }
-        return rule;
+        return from;
+    }
+
+    /**
+     * Получение дополнительной таблицы учавствующей в соединении
+     * Возвращается то условие, в котором каждая перечисленная таблица содержится в переданной коллекции
+     *
+     * @param tableNames
+     * @return
+     */
+    public String getTablesFrom(Set<TableName> tableNames) {
+        String from = null;
+        for (List<String> tables: tablesJoinFrom.keySet()){
+            boolean found = true;
+            if (tables.size()==tableNames.size()) {
+                for (int x = 0; x < tables.size(); x++) {
+                    int finalX = x;
+                    if(tableNames.stream().filter(tableName -> tableName.getTable().equals(tables.get(finalX))).count()==0){
+                        found = false;
+                        break;
+                    }
+                    if (x==tables.size()-1&&found) {
+                        from = tablesJoinFrom.get(tables);
+                        break;
+                    }
+
+                }
+            }
+
+        }
+        return from;
     }
 
 

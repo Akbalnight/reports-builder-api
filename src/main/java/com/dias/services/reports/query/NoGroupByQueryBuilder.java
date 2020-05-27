@@ -55,6 +55,7 @@ public class NoGroupByQueryBuilder {
     private final QueryDescriptor descriptor;
     private final Set<TableName> tableNames;
     private String tablesJoin;
+    private String tablesAdditionalFrom;
 
     private Long limit;
     private Long offset;
@@ -69,6 +70,7 @@ public class NoGroupByQueryBuilder {
         this.tableNames = tablesService.extractTableNames(this.descriptor);
         if (tableNames.size() > 1) {
             tablesJoin = tablesService.getTablesJoin(tableNames);
+            tablesAdditionalFrom = tablesService.getTablesFrom(tableNames);
         }
 
     }
@@ -114,6 +116,7 @@ public class NoGroupByQueryBuilder {
         bld.append(buildFromClause());
 
         if (!descriptorColumnsEmpty(where) || (tablesJoin != null && !tablesJoin.isEmpty())) {
+            if (tablesAdditionalFrom != null) bld.append(tablesAdditionalFrom);
             bld.append(CLAUSE_WHERE);
             bld.append(buildWhereClause(where));
         }
@@ -154,6 +157,7 @@ public class NoGroupByQueryBuilder {
         Condition[] where = descriptor.getWhere();
 
         if (!descriptorColumnsEmpty(where) || (tablesJoin != null && !tablesJoin.isEmpty())) {
+            if (tablesAdditionalFrom != null) bld.append(tablesAdditionalFrom);
             bld.append(CLAUSE_WHERE);
             bld.append(buildWhereClause(where));
         }
@@ -181,7 +185,8 @@ public class NoGroupByQueryBuilder {
         TableName[] tableNamesArray = tableNames.toArray(new TableName[0]);
         for (int i = 0; i < tableNamesArray.length; i++) {
             TableName tableName = tableNamesArray[i];
-            bld.append(tableName.getTable()).append(SPACE).append(tableName.getTableName());
+//            bld.append(tableName.getTable()).append(SPACE).append(tableName.getTableName()); //старый вариант, если будет все работать можно удалить
+            bld.append(tableName.getTable());
             if (i < tableNames.size() - 1) {
                 bld.append(COMMA_SEPARATOR);
             }
@@ -297,12 +302,12 @@ public class NoGroupByQueryBuilder {
             }
 
             if (("[=]".contains("[" + operator + "]"))) {
-               try {
-                   Double.parseDouble(value.toString());
-                   bld.setLength(0);
-                   bld.append(beautify ? part.toUser() : "round("+part.toSQL()+",2)");
-                   bld.append(SPACE);
-               } catch (NumberFormatException | NullPointerException nfe) {}
+                try {
+                    Double.parseDouble(value.toString());
+                    bld.setLength(0);
+                    bld.append(beautify ? part.toUser() : "round("+part.toSQL()+",2)");
+                    bld.append(SPACE);
+                } catch (NumberFormatException | NullPointerException nfe) {}
 
             }
 

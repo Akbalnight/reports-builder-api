@@ -406,7 +406,6 @@ public class ReportService extends AbstractService<Report> {
             descriptor.setCalculatedYRange(generalNode.get(PROPERTY_CALCULATED_Y_RANGE) != null && generalNode.get(PROPERTY_CALCULATED_Y_RANGE).asBoolean());
             descriptor.setShowDotValues(generalNode.get(PROPERTY_SHOW_DOT_VALUES) != null && generalNode.get(PROPERTY_SHOW_DOT_VALUES).asBoolean());
         }
-        
 
 
         return descriptor;
@@ -436,10 +435,16 @@ public class ReportService extends AbstractService<Report> {
     }
 
     private ColumnWithType columnWithTypeByColumn(String column, String fullTableName, Map<String, Map<String, ColumnWithType>> columnWithTypes) {
-
+        String[] split = column.split("\\.");
+        column = split[split.length-1];
         Map<String, ColumnWithType> columnsToSearchIn;
         if (fullTableName != null) {
             columnsToSearchIn = columnWithTypes.get(fullTableName);
+            Collection<Map<String, ColumnWithType>> collection = columnWithTypes.values();
+            for(Map<String, ColumnWithType> map:collection){
+                columnsToSearchIn.putAll(map);
+            }
+
         } else {
             columnsToSearchIn = new HashMap<>();
             Map<String, ColumnWithType> finalColumnsToSearchIn = columnsToSearchIn;

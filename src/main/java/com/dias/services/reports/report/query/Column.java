@@ -45,9 +45,18 @@ public class Column {
         if (column != null) {
             String[] parts = column.split("\\.");
             if (parts.length > 1) {
-                columnName = parts[parts.length - 1];
-                tableName = parts[parts.length - 2];
-                if (parts.length == 3) {
+
+                StringBuilder st = new StringBuilder();
+                for (int x = 2; x < parts.length; x++) {
+                    st.append(parts[x]);
+                    if(x!=parts.length-1){
+                        st.append(".");
+                    }
+                }
+                columnName = st.toString();
+//                columnName = parts[parts.length - 1];
+                tableName = parts[1];
+                if (parts.length > 1) {
                     schemeName = parts[0];
                 }
             } else {
