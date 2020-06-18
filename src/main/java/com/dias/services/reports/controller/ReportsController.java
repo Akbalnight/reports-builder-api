@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 @RestController
-@RequestMapping("/reports/analytics")
+@RequestMapping("/analytics")
 @Api(tags = "REST API модуля отчетов", description = "Контроллер для работы с отчетами")
 public class ReportsController extends AbstractController {
 

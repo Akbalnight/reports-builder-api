@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
-@RequestMapping("/reports/analytics")
+@RequestMapping("/analytics")
 @Api(value = "Api for SubSystemController", description = "Контроллер для подсистем")
 public class ReportBuilderController {
 
