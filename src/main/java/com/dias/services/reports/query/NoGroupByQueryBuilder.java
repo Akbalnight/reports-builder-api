@@ -43,6 +43,7 @@ public class NoGroupByQueryBuilder {
     private static final String CLAUSE_OFFSET   = " OFFSET ";
     private static final String CLAUSE_AS       = " as ";
     private static final String CLAUSE_AND      = " and ";
+    private static final String CLAUSE_OR      = " OR ";
 
     private static final String COMMA_SEPARATOR = ",";
     private static final String OPEN_BRACKET = "(";
@@ -233,9 +234,16 @@ public class NoGroupByQueryBuilder {
 
     private static String buildWherePart(Condition part, Map<String, Map<String, ColumnWithType>> columnWithTypes, int deep, boolean beautify) {
         StringBuilder bld = new StringBuilder();
+        bld.append("(");
 
         if (part.getColumn() != null) {
-            Object value = сheckToday(part.getValue());
+            Object value = null;
+            Object[] valueAll = null;
+            if (part.getValue() != null){
+                valueAll = part.getValue().toString().split(";");
+                value = valueAll[0];
+            }
+            value = сheckToday(value);
             Object value2 = сheckToday(part.getValue2());
             bld.append(beautify ? part.toUser() : part.toSQL());
             bld.append(SPACE);
@@ -277,6 +285,11 @@ public class NoGroupByQueryBuilder {
             if ("[contains],[not contains]".contains("[" + operator.toLowerCase() + "]")) {
                 operator = operator.toLowerCase().replace("contains", "like");
                 value = "%" + value + "%";
+                if (valueAll != null && valueAll.length>1){
+                    for (int i = 1; valueAll.length>i; i++){
+                        valueAll[i] = "%" + valueAll[i] + "%";
+                    }
+                }
             } else if ("[is null],[is not null]".contains("[" + operator.toLowerCase() + "]")) {
                 value = "";
                 requiresQuoting = false;
@@ -293,22 +306,26 @@ public class NoGroupByQueryBuilder {
             if (("[between],[not between]".contains("[" + operator.toLowerCase() + "]"))) {
                 operator = operator.toLowerCase();
                 if (value2 == null) value2 = value;
-                try {
-                    Double.parseDouble(value.toString());
-                    value = value + CLAUSE_AND + value2;
-                }  catch (NumberFormatException | NullPointerException nfe) {
+                if (requiresQuoting){
                     value = value + QUOTE + CLAUSE_AND + QUOTE + value2;
+                } else {
+                    value = value + CLAUSE_AND + value2;
                 }
             }
 
             if (("[=]".contains("[" + operator + "]"))) {
-                try {
-                    Double.parseDouble(value.toString());
+                if (!requiresQuoting){
+                    try {
+                        Double.parseDouble(value.toString());
+                        bld.setLength(0);
+                        bld.append("(");
+                        operator = (beautify ? part.toUser() : "round("+part.toSQL()+",2) =");
+                    } catch (NumberFormatException | NullPointerException nfe) {}
+                } else {
                     bld.setLength(0);
-                    bld.append(beautify ? part.toUser() : "round("+part.toSQL()+",2)");
-                    bld.append(SPACE);
-                } catch (NumberFormatException | NullPointerException nfe) {}
-
+                    bld.append("(");
+                    operator = beautify ? part.toUser() : part.toSQL()+" =";
+                }
             }
 
             bld.append(operator);
@@ -322,6 +339,30 @@ public class NoGroupByQueryBuilder {
             if (requiresQuoting) {
                 bld.append(QUOTE);
             }
+
+            if(valueAll != null && valueAll.length>1){
+                for (int i = 1; valueAll.length>i; i++){
+                    bld.append(CLAUSE_OR);
+                    if(!("[=]".contains("[" + part.getOperator() + "]"))) {
+                        bld.append(beautify ? part.toUser() : part.toSQL());
+                    }
+                    bld.append(SPACE);
+                    bld.append(operator);
+                    bld.append(SPACE);
+                    if (requiresQuoting) {
+                        bld.append(QUOTE);
+                    }
+                    bld.append(valueAll[i]);
+                    if (requiresQuoting) {
+                        bld.append(QUOTE);
+                    }
+                }
+            }
+            if(part.getValue() == null && !("[is null],[is not null]".contains("[" + part.getOperator().toLowerCase() + "]"))){
+                bld.setLength(0);
+                bld.append("(1=1");
+            }
+
         } else if (part.getLeft() != null) {
             boolean putIntoBrackets = deep > 0;
             deep++;
@@ -337,6 +378,7 @@ public class NoGroupByQueryBuilder {
                 bld.append(CLOSE_BRACKET);
             }
         }
+        bld.append(")");
         return bld.toString();
     }
 

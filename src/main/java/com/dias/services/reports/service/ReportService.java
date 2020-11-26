@@ -197,7 +197,9 @@ public class ReportService extends AbstractService<Report> {
                 .withOffset(queryDescriptor.getOffset()!=null?queryDescriptor.getOffset():0)
                 .withColumns(columnTypesMap)
                 .buildSelectQuery();
-        return template.query(result, getResultSetResultSetExtractor(queryDescriptor, columnTypesMap));
+        ResultSetExtractor<ResultSet> rs = getResultSetResultSetExtractor(queryDescriptor, columnTypesMap);
+        ResultSet set = template.query(result, rs);
+        return set;
     }
 
     private ResultSetExtractor<ResultSet> getResultSetResultSetExtractor(QueryDescriptor queryDescriptor, Map<String, Map<String, ColumnWithType>> columnTypesMap) {
@@ -436,7 +438,8 @@ public class ReportService extends AbstractService<Report> {
 
     private ColumnWithType columnWithTypeByColumn(String column, String fullTableName, Map<String, Map<String, ColumnWithType>> columnWithTypes) {
         String[] split = column.split("\\.");
-        column = split[split.length-1];
+        String columnAll = split[split.length-1];
+        column = columnAll.split("(\\+|\\-|\\*|\\/)")[0];
         Map<String, ColumnWithType> columnsToSearchIn;
         if (fullTableName != null) {
             columnsToSearchIn = columnWithTypes.get(fullTableName);
