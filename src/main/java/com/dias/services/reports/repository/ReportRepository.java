@@ -53,6 +53,7 @@ public class ReportRepository extends AbstractRepository<Report> {
             report.setDescription(rs.getString("description"));
             report.setIsFavorite(rs.getBoolean("is_favorite"));
             report.setIsPublic(rs.getBoolean("is_public"));
+            report.setLimit50(rs.getBoolean("limit50"));
             return report;
         }
     }
@@ -146,6 +147,7 @@ public class ReportRepository extends AbstractRepository<Report> {
                 "description=:description, " +
                 "is_favorite=:isFavorite, " +
                 "is_public=:isPublic, " +
+                "limit50=:limit50, " +
                 "query_descriptor=:queryDescriptor " +
                 "where id=:id";
     }

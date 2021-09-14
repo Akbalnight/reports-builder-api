@@ -7,14 +7,14 @@
         "name": "Суточные ведомости",
         "displayName": "Суточные ведомости",
         "join": [
-          ["day_statement","history_values_by_day_view"]
+          ["public.day_statement","public.history_values_by_day_view"]
         ],
         "children": [
           {
-            "name":"day_statement"
+            "name":"public.day_statement"
           },
           {
-            "name": "history_values_by_day_view"
+            "name": "public.history_values_by_day_view"
           }
         ]
       },
@@ -22,14 +22,14 @@
         "name": "Часовые ведомости",
         "displayName":"Часовые ведомости",
         "join": [
-          ["hour_statement","history_values_by_hour_view"]
+          ["public.hour_statement","public.history_values_by_hour_view"]
         ],
         "children": [
           {
-            "name":"hour_statement"
+            "name":"public.hour_statement"
           },
           {
-            "name": "history_values_by_hour_view"
+            "name": "public.history_values_by_hour_view"
           }
         ]
       },
@@ -37,14 +37,14 @@
         "name": "Протоколы",
         "displayName":"Протоколы",
         "join": [
-          ["protocol","protocol_data"]
+          ["public.protocol","public.protocol_data"]
         ],
         "children": [
           {
-            "name":"protocol"
+            "name":"public.protocol"
           },
           {
-            "name": "protocol_data"
+            "name": "public.protocol_data"
           }
         ]
       },
@@ -52,14 +52,14 @@
         "name": "Расчет замещающих значений",
         "displayName":"Расчет замещающих значений",
         "join": [
-          ["substitution_alg","substitution_values"]
+          ["public.substitution_alg","public.substitution_values"]
         ],
         "children": [
           {
-            "name":"substitution_alg"
+            "name":"public.substitution_alg"
           },
           {
-            "name": "substitution_values"
+            "name": "public.substitution_values"
           }
         ]
       }
@@ -73,20 +73,20 @@
         "name": "Объекты генерации",
         "displayName": "Объекты генерации",
         "join": [
-          ["generation_object","generation_object_type"]
+          ["public.generation_object","public.generation_object_type"]
         ],
         "children": [
           {
-            "name": "generation_object"
+            "name": "public.generation_object"
           },
           {
-            "name": "generation_object_type"
+            "name": "public.generation_object_type"
           },
           {
-            "name": "consumer"
+            "name": "public.consumer"
           },
           {
-            "name": "pipeline"
+            "name": "public.pipeline"
           }
         ]
       }

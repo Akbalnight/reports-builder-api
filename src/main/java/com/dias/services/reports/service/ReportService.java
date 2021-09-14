@@ -251,6 +251,7 @@ public class ReportService extends AbstractService<Report> {
             Optional.ofNullable(updates.getDescription()).ifPresent(originalReport::setDescription);
             Optional.ofNullable(updates.getIsFavorite()).ifPresent(originalReport::setIsFavorite);
             Optional.ofNullable(updates.getIsPublic()).ifPresent(originalReport::setIsPublic);
+            Optional.ofNullable(updates.getLimit50()).ifPresent(originalReport::setLimit50);
             Optional.ofNullable(updates.getQueryDescriptor()).ifPresent(originalReport::setQueryDescriptor);
         });
         Report model = convertToBO(originalReport);

@@ -16,5 +16,6 @@ public class ReportDTO {
     private JsonNode description;
     private Boolean isFavorite;
     private Boolean isPublic;
+    private Boolean limit50;
     private QueryDescriptor queryDescriptor;
 }
