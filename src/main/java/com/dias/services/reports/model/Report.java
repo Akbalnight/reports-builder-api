@@ -18,6 +18,7 @@ public class Report extends AbstractModel {
     private String createdBy;
     private Boolean isFavorite;
     private Boolean isPublic;
+    private Boolean limit50;
     private String queryDescriptor;
     private String description;
 }

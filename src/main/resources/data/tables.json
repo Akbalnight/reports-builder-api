@@ -1,5 +1,5 @@
 {
-  "substitution_alg": {
+  "public.substitution_alg": {
     "title": "Алгоритмы расчёта замещающих значений",
     "ignoreFields": [
       "key",
@@ -13,7 +13,7 @@
       "description": "Описание"
     }
   },
-  "substitution_values": {
+  "public.substitution_values": {
     "title": "Данные по расчетам замещающих значений",
     "ignoreFields": [
       "generation_object_id",
@@ -21,7 +21,8 @@
       "statement_id",
       "id",
       "highway_id",
-      "substitution_algorithm_id"
+      "substitution_algorithm_id",
+      "metering_reports_id"
     ],
     "translations": {
       "create_date": "Дата создания",
@@ -36,10 +37,13 @@
       "weight": "Масса",
       "volume": "Объем",
       "status": "Статус",
-      "highway_full_name": "Магистраль"
+      "highway_full_name": "Магистраль",
+      "code": "Код",
+      "sub_status": "Статус"
+
     }
   },
-  "protocol": {
+  "public.protocol": {
     "title": "Протоколы",
     "ignoreFields": [
       "generation_object_id",
@@ -54,10 +58,11 @@
       "date_from": "Дата, с",
       "date_to": "Дата, по",
       "formula": "Формула расчета",
-      "generation_object_short_name": "Краткое имя объекта генерации"
+      "generation_object_short_name": "Краткое имя объекта генерации",
+      "code": "Код"
     }
   },
-  "protocol_data": {
+  "public.protocol_data": {
     "title": "Данные по протоколам",
     "ignoreFields": [
       "heat_eon_line",
@@ -90,7 +95,7 @@
       "date": "Дата / время"
     }
   },
-  "day_statement": {
+  "public.day_statement": {
     "title": "Ведомости по дням",
     "ignoreFields": [
       "substition_variations",
@@ -123,7 +128,7 @@
       "manual_fill_type": "Тип ручного заполнения"
     }
   },
-  "hour_statement": {
+  "public.hour_statement": {
     "title": "Ведомости по часам",
     "ignoreFields": [
       "substition_variations",
@@ -154,7 +159,7 @@
       "step_save": "Час"
     }
   },
-  "history_values_by_day_view": {
+  "public.history_values_by_day_view": {
     "title": "Данные по дневным ведомостям",
     "ignoreFields": [
       "time_get_data",
@@ -164,7 +169,9 @@
       "pipeline_id",
       "statement_id",
       "highway_id",
-      "id"
+      "id",
+      "metering_reports_id",
+      "ml_map_object_id"
     ],
     "translations": {
       "heat_energy_cold_water_all_time": "Тепловая энергия холодной воды, накопительное значение",
@@ -239,10 +246,11 @@
       "weight_supply": "Масса теплоносителя подающего трубопровода",
       "weight_supply_all_time": "Масса теплоносителя подающего трубопровода, накопительное значение",
       "pipeline_full_name": "Имя трубопровода",
-      "highway_full_name": "Магистраль"
+      "highway_full_name": "Магистраль",
+      "map_name": "Тип ведомости"
     }
   },
-  "history_values_by_hour_view": {
+  "public.history_values_by_hour_view": {
     "title": "Данные по часовым ведомостям",
     "ignoreFields": [
       "time_get_data",
@@ -252,7 +260,10 @@
       "pipeline_id",
       "statement_id",
       "id",
-      "highway_id"
+      "highway_id",
+      "metering_reports_id",
+      "ml_map_object_id"
+
     ],
     "translations": {
       "heat_energy_cold_water_all_time":"Тепловая энергия холодной воды, накопительное значение",
@@ -327,10 +338,11 @@
       "weight_supply": "Масса теплоносителя подающего трубопровода",
       "weight_supply_all_time": "Масса теплоносителя подающего трубопровода, накопительное значение",
       "pipeline_full_name": "Имя трубопровода",
-      "highway_full_name": "Магистраль"
+      "highway_full_name": "Магистраль",
+      "map_name": "Тип ведомости"
     }
   },
-  "consumer": {
+  "public.consumer": {
     "title": "Потребители",
     "ignoreFields": [
       "id"
@@ -341,7 +353,7 @@
       "consumer_group": "Группа потребителя"
     }
   },
-  "generation_object": {
+  "public.generation_object": {
     "title": "Объекты генерации",
     "ignoreFields": [
       "parent_generation_object_id",
@@ -372,7 +384,7 @@
       "condensate_return": "Возврат конденсата, коэффициент пересчёта"
     }
   },
-  "generation_object_type": {
+  "public.generation_object_type": {
     "title": "Тип объекта генерации",
     "ignoreFields": [
       "id"
@@ -382,7 +394,7 @@
       "short_name": "Краткое наименование типа объекта генерации"
     }
   },
-  "pipeline": {
+  "public.pipeline": {
     "title": "Трубопроводы",
     "ignoreFields": [
       "parent_pipeline_id",
